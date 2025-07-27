@@ -14,6 +14,6 @@ commentController.createComment,
 router.get('/:memoryId', auth(), commentController.getCommentsByMemory);
 
 
-router.delete('/:id', auth(), commentController.deleteComment);
+router.delete('/:commentId', auth(), commentController.deleteComment);
 
 export const commentRoutes = router;

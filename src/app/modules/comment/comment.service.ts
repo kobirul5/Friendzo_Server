@@ -53,22 +53,27 @@ const getCommentsByMemoryService = async (memoryId: string) => {
 };
 
 
-const deleteItemFromDb = async (id: string) => {
-  const transaction = await prisma.$transaction(async (prisma) => {
-    const deletedItem = await prisma.comment.delete({
-      where: { id },
-    });
 
-    // Add any additional logic if necessary, e.g., cascading deletes
-    return deletedItem;
+const deleteCommentService = async (commentId: string) => {
+  // Check if comment exists
+  const comment = await prisma.comment.findUnique({
+    where: { id: commentId },
   });
 
-  return transaction;
+  if (!comment) {
+    throw new ApiError(404, 'Comment not found.');
+  }
+
+  // Delete comment
+  const deletedComment = await prisma.comment.delete({
+    where: { id: commentId },
+  });
+
+  return deletedComment;
 };
-;
 
 export const commentService = {
 createCommentService,
 getCommentsByMemoryService,
-deleteItemFromDb,
+deleteCommentService,
 };

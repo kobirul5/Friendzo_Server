@@ -43,8 +43,16 @@ const getCommentsByMemory = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const deleteComment = catchAsync(async (req, res) => {
-  const result = await commentService.deleteItemFromDb(req.params.id);
+
+const deleteComment = catchAsync(async (req: Request, res: Response) => {
+  const { commentId } = req.params;
+
+  if (!commentId) {
+    throw new ApiError(400, 'commentId is required.');
+  }
+
+  const result = await commentService.deleteCommentService(commentId);
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -52,6 +60,7 @@ const deleteComment = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 
 export const commentController = {
   createComment,
