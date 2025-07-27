@@ -1,8 +1,7 @@
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
 
-
-export const createEventLikeService = async (userId: string, eventId: string) => {
+const createEventLikeService = async (userId: string, eventId: string) => {
   // Check if like already exists
   const existingLike = await prisma.eventLike.findFirst({
     where: {
@@ -24,6 +23,31 @@ export const createEventLikeService = async (userId: string, eventId: string) =>
 
   return like;
 };
+
+
+
+const createMemoryLikeService = async (userId: string, memoryId: string) => {
+  const existingLike = await prisma.memoryLike.findFirst({
+    where: {
+      userId,
+      memoryId,
+    },
+  });
+
+  if (existingLike) {
+    throw new ApiError(400,"You have already liked this memory.");
+  }
+
+  const like = await prisma.memoryLike.create({
+    data: {
+      userId,
+      memoryId,
+    },
+  });
+
+  return like;
+};
+
 
 // const getListFromDb = async () => {
 
@@ -70,6 +94,7 @@ export const createEventLikeService = async (userId: string, eventId: string) =>
 
 export const likeService = {
   createEventLikeService,
+  createMemoryLikeService,
   // getListFromDb,
   // getByIdFromDb,
   // updateIntoDb,

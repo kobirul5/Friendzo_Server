@@ -21,6 +21,24 @@ const createEventLike = catchAsync(async (req, res) => {
   });
 });
 
+
+const createMemoryLike = catchAsync(async (req, res) => {
+     const { userId, memoryId } = req.body;
+
+    if (!userId || !memoryId) {
+      throw new ApiError(400, "userId and memoryId are required." );
+    }
+
+    const result = await likeService.createMemoryLikeService(userId, memoryId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: 'Like created successfully',
+    data: result,
+  });
+});
+
 // const getLikeList = catchAsync(async (req, res) => {
 //   const result = await likeService.getListFromDb();
 //   sendResponse(res, {
@@ -63,6 +81,7 @@ const createEventLike = catchAsync(async (req, res) => {
 
 export const likeController = {
   createEventLike,
+  createMemoryLike,
   // getLikeList,
   // getLikeById,
   // updateLike,

@@ -37,7 +37,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relationships
-  EventLike EventLike[]
+  EventLike  EventLike[]
+  MemoryLike MemoryLike[]
 
   @@map("users")
 }
@@ -52,8 +53,9 @@ model Memory {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  userId String @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id])
+  userId     String       @db.ObjectId
+  user       User         @relation(fields: [userId], references: [id])
+  MemoryLike MemoryLike[]
 }
 
 model Event {
@@ -91,6 +93,19 @@ model EventLike {
 
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MemoryLike {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
+
+  memory   Memory @relation(fields: [memoryId], references: [id])
+  memoryId String @db.ObjectId
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

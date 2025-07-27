@@ -11,6 +11,11 @@ router.post(
 auth(),
 likeController.createEventLike,
 );
+router.post(
+'/memories',
+auth(),
+likeController.createMemoryLike,
+);
 
 // router.get('/', auth(), likeController.getLikeList);
 
