@@ -20,14 +20,5 @@ likeController.createMemoryLike,
 router.get('/memories/:id', auth(), likeController.getMemoryLikeStats);
 router.delete('/memories', auth(), likeController.removeMemoryLike);
 
-// router.get('/:id', auth(), likeController.getLikeById);
-
-// router.put(
-// '/:id',
-// auth(),
-// likeController.updateLike,
-// );
-
-// router.delete('/:id', auth(), likeController.deleteLike);
 
 export const likesRoutes = router;

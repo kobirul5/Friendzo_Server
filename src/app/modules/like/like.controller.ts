@@ -89,55 +89,9 @@ const removeMemoryLike = catchAsync(async (req, res) => {
 });
 
 
-
-
-// const getLikeList = catchAsync(async (req, res) => {
-//   const result = await likeService.getListFromDb();
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Like list retrieved successfully',
-//     data: result,
-//   });
-// });
-
-// const getLikeById = catchAsync(async (req, res) => {
-//   const result = await likeService.getByIdFromDb(req.params.id);
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Like details retrieved successfully',
-//     data: result,
-//   });
-// });
-
-// const updateLike = catchAsync(async (req, res) => {
-//   const result = await likeService.updateIntoDb(req.params.id, req.body);
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Like updated successfully',
-//     data: result,
-//   });
-// });
-
-// const deleteLike = catchAsync(async (req, res) => {
-//   const result = await likeService.deleteItemFromDb(req.params.id);
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Like deleted successfully',
-//     data: result,
-//   });
-// });
-
 export const likeController = {
   createEventLike,
   createMemoryLike,
   getMemoryLikeStats,
   removeMemoryLike,
-  // getLikeList,
-  // getLikeById,
-  // updateLike,
-  // deleteLike,
 };

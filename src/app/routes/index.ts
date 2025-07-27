@@ -4,6 +4,7 @@ import { AuthRoutes } from "../modules/Auth/auth.routes";
 import { memoriesRoutes } from "../modules/memories/memories.routes";
 import { eventsRoutes } from "../modules/event/event.routes";
 import { likesRoutes } from "../modules/like/like.routes";
+import { commentRoutes } from "../modules/comment/comment.routes";
 
 // import { ReviewRoutes } from "../modules/review/review.route";
 
@@ -31,6 +32,10 @@ const moduleRoutes = [
   {
     path: "/likes",
     route: likesRoutes,
+  },
+  {
+    path: "/comment",
+    route: commentRoutes,
   },
  
   // {

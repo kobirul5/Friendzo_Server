@@ -25,7 +25,6 @@ const createEventLikeService = async (userId: string, eventId: string) => {
 };
 
 
-
 const createMemoryLikeService = async (userId: string, memoryId: string) => {
   const existingLike = await prisma.memoryLike.findFirst({
     where: {
@@ -100,48 +99,6 @@ const removeMemoryLikeService = async (userId: string, memoryId: string) => {
 };
 
 
-// const getListFromDb = async () => {
-
-//   const result = await prisma.like.findMany();
-//   return result;
-// };
-
-// const getByIdFromDb = async (id: string) => {
-
-//   const result = await prisma.like.findUnique({ where: { id } });
-//   if (!result) {
-//     throw new Error('Like not found');
-//   }
-//   return result;
-// };
-
-
-
-// const updateIntoDb = async (id: string, data: any) => {
-//   const transaction = await prisma.$transaction(async (prisma) => {
-//     const result = await prisma.like.update({
-//       where: { id },
-//       data,
-//     });
-//     return result;
-//   });
-
-//   return transaction;
-// };
-
-// const deleteItemFromDb = async (id: string) => {
-//   const transaction = await prisma.$transaction(async (prisma) => {
-//     const deletedItem = await prisma.like.delete({
-//       where: { id },
-//     });
-
-//     // Add any additional logic if necessary, e.g., cascading deletes
-//     return deletedItem;
-//   });
-
-//   return transaction;
-// };
-// ;
 
 export const likeService = {
   createEventLikeService,
@@ -149,8 +106,4 @@ export const likeService = {
   getMemoryLikeCountService,
   getMemoryLikedUsersService,
   removeMemoryLikeService
-  // getListFromDb,
-  // getByIdFromDb,
-  // updateIntoDb,
-  // deleteItemFromDb,
 };
