@@ -8,7 +8,9 @@ const router = express.Router();
 
 router.post('/', authMiddleware(),fileUploader.uploadFile,  memoriesController.createMemory);
 router.get('/', authMiddleware(), memoriesController.getUserMemories);
+router.get('/:id', authMiddleware(), memoriesController.getSingleMemory);
 router.patch('/:id', authMiddleware(), memoriesController.updateMemory);
-// router.delete('/:id', authMiddleware(), memoriesController.deleteMemory);
+router.delete('/:id', authMiddleware(), memoriesController.deleteMemory);
 
-export default router;
+
+export const memoriesRoutes = router;

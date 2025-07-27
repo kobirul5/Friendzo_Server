@@ -7,6 +7,7 @@ import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { memoriesService } from './memories.service';
 import { fileUploader } from '../../../helpars/fileUploader';
+import ApiError from '../../../errors/ApiErrors';
 
  const createMemory = catchAsync(async (req: any, res: Response) => {
   const userId = req.user.id;
@@ -61,6 +62,25 @@ import { fileUploader } from '../../../helpars/fileUploader';
   });
 });
 
+
+const getSingleMemory = catchAsync(async (req: Request, res: Response) => {
+  const memoryId = req.params.id;
+
+  const memory = await memoriesService.getMemoryById(memoryId);
+
+  if (!memory) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Memory not found');
+  }
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Memory fetched successfully',
+    data: memory,
+  });
+});
+
+
  const updateMemory = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const updated = await memoriesService.updateMemory(id, req.body);
@@ -73,21 +93,25 @@ import { fileUploader } from '../../../helpars/fileUploader';
   });
 });
 
-//  const deleteMemory = catchAsync(async (req: Request, res: Response) => {
-//   const { id } = req.params;
-//    const delete =  await memoriesService.deleteMemory(id);
+const deleteMemory = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Memory deleted successfully',
-//   });
-// });
+  const deletedMemory = await memoriesService.deleteMemory(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Memory deleted successfully',
+    data: deletedMemory,
+  });
+});
+
 
 export const memoriesController = {
     createMemory,
     getUserMemories,
+    getSingleMemory,
     updateMemory,
-    // deleteMemory
+    deleteMemory
 }
 

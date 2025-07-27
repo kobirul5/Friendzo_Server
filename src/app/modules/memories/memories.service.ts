@@ -22,9 +22,12 @@ const getMemoriesByUser = async (userId: string): Promise<Memory[]> => {
 };
 
 // Get single memory by ID
-const getSingleMemory = async (id: string): Promise<Memory | null> => {
-  return await prisma.memory.findUnique({ where: { id } });
+const getMemoryById = async (id: string): Promise<Memory | null> => {
+  return await prisma.memory.findUnique({
+    where: { id },
+  });
 };
+
 
 // Update memory
 const updateMemory = async (
@@ -39,14 +42,17 @@ const updateMemory = async (
 
 // Delete memory
 const deleteMemory = async (id: string): Promise<Memory> => {
-  return await prisma.memory.delete({ where: { id } });
+  return await prisma.memory.delete({
+    where: { id },
+  });
 };
+
 
 // Export all
 export const memoriesService = {
   createMemory,
   getMemoriesByUser,
-  getSingleMemory,
+  getMemoryById,
   updateMemory,
   deleteMemory,
 };
