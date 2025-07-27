@@ -1,6 +1,5 @@
 import express from 'express';
 import auth from '../../middlewares/auth';
-import validateRequest from '../../middlewares/validateRequest';
 import { likeController } from './like.controller';
 
 
@@ -15,9 +14,11 @@ router.post(
 '/memories',
 auth(),
 likeController.createMemoryLike,
+likeController.createMemoryLike,
 );
 
-// router.get('/', auth(), likeController.getLikeList);
+router.get('/memories/:id', auth(), likeController.getMemoryLikeStats);
+router.delete('/memories', auth(), likeController.removeMemoryLike);
 
 // router.get('/:id', auth(), likeController.getLikeById);
 
