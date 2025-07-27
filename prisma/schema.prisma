@@ -6,44 +6,41 @@ datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
 }
+
 model User {
-  id                  String         @id @default(auto()) @map("_id") @db.ObjectId
-  profileImage              String?
-  firstName           String?
-  lastName            String?
-  email               String         @unique
-  phoneNumber         String?        
-  password            String?
-  fcmToken            String?
-  role                UserRole   @default(USER)
-  status              UserStatus     @default(INACTIVE)
- 
-  isVerified          Boolean        @default(false)
-  otp                 Int?
-  expirationOtp       DateTime?
-  gender              String?
-  dob                 DateTime?
-  lat                 Float? 
-  lng                 Float?
-  isNotificationOn    Boolean        @default(true)
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  profileImage String?
+  firstName    String?
+  lastName     String?
+  email        String     @unique
+  phoneNumber  String?
+  password     String?
+  fcmToken     String?
+  role         UserRole   @default(USER)
+  status       UserStatus @default(INACTIVE)
 
+  isVerified       Boolean   @default(false)
+  otp              Int?
+  expirationOtp    DateTime?
+  gender           String?
+  dob              DateTime?
+  lat              Float?
+  lng              Float?
+  isNotificationOn Boolean   @default(true)
 
-  provider         String?   // google, facebook etc
-  providerId       String?   // social provider id
-  memories         Memory[]
-  event            Event[]
+  provider   String? // google, facebook etc
+  providerId String? // social provider id
+  memories   Memory[]
+  event      Event[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relationships
-  
+  EventLike EventLike[]
 
   @@map("users")
 }
-
-
-
 
 model Memory {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -55,8 +52,8 @@ model Memory {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  userId      String   @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model Event {
@@ -69,12 +66,11 @@ model Event {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  userId      String   @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  EventLike EventLike[]
 }
-
-
-
 
 enum UserStatus {
   ACTIVE
@@ -87,7 +83,18 @@ enum UserRole {
   SUPER_ADMIN
 }
 
+model EventLike {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
 
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
+
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 // model Review {
 //   id          String         @id @default(auto()) @map("_id") @db.ObjectId
@@ -100,7 +107,6 @@ enum UserRole {
 //   createProjectId   String         @db.ObjectId @unique
 //   createProject     CreateProduct  @relation(fields: [createProjectId], references: [id]) 
 
-
 //   providerId  String?         @db.ObjectId
 //   provider    User?           @relation("UserReviews", fields: [providerId], references: [id])
 
@@ -109,10 +115,6 @@ enum UserRole {
 
 //   @@map("reviews")
 // }
-
-
-
-
 
 // model Notification {
 //   id        String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -129,22 +131,9 @@ enum UserRole {
 //   @@map("notifications")
 // }
 
-
-
-
-
-
-
-
-
-
 // enum PaymentStatus {
 //   PENDING
 //   COMPLETED
 //   REFUNDED
 //   REQUIRES_CAPTURE
 // }
-
-
-
-
