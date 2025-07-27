@@ -3,7 +3,7 @@ import { commentService } from './comment.service';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import ApiError from '../../../errors/ApiErrors';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 const createComment = catchAsync(async (req:any, res: Response) => {
   const { comment, memoryId } = req.body;
@@ -26,16 +26,22 @@ const createComment = catchAsync(async (req:any, res: Response) => {
   });
 });
 
-const getCommentList = catchAsync(async (req, res) => {
-  const result = await commentService.getListFromDb();
+const getCommentsByMemory = catchAsync(async (req: Request, res: Response) => {
+  const { memoryId } = req.params;
+
+  if (!memoryId) {
+    throw new ApiError(400, 'memoryId is required.');
+  }
+
+  const result = await commentService.getCommentsByMemoryService(memoryId);
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Comment list retrieved successfully',
+    message: 'Comments fetched successfully',
     data: result,
   });
 });
-
 
 const deleteComment = catchAsync(async (req, res) => {
   const result = await commentService.deleteItemFromDb(req.params.id);
@@ -49,6 +55,6 @@ const deleteComment = catchAsync(async (req, res) => {
 
 export const commentController = {
   createComment,
-  getCommentList,
+  getCommentsByMemory,
   deleteComment,
 };

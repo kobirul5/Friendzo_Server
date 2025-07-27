@@ -11,7 +11,7 @@ auth(),
 commentController.createComment,
 );
 
-router.get('/', auth(), commentController.getCommentList);
+router.get('/:memoryId', auth(), commentController.getCommentsByMemory);
 
 
 router.delete('/:id', auth(), commentController.deleteComment);

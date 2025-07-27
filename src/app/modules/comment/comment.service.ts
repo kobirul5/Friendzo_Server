@@ -27,10 +27,29 @@ const createCommentService = async (
   return comment;
 };
 
-const getListFromDb = async () => {
-  
-    const result = await prisma.comment.findMany();
-    return result;
+const getCommentsByMemoryService = async (memoryId: string) => {
+
+  const memory = await prisma.memory.findUnique({ where: { id: memoryId } });
+
+  if (!memory) {
+    throw new ApiError(404, 'Memory not found.');
+  }
+
+  const comments = await prisma.comment.findMany({
+    where: { memoryId },
+    include: {
+      user: {
+        select: {
+          firstName: true,
+          lastName: true,
+          profileImage: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return comments;
 };
 
 
@@ -50,6 +69,6 @@ const deleteItemFromDb = async (id: string) => {
 
 export const commentService = {
 createCommentService,
-getListFromDb,
+getCommentsByMemoryService,
 deleteItemFromDb,
 };
