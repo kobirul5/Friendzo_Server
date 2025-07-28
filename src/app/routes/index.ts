@@ -6,6 +6,7 @@ import { eventsRoutes } from "../modules/event/event.routes";
 import { likesRoutes } from "../modules/like/like.routes";
 import { commentRoutes } from "../modules/comment/comment.routes";
 import { profileRoutes } from "../modules/profile/profile.routes";
+import { follwerRoutes } from "../modules/follow/follwer.routes";
 
 // import { ReviewRoutes } from "../modules/review/review.route";
 
@@ -41,6 +42,10 @@ const moduleRoutes = [
   {
     path: "/profile",
     route: profileRoutes,
+  },
+  {
+    path: "/follow",
+    route: follwerRoutes,
   },
  
   // {
