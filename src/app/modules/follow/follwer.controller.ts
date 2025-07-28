@@ -40,7 +40,7 @@ const createFollwer = catchAsync(async (req:Request, res:Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Followers and followings retrieved successfully',
+    message: 'Followers  retrieved successfully',
     data: result,
   });
 });
@@ -48,14 +48,13 @@ const createFollwer = catchAsync(async (req:Request, res:Response) => {
 
  const getMyAllFollowing = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
-  console.log(userId,"================")
 
   const result = await follwerService.getMyFollowingService(userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Followers and followings retrieved successfully',
+    message: 'Followings retrieved successfully',
     data: result,
   });
 });

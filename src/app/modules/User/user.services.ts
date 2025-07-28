@@ -109,6 +109,7 @@ const updateUserProfile = async (userId: string, updateData: Partial<IUser>,  fi
       role: true,
       createdAt: true,
       updatedAt: true,
+      interests: true,
     },
   });
 
