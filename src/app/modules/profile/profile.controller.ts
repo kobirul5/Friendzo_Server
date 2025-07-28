@@ -13,7 +13,7 @@ const getAllPostForProfile = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Profile list retrieved successfully',
+    message: 'Total post retrieved successfully',
     data: result,
   });
 });

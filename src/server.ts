@@ -4,6 +4,7 @@ import config from "./config";
 
 import prisma from "./shared/prisma";
 import app from "./app";
+import { setupWebSocket } from "./helpars/websocket";
 
 let server: Server;
 
@@ -11,6 +12,7 @@ async function startServer() {
   server = app.listen(config.port, () => {
     console.log("Server is listiening on port ", config.port);
   });
+  setupWebSocket(server);
 }
 
 async function main() {

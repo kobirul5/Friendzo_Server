@@ -37,11 +37,16 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relationships
-  EventLike  EventLike[]
-  MemoryLike MemoryLike[]
-  Comment    Comment[]
-  followers   Follow[] @relation("Followers")
-  following   Follow[] @relation("Following")
+  EventLike     EventLike[]
+  MemoryLike    MemoryLike[]
+  Comment       Comment[]
+  followers     Follow[]     @relation("Followers")
+  following     Follow[]     @relation("Following")
+  SentChats     Chat[]       @relation("SentChats") 
+  ReceivedChats Chat[]       @relation("ReceivedChats") 
+
+  SenderRooms   Room[] @relation("SenderRooms") 
+  ReceiverRooms Room[] @relation("ReceiverRooms") 
 
   @@map("users")
 }
@@ -132,17 +137,46 @@ model Comment {
 model Follow {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  follower    User   @relation("Following", fields: [followerId], references: [id])
-  followerId  String @db.ObjectId  
+  follower   User   @relation("Following", fields: [followerId], references: [id])
+  followerId String @db.ObjectId
 
   following   User   @relation("Followers", fields: [followingId], references: [id])
-  followingId String @db.ObjectId  
+  followingId String @db.ObjectId
 
   createdAt DateTime @default(now())
 
   @@unique([followerId, followingId])
 }
 
+model Chat {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  message    String
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  roomId     String   @db.ObjectId
+  images     String[] @default([])
+
+  isRead Boolean @default(false)
+
+  sender   User @relation("SentChats", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedChats", fields: [receiverId], references: [id])
+  room     Room @relation(fields: [roomId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Room {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String @db.ObjectId
+  receiverId String @db.ObjectId
+  sender     User   @relation("SenderRooms", fields: [senderId], references: [id])
+  receiver   User   @relation("ReceiverRooms", fields: [receiverId], references: [id])
+  chats      Chat[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 // model Review {
 //   id          String         @id @default(auto()) @map("_id") @db.ObjectId
