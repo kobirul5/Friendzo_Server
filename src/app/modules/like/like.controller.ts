@@ -4,7 +4,7 @@ import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import ApiError from '../../../errors/ApiErrors';
 import { likeService } from './like.service';
-import { Request, Response } from 'express';
+import { Request, Response} from 'express';
 import prisma from '../../../shared/prisma';
 
 const createEventLike = catchAsync(async (req, res) => {
@@ -24,10 +24,11 @@ const createEventLike = catchAsync(async (req, res) => {
 });
 
 
-const createMemoryLike = catchAsync(async (req, res) => {
-     const { userId, memoryId } = req.body;
+const createMemoryLike = catchAsync(async (req:any, res:Response) => {
+     const { memoryId } = req.body;
+     const userId = req.user.id
 
-    if (!userId || !memoryId) {
+    if (!memoryId) {
       throw new ApiError(400, "userId and memoryId are required." );
     }
 
@@ -72,9 +73,10 @@ const createMemoryLike = catchAsync(async (req, res) => {
 
 
 const removeMemoryLike = catchAsync(async (req, res) => {
-  const { userId, memoryId } = req.body;
+  const { memoryId } = req.body;
+  const userId = req.user.id
 
-  if (!userId || !memoryId) {
+  if (!memoryId) {
     throw new ApiError(400, "userId and memoryId are required.");
   }
 
