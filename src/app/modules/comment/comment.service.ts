@@ -13,7 +13,7 @@ const createCommentService = async (
   const memory = await prisma.memory.findUnique({ where: { id: memoryId } });
 
   if (!memory) {
-    throw new ApiError(404, 'Memory not found.');
+    throw new ApiError(httpStatus.NOT_FOUND, 'Memory not found.');
   }
 
   const comment = await prisma.comment.create({
@@ -32,7 +32,7 @@ const getCommentsByMemoryService = async (memoryId: string) => {
   const memory = await prisma.memory.findUnique({ where: { id: memoryId } });
 
   if (!memory) {
-    throw new ApiError(404, 'Memory not found.');
+    throw new ApiError(httpStatus.NOT_FOUND, 'Memory not found.');
   }
 
   const comments = await prisma.comment.findMany({
@@ -61,7 +61,7 @@ const deleteCommentService = async (commentId: string) => {
   });
 
   if (!comment) {
-    throw new ApiError(404, 'Comment not found.');
+    throw new ApiError(httpStatus.NOT_FOUND, 'Comment not found.');
   }
 
   // Delete comment
