@@ -12,8 +12,9 @@ auth(),
 follwerController.createFollwer,
 );
 
-
 router.get('/count', auth(), follwerController.getMyFollowersAndFollowingCount);
+router.get('/follower', auth(), follwerController.getMyAllFollwer);
+router.get('/following', auth(), follwerController.getMyAllFollowing);
 router.delete('/unfollow', auth(), follwerController.unfollowUser);
 
 export const follwerRoutes = router;

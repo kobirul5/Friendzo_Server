@@ -32,18 +32,33 @@ const createFollwer = catchAsync(async (req:Request, res:Response) => {
   });
 });
 
-//  const getMyFollowersAndFollowings = catchAsync(async (req: Request, res: Response) => {
-//   const userId = req.user.id;
+ const getMyAllFollwer = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
 
-//   const result = await follwerService.getMyNetwork(userId);
+  const result = await follwerService.getMyFollowerService(userId);
 
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Followers and followings retrieved successfully',
-//     data: result,
-//   });
-// });
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Followers and followings retrieved successfully',
+    data: result,
+  });
+});
+
+
+ const getMyAllFollowing = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  console.log(userId,"================")
+
+  const result = await follwerService.getMyFollowingService(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Followers and followings retrieved successfully',
+    data: result,
+  });
+});
 
 const unfollowUser = catchAsync(async (req: Request, res: Response) => {
   const followerId = req.user.id; 
@@ -63,4 +78,6 @@ export const follwerController = {
   createFollwer,
   getMyFollowersAndFollowingCount,
   unfollowUser,
+  getMyAllFollwer,
+  getMyAllFollowing
 };

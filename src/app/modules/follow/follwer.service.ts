@@ -55,23 +55,7 @@ const getMyNetworkCount = async (userId: string) => {
   };
 };
 
-const getMyNetwork = async (userId: string) => {
-  // Who I am following
-  const following = await prisma.follow.findMany({
-    where: { followerId: userId },
-    include: {
-      following: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          profileImage: true,
-        },
-      },
-    },
-  });
-
-  // Who follows me
+const getMyFollowerService = async (userId: string) => {
   const followers = await prisma.follow.findMany({
     where: { followingId: userId },
     include: {
@@ -86,10 +70,26 @@ const getMyNetwork = async (userId: string) => {
     },
   });
 
-  return {
-    followers: followers.map(f => f.follower),
-    followings: following.map(f => f.following),
-  };
+  return followers.map(f => f.follower);
+};
+
+
+const getMyFollowingService = async (userId: string) => {
+  const following = await prisma.follow.findMany({
+    where: { followerId: userId },
+    include: {
+      following: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          profileImage: true,
+        },
+      },
+    },
+  });
+
+  return following.map(f => f.following);
 };
 
 
@@ -120,6 +120,7 @@ const unfollowUserService = async (followerId: string, followingId: string) => {
 export const follwerService = {
   createFollowerAndFollowingService,
   unfollowUserService,
-  getMyNetwork,
-  getMyNetworkCount
+  getMyFollowerService,
+  getMyNetworkCount,
+  getMyFollowingService
 };
