@@ -72,7 +72,7 @@ const createMemoryLike = catchAsync(async (req:any, res:Response) => {
   }
 
 
-const removeMemoryLike = catchAsync(async (req, res) => {
+const removeMemoryLike = catchAsync(async (req:any, res:Response) => {
   const { memoryId } = req.body;
   const userId = req.user.id
 
@@ -90,10 +90,39 @@ const removeMemoryLike = catchAsync(async (req, res) => {
   });
 });
 
+const getDayliMyLike = catchAsync(async (req:any, res:Response) => {
+
+  const userId = req.user.id
+console.log(userId)
+  const result = await likeService.getDayliMyLikeService(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Dayli Like Get successfully',
+    data: result,
+  });
+})
+const getWeeklyMyLike = catchAsync(async (req:any, res:Response) => {
+
+  const userId = req.user.id
+console.log(userId)
+  const result = await likeService.getDayliMyWeeklyService(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Dayli Like Get successfully',
+    data: result,
+  });
+})
+
 
 export const likeController = {
   createEventLike,
   createMemoryLike,
   getMemoryLikeStats,
   removeMemoryLike,
+  getDayliMyLike,
+  getWeeklyMyLike 
 };

@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
 
@@ -11,7 +12,7 @@ const createEventLikeService = async (userId: string, eventId: string) => {
   });
 
   if (existingLike) {
-    throw new ApiError(400,"You have already liked this event.");
+    throw new ApiError(400, "You have already liked this event.");
   }
 
   const like = await prisma.eventLike.create({
@@ -34,7 +35,7 @@ const createMemoryLikeService = async (userId: string, memoryId: string) => {
   });
 
   if (existingLike) {
-    throw new ApiError(400,"You have already liked this memory.");
+    throw new ApiError(400, "You have already liked this memory.");
   }
 
   const like = await prisma.memoryLike.create({
@@ -66,7 +67,7 @@ const getMemoryLikedUsersService = async (memoryId: string) => {
           id: true,
           firstName: true,
           lastName: true,
-          email: true, 
+          email: true,
 
         },
       },
@@ -98,12 +99,69 @@ const removeMemoryLikeService = async (userId: string, memoryId: string) => {
   return { message: "Like removed successfully." };
 };
 
+const getDayliMyLikeService = async (userId: string) => {
 
+  const startOfToday = dayjs().startOf("day").toDate();
+  const endOfToday = dayjs().endOf("day").toDate();
+
+  const likes = await prisma.memoryLike.findMany({
+    where: {
+      userId,
+      createdAt: {
+        gte: startOfToday,
+        lte: endOfToday,
+      },
+    },
+  });
+
+  return likes
+
+}
+
+
+const getDayliMyWeeklyService = async (userId: string) => {
+
+
+ const now = new Date();
+  const day = now.getDay(); 
+
+  // Get ISO day index: Monday = 0, Sunday = 6
+  const isoDay = (day + 6) % 7;
+
+  // Start of ISO week (Monday)
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - isoDay);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  // End of ISO week (Sunday, 23:59:59)
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  console.log("Start of week:", startOfWeek.toString());
+  console.log("End of week:", endOfWeek.toString());
+  console.log("Weekly range:", startOfWeek.toString(), "->", endOfWeek.toString());
+
+  const likes = await prisma.memoryLike.findMany({
+    where: {
+      userId,
+      createdAt: {
+        gte: startOfWeek,
+        lte: endOfWeek,
+      },
+    },
+  });
+
+  return likes;
+
+}
 
 export const likeService = {
   createEventLikeService,
   createMemoryLikeService,
   getMemoryLikeCountService,
   getMemoryLikedUsersService,
-  removeMemoryLikeService
+  removeMemoryLikeService,
+  getDayliMyLikeService,
+  getDayliMyWeeklyService
 };
