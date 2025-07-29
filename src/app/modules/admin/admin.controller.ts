@@ -17,7 +17,7 @@ const getTotalUsers = catchAsync(async (req, res) => {
 });
 
 const deleteUser = catchAsync(async (req, res) => {
-  const {userId} = req.params
+  const { userId } = req.params
 
 
   const result = await adminService.deleteUserService(userId);
@@ -29,10 +29,31 @@ const deleteUser = catchAsync(async (req, res) => {
   });
 });
 
+const getTotalreport = catchAsync(async (req, res) => {
+  const result = await adminService.getTotalReportService(req.query);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Total Report Count retrieved successfully',
+    data: result,
+  });
+});
+
+const getMonthlyReport = catchAsync(async (req, res) => {
+  console.log("hi")
+  const result = await adminService.getMonthlyReportService();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Last 1 month report count retrieved successfully',
+    data: result,
+  });
+});
 
 
 export const adminController = {
-  getTotalUsers ,
+  getTotalUsers,
   deleteUser,
-
+  getTotalreport,
+  getMonthlyReport
 };

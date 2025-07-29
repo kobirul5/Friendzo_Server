@@ -1,32 +1,15 @@
 import express from 'express';
 import auth from '../../middlewares/auth';
-import validateRequest from '../../middlewares/validateRequest';
 import { adminController } from './admin.controller';
-import { adminValidation } from './admin.validation';
+
 
 const router = express.Router();
 
 router.get('/total-user', auth("ADMIN"), adminController.getTotalUsers);
-router.delete('/delete/:userId', auth("ADMIN"), adminController.deleteUser);
-
-// router.post(
-// '/',
-// auth(),
-// validateRequest(adminValidation.createSchema),
-// adminController.createAdmin,
-// );
+router.get('/total-report', auth("ADMIN"), adminController.getTotalreport);
+router.delete('/delete/userId', auth("ADMIN"), adminController.deleteUser);
+router.get('/total-report-monthly', auth("ADMIN"), adminController.getMonthlyReport);
 
 
-
-// router.get('/:id', auth(), adminController.getAdminById);
-
-// router.put(
-// '/:id',
-// auth(),
-// validateRequest(adminValidation.updateSchema),
-// adminController.updateAdmin,
-// );
-
-// router.delete('/:id', auth(), adminController.deleteAdmin);
 
 export const adminRoutes = router;
