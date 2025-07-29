@@ -46,11 +46,13 @@ model User {
   SentChats     Chat[]       @relation("SentChats")
   ReceivedChats Chat[]       @relation("ReceivedChats")
 
-  SenderRooms   Room[]   @relation("SenderRooms")
-  ReceiverRooms Room[]   @relation("ReceiverRooms")
+  SenderRooms   Room[] @relation("SenderRooms")
+  ReceiverRooms Room[] @relation("ReceiverRooms")
 
-  reportsMade Report[] @relation("ReportCreatedBy")
-  reportsOnMe Report[] @relation("ReportedUser")
+  reportsMade    Report[] @relation("ReportCreatedBy")
+  reportsOnMe    Report[] @relation("ReportedUser")
+  blockedUsers   Block[]  @relation("BlockerRelation")
+  blockedByUsers Block[]  @relation("BlockedRelation")
 
   @@map("users")
 }
@@ -183,20 +185,32 @@ model Room {
 }
 
 model Report {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  description    String
-  createdAt      DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Reporter 
-  reporterId     String   @db.ObjectId
-  reporter       User     @relation("ReportCreatedBy", fields: [reporterId], references: [id])
+  reporterId String @db.ObjectId
+  reporter   User   @relation("ReportCreatedBy", fields: [reporterId], references: [id])
 
   // Reported user
-  reportedUserId String   @db.ObjectId
-  reportedUser   User     @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  reportedUserId String @db.ObjectId
+  reportedUser   User   @relation("ReportedUser", fields: [reportedUserId], references: [id])
 }
 
+model Block {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  blockerId     String   @db.ObjectId
+  blockedUserId String   @db.ObjectId
+  createdAt     DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  blocker     User @relation("BlockerRelation", fields: [blockerId], references: [id])
+  blockedUser User @relation("BlockedRelation", fields: [blockedUserId], references: [id])
+
+  @@unique([blockerId, blockedUserId]) // Prevent duplicate blocks
+}
 
 // model Review {
 //   id          String         @id @default(auto()) @map("_id") @db.ObjectId
