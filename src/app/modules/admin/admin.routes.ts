@@ -7,6 +7,7 @@ import { adminValidation } from './admin.validation';
 const router = express.Router();
 
 router.get('/total-user', auth("ADMIN"), adminController.getTotalUsers);
+router.delete('/delete/:userId', auth("ADMIN"), adminController.deleteUser);
 
 // router.post(
 // '/',
