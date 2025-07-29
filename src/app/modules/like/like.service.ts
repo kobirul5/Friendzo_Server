@@ -138,10 +138,6 @@ const getDayliMyWeeklyService = async (userId: string) => {
   endOfWeek.setDate(startOfWeek.getDate() + 6);
   endOfWeek.setHours(23, 59, 59, 999);
 
-  console.log("Start of week:", startOfWeek.toString());
-  console.log("End of week:", endOfWeek.toString());
-  console.log("Weekly range:", startOfWeek.toString(), "->", endOfWeek.toString());
-
   const likes = await prisma.memoryLike.findMany({
     where: {
       userId,

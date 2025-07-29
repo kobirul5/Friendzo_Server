@@ -7,6 +7,7 @@ import { likesRoutes } from "../modules/like/like.routes";
 import { commentRoutes } from "../modules/comment/comment.routes";
 import { profileRoutes } from "../modules/profile/profile.routes";
 import { follwerRoutes } from "../modules/follow/follwer.routes";
+import { adminRoutes } from "../modules/admin/admin.routes";
 
 // import { ReviewRoutes } from "../modules/review/review.route";
 
@@ -46,6 +47,10 @@ const moduleRoutes = [
   {
     path: "/follow",
     route: follwerRoutes,
+  },
+  {
+    path: "/admin",
+    route: adminRoutes,
   },
  
   // {
