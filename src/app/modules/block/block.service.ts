@@ -4,8 +4,8 @@ import prisma from '../../../shared/prisma';
 import ApiError from '../../../errors/ApiErrors';
 
 
-const createIntoDb = async (blockedUserId: string, blockerId: string) => {
-  console.log(blockedUserId, blockerId)
+const createBlockBetweenUsers  = async (blockedUserId: string, blockerId: string) => {
+  
   if (blockerId === blockedUserId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "You cannot block yourself");
   }
@@ -27,5 +27,5 @@ const createIntoDb = async (blockedUserId: string, blockerId: string) => {
 
 
 export const blockService = {
-  createIntoDb,
+  createBlockBetweenUsers ,
 };

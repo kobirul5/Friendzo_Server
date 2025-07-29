@@ -10,6 +10,11 @@ router.post(
 auth(),
 blockController.createBlock,
 );
+router.get(
+'/:receiverId',
+auth(),
+blockController.checkBlockStatus,
+);
 
 
 export const blockRoutes = router;
