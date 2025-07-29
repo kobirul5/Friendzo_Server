@@ -8,6 +8,7 @@ import { commentRoutes } from "../modules/comment/comment.routes";
 import { profileRoutes } from "../modules/profile/profile.routes";
 import { follwerRoutes } from "../modules/follow/follwer.routes";
 import { adminRoutes } from "../modules/admin/admin.routes";
+import { reportRoutes } from "../modules/report/report.routes";
 
 // import { ReviewRoutes } from "../modules/review/review.route";
 
@@ -51,6 +52,10 @@ const moduleRoutes = [
   {
     path: "/admin",
     route: adminRoutes,
+  },
+  {
+    path: "/report",
+    route: reportRoutes,
   },
  
   // {
