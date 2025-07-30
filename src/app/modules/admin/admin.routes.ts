@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get('/total-user', auth("ADMIN"), adminController.getTotalUsers);
 router.get('/total-report', auth("ADMIN"), adminController.getTotalreport);
-router.delete('/delete/userId', auth("ADMIN"), adminController.deleteUser);
+router.delete('/delete/:userId',  adminController.deleteUser);
 router.get('/total-report-monthly', auth("ADMIN"), adminController.getMonthlyReport);
 
 
