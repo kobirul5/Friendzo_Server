@@ -23,8 +23,24 @@ const createReportService = async (data: any, reporterId: string) => {
 
 };
 
+const deleteReportService = async (reportId: string) => {
+  const report = await prisma.report.findUnique({
+    where: { id: reportId },
+  });
+
+  if (!report) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Report not found');
+  }
+
+  const result = await prisma.report.delete({
+    where: { id: reportId },
+  });
+
+  return result;
+};  
 
 
 export const reportService = {
 createReportService,
+deleteReportService
 };

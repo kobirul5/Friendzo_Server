@@ -28,7 +28,7 @@ const checkBlockStatus = catchAsync(async (req: any, res: Response) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "You cannot block yourself");
   }
   const blocked = await isBlocked(currentUserId, targetUserId);
-  console.log(blocked)
+
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
