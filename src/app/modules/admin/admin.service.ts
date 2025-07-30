@@ -43,33 +43,43 @@ const getTotalUsersService = async (options: IPaginationOptions) => {
 };
 
 
-const deleteUserService = async (userId:string) => {
- const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+const deleteUserService = async (userId: string) => {
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
 
-    if (!existingUser) {
-      throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+  }
+
+  await prisma.block.deleteMany({
+    where: {
+      OR: [
+        { blockerId: userId },
+        { blockedUserId: userId },
+      ]
     }
+  });
 
-    // Step 2: (optional) Delete related follow records first
-    await prisma.follow.deleteMany({
-      where: {
-        OR: [
-          { followerId: userId },
-          { followingId: userId }
-        ]
-      }
-    });
 
-    // Step 3: Delete user
-    const deletedUser = await prisma.user.delete({
-      where: {
-        id: userId,
-      },
-    });
+  // Step 2: (optional) Delete related follow records first
+  await prisma.follow.deleteMany({
+    where: {
+      OR: [
+        { followerId: userId },
+        { followingId: userId }
+      ]
+    }
+  });
 
-    return deletedUser;
+  // Step 3: Delete user
+  const deletedUser = await prisma.user.delete({
+    where: {
+      id: userId,
+    },
+  });
+
+  return deletedUser;
 };
 
 const getMonthlyReportService = async () => {
