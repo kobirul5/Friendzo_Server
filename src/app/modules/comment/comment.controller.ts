@@ -9,7 +9,6 @@ const createComment = catchAsync(async (req:any, res: Response) => {
   const { comment, memoryId } = req.body;
   const userId = req.user.id
 
-  console.log(userId)
 
   if (!comment ||  !memoryId) {
     throw new ApiError(400, 'comment, and memoryId are required.');

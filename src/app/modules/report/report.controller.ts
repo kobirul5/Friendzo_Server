@@ -16,9 +16,19 @@ const createReport = catchAsync(async (req: any, res: Response) => {
   });
 });
 
-
+const deleteReport = catchAsync(async (req: any, res: Response) => {
+  const reportId = req.params.id;
+  const result = await reportService.deleteReportService(reportId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Report deleted successfully',
+    data: result,
+  });
+});
 
 
 export const reportController = {
   createReport,
+  deleteReport
 };

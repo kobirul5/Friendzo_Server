@@ -13,5 +13,11 @@ validateRequest(reportValidation.createSchema),
 reportController.createReport,
 );
 
+router.delete(
+'/:id',
+auth(),
+reportController.deleteReport,
+);
+
 
 export const reportRoutes = router;

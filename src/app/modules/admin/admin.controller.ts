@@ -40,7 +40,6 @@ const getTotalreport = catchAsync(async (req, res) => {
 });
 
 const getMonthlyReport = catchAsync(async (req, res) => {
-  console.log("hi")
   const result = await adminService.getMonthlyReportService();
   sendResponse(res, {
     statusCode: httpStatus.OK,

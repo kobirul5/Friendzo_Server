@@ -93,7 +93,7 @@ const removeMemoryLike = catchAsync(async (req:any, res:Response) => {
 const getDayliMyLike = catchAsync(async (req:any, res:Response) => {
 
   const userId = req.user.id
-console.log(userId)
+
   const result = await likeService.getDayliMyLikeService(userId);
 
   sendResponse(res, {
@@ -106,7 +106,7 @@ console.log(userId)
 const getWeeklyMyLike = catchAsync(async (req:any, res:Response) => {
 
   const userId = req.user.id
-console.log(userId)
+
   const result = await likeService.getDayliMyWeeklyService(userId);
 
   sendResponse(res, {
