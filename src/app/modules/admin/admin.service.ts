@@ -52,7 +52,7 @@ const deleteUserService = async (userId: string) => {
   }
 
   const result = await prisma.user.delete({
-    where:{
+    where: {
       id: existingUser.id
     }
   })
@@ -250,7 +250,7 @@ const getweeklyReportService = async () => {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(today.getDate() - 7);
 
-  
+
   const reports = await prisma.report.findMany({
     where: {
       createdAt: {
@@ -289,6 +289,46 @@ const getweeklyReportService = async () => {
   };
 };
 
+const getDailyReportService = async () => {
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const reports = await prisma.report.findMany({
+    where: {
+      createdAt: {
+        gte: startOfDay,
+        lt: endOfDay,
+      },
+    },
+    include: {
+      reporter: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+      reportedUser: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+  return {
+    from: startOfDay,
+    to: endOfDay,
+    total: reports.length,
+    reports,
+  };
+}
 
 export const adminService = {
 
@@ -297,5 +337,6 @@ export const adminService = {
   getTotalReportService,
   getMonthlyReportService,
   getweeklyReportService,
+  getDailyReportService
 
 };

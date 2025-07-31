@@ -10,6 +10,7 @@ router.get('/total-report', auth("ADMIN"), adminController.getTotalreport);
 router.delete('/delete/:userId',  adminController.deleteUser);
 router.get('/total-report-monthly', auth("ADMIN"), adminController.getMonthlyReport);
 router.get('/total-report-weekly', auth("ADMIN"), adminController.getweeklyReport);
+router.get('/total-report-daily', auth("ADMIN"), adminController.getDailyReport);
 
 
 

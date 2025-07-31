@@ -59,10 +59,24 @@ const getweeklyReport = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+const getDailyReport = catchAsync(async (req, res) => {
+  const result = await adminService.getDailyReportService();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Daily report retrieved successfully',
+    data: result,
+  });
+});
+
+
+
 export const adminController = {
   getTotalUsers,
   deleteUser,
   getTotalreport,
   getMonthlyReport,
-  getweeklyReport
+  getweeklyReport,
+  getDailyReport
 };
