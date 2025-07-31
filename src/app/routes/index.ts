@@ -10,6 +10,7 @@ import { follwerRoutes } from "../modules/follow/follwer.routes";
 import { adminRoutes } from "../modules/admin/admin.routes";
 import { reportRoutes } from "../modules/report/report.routes";
 import { blockRoutes } from "../modules/block/block.routes";
+import { discoverByInterestRoutes } from "../modules/discoverByInterest/discoverByInterest.routes";
 
 // import { ReviewRoutes } from "../modules/review/review.route";
 
@@ -62,10 +63,10 @@ const moduleRoutes = [
     path: "/block",
     route: blockRoutes,
   },
-  // {
-  //   path: "/discoverByInterest",
-  //   route: discoverByInterestRoutes,
-  // },
+  {
+    path: "/discoverByInterest",
+    route: discoverByInterestRoutes,
+  },
  
   // {
   //   path: "/reviews",

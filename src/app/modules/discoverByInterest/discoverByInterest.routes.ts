@@ -1,12 +1,12 @@
-// import express from 'express';
-// import auth from '../../middlewares/auth';
-// import { discoverByInterestController } from './discoverByInterest.controller';
+import express from 'express';
+import auth from '../../middlewares/auth';
+import { discoverByInterestController } from './discoverByInterest.controller';
 
 
-// const router = express.Router();
+const router = express.Router();
 
 
-// // router.get('/', auth(), discoverByInterestController.getDiscoverByInterestList);
+router.get('/', auth(), discoverByInterestController.getNearbyPeopleController);
 
 
-// export const discoverByInterestRoutes = router;
+export const discoverByInterestRoutes = router;

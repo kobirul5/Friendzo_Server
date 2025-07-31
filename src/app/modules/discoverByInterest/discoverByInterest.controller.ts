@@ -1,33 +1,39 @@
-// import httpStatus from 'http-status';
+import httpStatus from 'http-status';
+import { Request, Response } from 'express';
 
-// import { discoverByInterestService } from './discoverByInterest.service';
-// import catchAsync from '../../../shared/catchAsync';
-// import sendResponse from '../../../shared/sendResponse';
+import { discoverByInterestService } from './discoverByInterest.service';
+import catchAsync from '../../../shared/catchAsync';
+import sendResponse from '../../../shared/sendResponse';
 
-// const getNeerByPeple  = catchAsync(async (req, res) => {
+const getNearbyPeopleController = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id;
 
-//   const userId = req.user?.id;
-//   const { lat, lng } = req.params;
+  const lat = parseFloat(req.query.lat as string);
+  const lng = parseFloat(req.query.lng as string);
+  const radiusKm = parseFloat(req.query.radiusKm as string || "10"); // default to 10km if not provided
 
-//   if (!lat || !lng) {
-//     throw new Error("Latitude and Longitude are required in params.");
-//   }
-
-//   const result = await discoverByInterestService.getNeerByPeple(userId, parseFloat(lat), parseFloat(lng));
-
-
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Discover by interest list retrieved successfully',
-//     data: result,
-//   });
+  
 
 
+  if (!userId) {
+    throw new Error("User not authenticated.");
+  }
 
-// })
+  if (isNaN(lat) || isNaN(lng)) {
+    throw new Error("Latitude and Longitude must be valid numbers.");
+  }
+
+  const result = await discoverByInterestService.getNearbyPeople(userId, lat, lng, radiusKm);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Nearby people retrieved successfully.",
+    data: result,
+  });
+});
 
 
-// export const discoverByInterestController = {
- 
-// };
+export const discoverByInterestController = {
+ getNearbyPeopleController
+};
