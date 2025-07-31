@@ -50,9 +50,19 @@ const getMonthlyReport = catchAsync(async (req, res) => {
 });
 
 
+const getweeklyReport = catchAsync(async (req, res) => {
+  const result = await adminService.getweeklyReportService();
+   sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Last 7 day report retrieved successfully',
+    data: result,
+  });
+});
 export const adminController = {
   getTotalUsers,
   deleteUser,
   getTotalreport,
-  getMonthlyReport
+  getMonthlyReport,
+  getweeklyReport
 };

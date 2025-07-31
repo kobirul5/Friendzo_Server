@@ -42,49 +42,6 @@ const getTotalUsersService = async (options: IPaginationOptions) => {
   };
 };
 
-const getMonthlyReportService = async () => {
-  const today = new Date();
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(today.getMonth() - 1);
-
-  const reports = await prisma.report.findMany({
-    where: {
-      createdAt: {
-        gte: oneMonthAgo,
-        lte: today,
-      },
-    },
-    include: {
-      reporter: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-        },
-      },
-      reportedUser: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-        },
-      },
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
-
-  return {
-    from: oneMonthAgo,
-    to: today,
-    total: reports.length,
-    reports,
-  };
-};
-
 const deleteUserService = async (userId: string) => {
   const existingUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -244,7 +201,93 @@ const deleteUserService = async (userId: string) => {
   // });
 };
 
+const getMonthlyReportService = async () => {
+  const today = new Date();
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(today.getMonth() - 1);
 
+  const reports = await prisma.report.findMany({
+    where: {
+      createdAt: {
+        gte: oneMonthAgo,
+        lte: today,
+      },
+    },
+    include: {
+      reporter: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+      reportedUser: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  return {
+    from: oneMonthAgo,
+    to: today,
+    total: reports.length,
+    reports,
+  };
+};
+
+
+const getweeklyReportService = async () => {
+  const today = new Date();
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(today.getDate() - 7);
+
+  
+  const reports = await prisma.report.findMany({
+    where: {
+      createdAt: {
+        gte: oneWeekAgo,
+        lte: today,
+      },
+    },
+    include: {
+      reporter: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+      reportedUser: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  return {
+    from: oneWeekAgo,
+    to: today,
+    total: reports.length,
+    reports,
+  };
+};
 
 
 export const adminService = {
@@ -253,5 +296,6 @@ export const adminService = {
   deleteUserService,
   getTotalReportService,
   getMonthlyReportService,
+  getweeklyReportService,
 
 };
