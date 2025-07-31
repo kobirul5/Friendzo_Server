@@ -94,146 +94,154 @@ const deleteUserService = async (userId: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
   }
 
-  return await prisma.$transaction(async (tx) => {
-    // Step 1: Delete blocks (blocker or blocked)
-    await tx.block.deleteMany({
-      where: {
-        OR: [
-          { blockerId: userId },
-          { blockedUserId: userId },
-        ],
-      },
-    });
-
-    // Step 2: Delete follows (follower or following)
-    await tx.follow.deleteMany({
-      where: {
-        OR: [
-          { followerId: userId },
-          { followingId: userId },
-        ],
-      },
-    });
-
-    // Step 3: Delete EventLikes by user
-    await tx.eventLike.deleteMany({
-      where: { userId },
-    });
-
-    // Step 4: Delete MemoryLikes by user
-    await tx.memoryLike.deleteMany({
-      where: { userId },
-    });
-
-    // Step 5: Delete Comments by user
-    await tx.comment.deleteMany({
-      where: { userId },
-    });
-
-    // Step 6: Delete Comments on user's memories
-    const userMemories = await tx.memory.findMany({
-      where: { userId },
-      select: { id: true },
-    });
-    const memoryIds = userMemories.map((m) => m.id);
-    if (memoryIds.length > 0) {
-      await tx.comment.deleteMany({
-        where: {
-          memoryId: { in: memoryIds },
-        },
-      });
-      await tx.memoryLike.deleteMany({
-        where: {
-          memoryId: { in: memoryIds },
-        },
-      });
+  const result = await prisma.user.delete({
+    where:{
+      id: existingUser.id
     }
+  })
 
-    // Step 7: Delete Events and EventLikes on those events
-    const userEvents = await tx.event.findMany({
-      where: { userId },
-      select: { id: true },
-    });
-    const eventIds = userEvents.map((e) => e.id);
-    if (eventIds.length > 0) {
-      await tx.eventLike.deleteMany({
-        where: {
-          eventId: { in: eventIds },
-        },
-      });
-    }
+  return result;
 
-    await tx.event.deleteMany({
-      where: { userId },
-    });
+  // return await prisma.$transaction(async (tx) => {
+  //   // Step 1: Delete blocks (blocker or blocked)
+  //   await tx.block.deleteMany({
+  //     where: {
+  //       OR: [
+  //         { blockerId: userId },
+  //         { blockedUserId: userId },
+  //       ],
+  //     },
+  //   });
 
-    // Step 8: Delete Rooms and Chats (both sides)
-    const userRooms = await tx.room.findMany({
-      where: {
-        OR: [
-          { senderId: userId },
-          { receiverId: userId },
-        ],
-      },
-      select: { id: true },
-    });
+  //   // Step 2: Delete follows (follower or following)
+  //   await tx.follow.deleteMany({
+  //     where: {
+  //       OR: [
+  //         { followerId: userId },
+  //         { followingId: userId },
+  //       ],
+  //     },
+  //   });
 
-    const roomIds = userRooms.map((room) => room.id);
+  //   // Step 3: Delete EventLikes by user
+  //   await tx.eventLike.deleteMany({
+  //     where: { userId },
+  //   });
 
-    if (roomIds.length > 0) {
-      await tx.chat.deleteMany({
-        where: {
-          roomId: { in: roomIds },
-        },
-      });
-    }
+  //   // Step 4: Delete MemoryLikes by user
+  //   await tx.memoryLike.deleteMany({
+  //     where: { userId },
+  //   });
 
-    await tx.room.deleteMany({
-      where: {
-        OR: [
-          { senderId: userId },
-          { receiverId: userId },
-        ],
-      },
-    });
+  //   // Step 5: Delete Comments by user
+  //   await tx.comment.deleteMany({
+  //     where: { userId },
+  //   });
 
-    // Step 9: Delete all chats where user is sender or receiver
-    await tx.chat.deleteMany({
-      where: {
-        OR: [
-          { senderId: userId },
-          { receiverId: userId },
-        ],
-      },
-    });
+  //   // Step 6: Delete Comments on user's memories
+  //   const userMemories = await tx.memory.findMany({
+  //     where: { userId },
+  //     select: { id: true },
+  //   });
+  //   const memoryIds = userMemories.map((m) => m.id);
+  //   if (memoryIds.length > 0) {
+  //     await tx.comment.deleteMany({
+  //       where: {
+  //         memoryId: { in: memoryIds },
+  //       },
+  //     });
+  //     await tx.memoryLike.deleteMany({
+  //       where: {
+  //         memoryId: { in: memoryIds },
+  //       },
+  //     });
+  //   }
 
-    // Step 10: Delete Memories
-    await tx.memory.deleteMany({
-      where: { userId },
-    });
+  //   // Step 7: Delete Events and EventLikes on those events
+  //   const userEvents = await tx.event.findMany({
+  //     where: { userId },
+  //     select: { id: true },
+  //   });
+  //   const eventIds = userEvents.map((e) => e.id);
+  //   if (eventIds.length > 0) {
+  //     await tx.eventLike.deleteMany({
+  //       where: {
+  //         eventId: { in: eventIds },
+  //       },
+  //     });
+  //   }
 
-    // Step 11: Delete Reports (made by or on user)
-    await tx.report.deleteMany({
-      where: {
-        OR: [
-          { reporterId: userId },
-          { reportedUserId: userId },
-        ],
-      },
-    });
+  //   await tx.event.deleteMany({
+  //     where: { userId },
+  //   });
 
-    // Step 12: (optional) Delete notifications if used
-    // await tx.notification.deleteMany({
-    //   where: { userId },
-    // });
+  //   // Step 8: Delete Rooms and Chats (both sides)
+  //   const userRooms = await tx.room.findMany({
+  //     where: {
+  //       OR: [
+  //         { senderId: userId },
+  //         { receiverId: userId },
+  //       ],
+  //     },
+  //     select: { id: true },
+  //   });
 
-    // Step 13: Finally, delete the user
-    const deletedUser = await tx.user.delete({
-      where: { id: userId },
-    });
+  //   const roomIds = userRooms.map((room) => room.id);
 
-    return deletedUser;
-  });
+  //   if (roomIds.length > 0) {
+  //     await tx.chat.deleteMany({
+  //       where: {
+  //         roomId: { in: roomIds },
+  //       },
+  //     });
+  //   }
+
+  //   await tx.room.deleteMany({
+  //     where: {
+  //       OR: [
+  //         { senderId: userId },
+  //         { receiverId: userId },
+  //       ],
+  //     },
+  //   });
+
+  //   // Step 9: Delete all chats where user is sender or receiver
+  //   await tx.chat.deleteMany({
+  //     where: {
+  //       OR: [
+  //         { senderId: userId },
+  //         { receiverId: userId },
+  //       ],
+  //     },
+  //   });
+
+  //   // Step 10: Delete Memories
+  //   await tx.memory.deleteMany({
+  //     where: { userId },
+  //   });
+
+  //   // Step 11: Delete Reports (made by or on user)
+  //   await tx.report.deleteMany({
+  //     where: {
+  //       OR: [
+  //         { reporterId: userId },
+  //         { reportedUserId: userId },
+  //       ],
+  //     },
+  //   });
+
+  //   // Step 12: (optional) Delete notifications if used
+  //   // await tx.notification.deleteMany({
+  //   //   where: { userId },
+  //   // });
+
+  //   // Step 13: Finally, delete the user
+  //   const deletedUser = await tx.user.delete({
+  //     where: { id: userId },
+  //   });
+
+  //   return deletedUser;
+  // });
 };
 
 

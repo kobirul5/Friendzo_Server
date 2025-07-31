@@ -68,7 +68,7 @@ model Memory {
   updatedAt   DateTime @updatedAt
 
   userId     String       @db.ObjectId
-  user       User         @relation(fields: [userId], references: [id])
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   MemoryLike MemoryLike[]
   Comment    Comment[]
 }
@@ -84,7 +84,7 @@ model Event {
   updatedAt   DateTime @updatedAt
 
   userId String @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade )
 
   EventLike EventLike[]
 }
@@ -103,10 +103,10 @@ enum UserRole {
 model EventLike {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @db.ObjectId
 
-  event   Event  @relation(fields: [eventId], references: [id])
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId String @db.ObjectId
 
   createdAt DateTime @default(now())
@@ -116,10 +116,10 @@ model EventLike {
 model MemoryLike {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @db.ObjectId
 
-  memory   Memory @relation(fields: [memoryId], references: [id])
+  memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
   memoryId String @db.ObjectId
 
   createdAt DateTime @default(now())
@@ -130,10 +130,10 @@ model Comment {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   content String
 
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @db.ObjectId
 
-  memory   Memory @relation(fields: [memoryId], references: [id])
+  memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
   memoryId String @db.ObjectId
 
   createdAt DateTime @default(now())
@@ -143,10 +143,10 @@ model Comment {
 model Follow {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  follower   User   @relation("Following", fields: [followerId], references: [id])
+  follower   User   @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
   followerId String @db.ObjectId
 
-  following   User   @relation("Followers", fields: [followingId], references: [id])
+  following   User   @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
   followingId String @db.ObjectId
 
   createdAt DateTime @default(now())
@@ -164,9 +164,9 @@ model Chat {
 
   isRead Boolean @default(false)
 
-  sender   User @relation("SentChats", fields: [senderId], references: [id])
-  receiver User @relation("ReceivedChats", fields: [receiverId], references: [id])
-  room     Room @relation(fields: [roomId], references: [id])
+  sender   User @relation("SentChats", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedChats", fields: [receiverId], references: [id], onDelete: Cascade)
+  room     Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -176,8 +176,8 @@ model Room {
   id         String @id @default(auto()) @map("_id") @db.ObjectId
   senderId   String @db.ObjectId
   receiverId String @db.ObjectId
-  sender     User   @relation("SenderRooms", fields: [senderId], references: [id])
-  receiver   User   @relation("ReceiverRooms", fields: [receiverId], references: [id])
+  sender     User   @relation("SenderRooms", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User   @relation("ReceiverRooms", fields: [receiverId], references: [id], onDelete: Cascade)
   chats      Chat[]
 
   createdAt DateTime @default(now())
@@ -192,11 +192,11 @@ model Report {
 
   // Reporter 
   reporterId String @db.ObjectId
-  reporter   User   @relation("ReportCreatedBy", fields: [reporterId], references: [id])
+  reporter   User   @relation("ReportCreatedBy", fields: [reporterId], references: [id], onDelete: Cascade)
 
   // Reported user
   reportedUserId String @db.ObjectId
-  reportedUser   User   @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  reportedUser   User   @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
 }
 
 model Block {
@@ -206,8 +206,8 @@ model Block {
   createdAt     DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  blocker     User @relation("BlockerRelation", fields: [blockerId], references: [id])
-  blockedUser User @relation("BlockedRelation", fields: [blockedUserId], references: [id])
+  blocker     User @relation("BlockerRelation", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedUser User @relation("BlockedRelation", fields: [blockedUserId], references: [id], onDelete: Cascade)
 
   @@unique([blockerId, blockedUserId]) // Prevent duplicate blocks
 }
