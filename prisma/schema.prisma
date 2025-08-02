@@ -49,10 +49,16 @@ model User {
   SenderRooms   Room[] @relation("SenderRooms")
   ReceiverRooms Room[] @relation("ReceiverRooms")
 
-  reportsMade    Report[] @relation("ReportCreatedBy")
-  reportsOnMe    Report[] @relation("ReportedUser")
-  blockedUsers   Block[]  @relation("BlockerRelation")
-  blockedByUsers Block[]  @relation("BlockedRelation")
+  reportsMade    Report[]       @relation("ReportCreatedBy")
+  reportsOnMe    Report[]       @relation("ReportedUser")
+  blockedUsers   Block[]        @relation("BlockerRelation")
+  blockedByUsers Block[]        @relation("BlockedRelation")
+
+  // 🔔 Notifications where this user is the recipient
+ notificationsReceived Notification[] @relation("Notification_recipientId")
+
+  // 🔔 Notifications where this user is the sender
+  notificationsSent     Notification[] @relation("NotificationSender")
 
   @@map("users")
 }
@@ -84,7 +90,7 @@ model Event {
   updatedAt   DateTime @updatedAt
 
   userId String @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade )
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   EventLike EventLike[]
 }
@@ -204,7 +210,7 @@ model Block {
   blockerId     String   @db.ObjectId
   blockedUserId String   @db.ObjectId
   createdAt     DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt     DateTime @updatedAt
 
   blocker     User @relation("BlockerRelation", fields: [blockerId], references: [id], onDelete: Cascade)
   blockedUser User @relation("BlockedRelation", fields: [blockedUserId], references: [id], onDelete: Cascade)
@@ -232,20 +238,38 @@ model Block {
 //   @@map("reviews")
 // }
 
-// model Notification {
-//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-//   userId    String   @db.ObjectId
-//   title     String
-//   body      String
-//   data      String?
-//   fcmToken   String?
-//   read      Boolean  @default(false)
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-//   user      User     @relation(fields: [userId], references: [id])
+model Notification {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  type        NotificationType
+  title       String
+  message     String?
+  isRead      Boolean          @default(false)
+  recipientId String           @db.ObjectId
+  recipient   User             @relation("Notification_recipientId", fields: [recipientId], references: [id], onDelete: Cascade)
 
-//   @@map("notifications")
-// }
+  senderId String? @db.ObjectId
+  sender   User?   @relation("NotificationSender", fields: [senderId], references: [id])
+
+  targetType String? // e.g., "event", "memory", "comment", etc.
+  targetId   String? // ID of the item the notification is about
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  MENTION
+  MESSAGE
+  EVENT_INVITE
+  MEMORY_SHARE
+  REPORT
+  BLOCK
+}
 
 // enum PaymentStatus {
 //   PENDING

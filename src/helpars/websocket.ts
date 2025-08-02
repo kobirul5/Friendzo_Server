@@ -3,8 +3,6 @@ import WebSocket, { WebSocketServer } from "ws";
 import prisma from "../shared/prisma";
 import { jwtHelpers } from "./jwtHelpers";
 
-
-
 interface ExtendedWebSocket extends WebSocket {
   userId?: string;
 }
@@ -25,11 +23,18 @@ export function setupWebSocket(server: Server) {
           case "authenticate": {
             const token = parsed.token;
             const user = jwtHelpers.verifyToken(token, process.env.JWT_SECRET as string);
-            if (!user || !user.id) return ws.close();
+            if (!user || !user.id) {
+              console.log("Authentication failed, closing ws"); // <-- Added log for auth fail
+              return ws.close(); // <-- unchanged
+            }
 
             ws.userId = user.id;
             onlineUsers.add(ws.userId as string);
             userSockets.set(ws.userId as string, ws);
+
+            console.log("User authenticated:", ws.userId); // <-- Added log for success auth
+
+            ws.send(JSON.stringify({ event: "authenticated", userId: ws.userId })); // <-- Added: notify client auth success
 
             broadcast(wss, {
               event: "userStatus",
@@ -107,6 +112,87 @@ export function setupWebSocket(server: Server) {
             break;
           }
 
+          case "messageList": {
+            console.log("messageList requested by user:", ws.userId); // <-- Added log to track messageList requests
+
+            if (!ws.userId) {
+              ws.send(JSON.stringify({ event: "error", message: "Not authenticated" }));
+              return;
+            }
+
+            try {
+              // Fetch all rooms where the user is involved
+              const rooms = await prisma.room.findMany({
+                where: {
+                  OR: [{ senderId: ws.userId }, { receiverId: ws.userId }],
+                },
+                include: {
+                  chats: {
+                    orderBy: {
+                      createdAt: "desc",
+                    },
+                    take: 1, // Only latest message per room
+                  },
+                },
+              });
+
+              // Get the other user's IDs from rooms
+              const userIds = rooms.map((room) =>
+                room.senderId === ws.userId ? room.receiverId : room.senderId
+              );
+
+              // Fetch user profiles
+              const userInfos = await prisma.user.findMany({
+                where: {
+                  id: {
+                    in: userIds,
+                  },
+                },
+                select: {
+                  profileImage: true,
+                  firstName: true,
+                  lastName: true,
+                  id: true,
+                },
+              });
+
+              // Merge user info with last message per room
+              const userWithLastMessages = rooms.map((room) => {
+                const otherUserId =
+                  room.senderId === ws.userId ? room.receiverId : room.senderId;
+                const userInfo: any = userInfos.find(
+                  (userInfo) => userInfo.id === otherUserId
+                );
+
+                // Safely handle profileImage if undefined
+                userInfo.profileImage = userInfo?.profileImage || null;
+
+                return {
+                  user: userInfo || null,
+                  lastMessage: room.chats[0] || null,
+                };
+              });
+
+              console.log("Sending messageList data for user:", ws.userId); // <-- Added log before sending response
+
+              ws.send(
+                JSON.stringify({
+                  event: "messageList",
+                  data: userWithLastMessages,
+                })
+              );
+            } catch (error) {
+              console.error("Error fetching user list with last messages:", error);
+              ws.send(
+                JSON.stringify({
+                  event: "error",
+                  message: "Failed to fetch users with last messages",
+                })
+              );
+            }
+            break;
+          }
+
           case "unReadMessages": {
             const { receiverId } = parsed;
             if (!ws.userId || !receiverId) return;
@@ -121,9 +207,12 @@ export function setupWebSocket(server: Server) {
             });
 
             if (!room) {
-              return ws.send(JSON.stringify({
-                event: "noUnreadMessages", data: [],
-              }));
+              return ws.send(
+                JSON.stringify({
+                  event: "noUnreadMessages",
+                  data: [],
+                })
+              );
             }
 
             const unRead = await prisma.chat.findMany({
@@ -134,13 +223,15 @@ export function setupWebSocket(server: Server) {
               },
             });
 
-            ws.send(JSON.stringify({
-              event: "unReadMessages",
-              data: {
-                messages: unRead,
-                count: unRead.length,
-              },
-            }));
+            ws.send(
+              JSON.stringify({
+                event: "unReadMessages",
+                data: {
+                  messages: unRead,
+                  count: unRead.length,
+                },
+              })
+            );
             break;
           }
 
