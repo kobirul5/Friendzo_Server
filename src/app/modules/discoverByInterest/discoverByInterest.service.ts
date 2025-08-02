@@ -39,7 +39,52 @@ import ApiError from '../../../errors/ApiErrors';
   return nearbyUsers;
 };
 
+const getPeopleBySharedInterests = async (userId: string) => {
+  // Get current user's interests
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      interests: true,
+    },
+  });
+
+  if (!currentUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
+  }
+
+  const currentUserInterests = currentUser.interests;
+
+  if (!currentUserInterests || currentUserInterests.length === 0) {
+    return []; // or throw an error if interests are required
+  }
+
+  // Get other users who share at least one interest
+  const matchedUsers = await prisma.user.findMany({
+    where: {
+      id: { not: userId },
+      interests: {
+        hasSome: currentUserInterests,
+      },
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      profileImage: true,
+      email: true,
+      interests: true,
+      gender: true,
+      dob: true,
+    },
+  });
+
+  return matchedUsers;
+};
+
+
 export const discoverByInterestService = {
-getNearbyPeople
+getNearbyPeople,
+getPeopleBySharedInterests
 
 };

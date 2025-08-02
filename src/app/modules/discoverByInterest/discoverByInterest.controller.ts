@@ -33,7 +33,19 @@ const getNearbyPeopleController = catchAsync(async (req: Request, res: Response)
   });
 });
 
+const getPeopleBySharedInterestsController = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  const result = await discoverByInterestService.getPeopleBySharedInterests(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "People with shared interests retrieved successfully.",
+    data: result,
+  });
+});
 
 export const discoverByInterestController = {
- getNearbyPeopleController
+ getNearbyPeopleController,
+ getPeopleBySharedInterestsController
 };
