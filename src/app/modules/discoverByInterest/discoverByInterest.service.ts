@@ -39,6 +39,56 @@ import ApiError from '../../../errors/ApiErrors';
   return nearbyUsers;
 };
 
+const getTodaysBuzz = async (userId: string) => {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  // Step 1: Fetch today's events
+  const todaysEvents = await prisma.event.findMany({
+    where: {
+      createdAt: {
+        gte: todayStart,
+        lte: todayEnd,
+      },
+    }
+  });
+
+
+
+  // Step 3: Fetch those users separately (without event relation)
+  const users = await prisma.user.findMany({
+    where: {
+    id: {
+      not: userId,
+    },
+    lat: {
+      not: null,        
+    },
+    lng: {
+      not: null,       
+    },
+  },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      profileImage: true,
+      email: true,
+      lat: true,
+      lng: true,
+    },
+  });
+
+  return {
+    todaysEvents, // strip embedded user from event
+    users,
+  };
+};
+
+
 const getPeopleBySharedInterests = async (userId: string) => {
   // Get current user's interests
   const currentUser = await prisma.user.findUnique({
@@ -85,6 +135,7 @@ const getPeopleBySharedInterests = async (userId: string) => {
 
 export const discoverByInterestService = {
 getNearbyPeople,
-getPeopleBySharedInterests
+getPeopleBySharedInterests,
+getTodaysBuzz
 
 };

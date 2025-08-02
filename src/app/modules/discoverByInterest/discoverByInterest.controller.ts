@@ -12,7 +12,6 @@ const getNearbyPeopleController = catchAsync(async (req: Request, res: Response)
   const lng = parseFloat(req.query.lng as string);
   const radiusKm = parseFloat(req.query.radiusKm as string || "10"); // default to 10km if not provided
 
-  
 
 
   if (!userId) {
@@ -33,6 +32,20 @@ const getNearbyPeopleController = catchAsync(async (req: Request, res: Response)
   });
 });
 
+const getTodaysBuzzController = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+
+
+  const event = await discoverByInterestService.getTodaysBuzz(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Nearby people retrieved successfully.",
+    data: event,
+  });
+});
+
 const getPeopleBySharedInterestsController = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.id;
   const result = await discoverByInterestService.getPeopleBySharedInterests(userId);
@@ -47,5 +60,6 @@ const getPeopleBySharedInterestsController = catchAsync(async (req: Request, res
 
 export const discoverByInterestController = {
  getNearbyPeopleController,
- getPeopleBySharedInterestsController
+ getPeopleBySharedInterestsController,
+ getTodaysBuzzController
 };
