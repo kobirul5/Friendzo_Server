@@ -5,7 +5,6 @@ import config from "../../config";
 export const initiateSuperAdmin = async () => {
   const hashedPassword=await bcrypt.hash('123456789',Number(config.bcrypt_salt_rounds))
   const payload: any = {
-    fullName : "Super",
     // username: "Admin",
     email: "belalhossain22000@gmail.com",
     // phoneNumber: "1234567890",
