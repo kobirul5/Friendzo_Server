@@ -11,6 +11,7 @@ import { adminRoutes } from "../modules/admin/admin.routes";
 import { reportRoutes } from "../modules/report/report.routes";
 import { blockRoutes } from "../modules/block/block.routes";
 import { discoverByInterestRoutes } from "../modules/discoverByInterest/discoverByInterest.routes";
+import { ChatRoutes } from "../modules/chatFile/chatRouter";
 
 // import { ReviewRoutes } from "../modules/review/review.route";
 
@@ -66,6 +67,10 @@ const moduleRoutes = [
   {
     path: "/discoverByInterest",
     route: discoverByInterestRoutes,
+  },
+  {
+    path: "/chat",
+    route: ChatRoutes,
   },
  
   // {
