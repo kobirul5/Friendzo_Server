@@ -56,6 +56,11 @@ const getMyNetworkCount = async (userId: string) => {
 };
 
 const getMyFollowerService = async (userId: string) => {
+
+  const tootalFollowers = await prisma.follow.count({
+    where: { followingId: userId }, 
+  });
+
   const followers = await prisma.follow.findMany({
     where: { followingId: userId },
     include: {
@@ -70,11 +75,22 @@ const getMyFollowerService = async (userId: string) => {
     },
   });
 
-  return followers.map(f => f.follower);
+  return {
+    followers:followers.map(f => f.follower),
+    totalFollowers: tootalFollowers,
+  };
 };
 
 
 const getMyFollowingService = async (userId: string) => {
+
+
+const totalFollowing = await prisma.follow.count({
+    where: { followerId: userId },
+  });
+
+  
+
   const following = await prisma.follow.findMany({
     where: { followerId: userId },
     include: {
@@ -89,7 +105,12 @@ const getMyFollowingService = async (userId: string) => {
     },
   });
 
-  return following.map(f => f.following);
+
+
+  return {
+    following: following.map(f => f.following),
+    totalFollowing: totalFollowing,
+  };
 };
 
 

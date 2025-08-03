@@ -4,7 +4,7 @@ import prisma from "../../../shared/prisma";
 
 const getAllPostForProfileService = async (userId: string) => {
 
-  const event = await prisma.event.count({
+  const posts = await prisma.memory.findMany({
     where: {
       userId,
     },
@@ -15,7 +15,9 @@ const getAllPostForProfileService = async (userId: string) => {
     },
   });
 
-  return result + event;
+  return { totalPost:  result,
+    posts: posts
+  };
 };
 
 

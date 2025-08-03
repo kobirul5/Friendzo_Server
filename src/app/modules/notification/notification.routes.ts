@@ -1,29 +1,27 @@
-// import express from 'express';
-// import auth from '../../middlewares/auth';
-// import validateRequest from '../../middlewares/validateRequest';
-// import { notificationController } from './notification.controller';
-// import { notificationValidation } from './notification.validation';
+// import express from "express";
+// import auth from "../../middlewares/auth";
+// import { notificationController } from "./notification.controller";
+
 
 // const router = express.Router();
 
 // router.post(
-// '/',
-// auth(),
-// validateRequest(notificationValidation.createSchema),
-// notificationController.createNotification,
+//   "/send-notification/:userId",
+//   auth(),
+//   notificationController.sendNotification
 // );
 
-// router.get('/', auth(), notificationController.getNotificationList);
-
-// router.get('/:id', auth(), notificationController.getNotificationById);
-
-// router.put(
-// '/:id',
-// auth(),
-// validateRequest(notificationValidation.updateSchema),
-// notificationController.updateNotification,
+// router.post(
+//   "/send-notification",
+//   auth(),
+//   notificationController.sendNotifications
 // );
 
-// router.delete('/:id', auth(), notificationController.deleteNotification);
+// router.get("/", auth(), notificationController.getNotifications);
+// router.get(
+//   "/:notificationId",
+//   auth(),
+//   notificationController.getSingleNotificationById
+// );
 
-// export const notificationRoutes = router;
+// export const notificationsRoute = router;

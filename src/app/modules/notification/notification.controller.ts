@@ -1,53 +1,61 @@
-// import httpStatus from 'http-status';
-// import { notificationService } from './notification.service';
-// import catchAsync from '../../../shared/catchAsync';
-// import sendResponse from '../../../shared/sendResponse';
 
-// const createNotification = catchAsync(async (req, res) => {
-//   const result = await notificationService.createIntoDb(req.body);
+// import catchAsync from "../../../shared/catchAsync";
+// import sendResponse from "../../../shared/sendResponse";
+// import { notificationServices } from "./notification.service";
+
+
+
+// const sendNotification = catchAsync(async (req: any, res: any) => {
+//   const notification = await notificationServices.sendSingleNotification(req);
+
 //   sendResponse(res, {
-//     statusCode: httpStatus.CREATED,
+//     statusCode: 200,
 //     success: true,
-//     message: 'Notification created successfully',
-//     data: result,
+//     message: "notification sent successfully",
+//     data: notification,
 //   });
 // });
 
-// const getNotificationList = catchAsync(async (req, res) => {
-//   const result = await notificationService.getListFromDb();
+// const sendNotifications = catchAsync(async (req: any, res: any) => {
+//   const notifications = await notificationServices.sendNotifications(req);
+
 //   sendResponse(res, {
-//     statusCode: httpStatus.OK,
+//     statusCode: 200,
 //     success: true,
-//     message: 'Notification list retrieved successfully',
-//     data: result,
+//     message: "notifications sent successfully",
+//     data: notifications,
 //   });
 // });
 
-// const getNotificationById = catchAsync(async (req, res) => {
-//   const result = await notificationService.getByIdFromDb(req.params.id);
+// const getNotifications = catchAsync(async (req: any, res: any) => {
+//   const notifications = await notificationServices.getNotificationsFromDB(req);
+
 //   sendResponse(res, {
-//     statusCode: httpStatus.OK,
+//     statusCode: 200,
 //     success: true,
-//     message: 'Notification details retrieved successfully',
-//     data: result,
+//     message: "Notifications retrieved successfully",
+//     data: notifications,
 //   });
 // });
 
+// const getSingleNotificationById = catchAsync(async (req: any, res: any) => {
+//   const notificationId = req.params.notificationId;
+//   const notification = await notificationServices.getSingleNotificationFromDB(
+//     req,
+//     notificationId
+//   );
 
-
-// const deleteNotification = catchAsync(async (req, res) => {
-//   const result = await notificationService.deleteItemFromDb(req.params.id);
 //   sendResponse(res, {
-//     statusCode: httpStatus.OK,
 //     success: true,
-//     message: 'Notification deleted successfully',
-//     data: result,
+//     statusCode: 200,
+//     message: "Notification retrieved successfully",
+//     data: notification,
 //   });
 // });
 
 // export const notificationController = {
-//   createNotification,
-//   getNotificationList,
-//   getNotificationById,
-//   deleteNotification,
+//   sendNotification,
+//   sendNotifications,
+//   getNotifications,
+//   getSingleNotificationById,
 // };
