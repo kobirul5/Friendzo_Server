@@ -1,5 +1,6 @@
 import { Server } from "http";
-import WebSocket, { WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
+import config from "../config";
 import prisma from "../shared/prisma";
 import { jwtHelpers } from "./jwtHelpers";
 
@@ -12,40 +13,56 @@ const userSockets = new Map<string, ExtendedWebSocket>();
 
 export function setupWebSocket(server: Server) {
   const wss = new WebSocketServer({ server });
-  console.log("✅ WebSocket server running");
+  console.log("WebSocket server is running");
 
   wss.on("connection", (ws: ExtendedWebSocket) => {
-    ws.on("message", async (data) => {
-      try {
-        const parsed = JSON.parse(data.toString());
+    console.log("A user connected");
 
-        switch (parsed.event) {
+    ws.on("message", async (data: string) => {
+      try {
+        const parsedData = JSON.parse(data);
+
+        switch (parsedData.event) {
           case "authenticate": {
-            const token = parsed.token;
-            const user = jwtHelpers.verifyToken(token, process.env.JWT_SECRET as string);
-            if (!user || !user.id) {
-              console.log("Authentication failed, closing ws"); // <-- Added log for auth fail
-              return ws.close(); // <-- unchanged
+            const token = parsedData.token;
+
+            if (!token) {
+              console.log("No token provided");
+              ws.close();
+              return;
             }
 
-            ws.userId = user.id;
-            onlineUsers.add(ws.userId as string);
-            userSockets.set(ws.userId as string, ws);
+            const user = jwtHelpers.verifyToken(
+              token,
+              config.jwt.jwt_secret as string
+            );
 
-            console.log("User authenticated:", ws.userId); // <-- Added log for success auth
+            if (!user) {
+              console.log("Invalid token");
+              ws.close();
+              return;
+            }
 
-            ws.send(JSON.stringify({ event: "authenticated", userId: ws.userId })); // <-- Added: notify client auth success
+            const { id } = user;
 
-            broadcast(wss, {
+            ws.userId = id;
+            onlineUsers.add(id);
+            userSockets.set(id, ws);
+
+            broadcastToAll(wss, {
               event: "userStatus",
-              data: { userId: ws.userId, isOnline: true },
+              data: { userId: id, isOnline: true },
             });
             break;
           }
 
           case "message": {
-            const { receiverId, message, images } = parsed;
-            if (!ws.userId || !receiverId || !message) return;
+            const { receiverId, message, images } = parsedData;
+
+            if (!ws.userId || !receiverId || !message) {
+              console.log("Invalid message payload");
+              return;
+            }
 
             let room = await prisma.room.findFirst({
               where: {
@@ -72,18 +89,26 @@ export function setupWebSocket(server: Server) {
               },
             });
 
-            const recvSocket = userSockets.get(receiverId);
-            if (recvSocket) {
-              recvSocket.send(JSON.stringify({ event: "message", data: chat }));
+            const receiverSocket = userSockets.get(receiverId);
+            if (receiverSocket) {
+              receiverSocket.send(
+                JSON.stringify({ event: "message", data: chat })
+              );
             }
-
             ws.send(JSON.stringify({ event: "message", data: chat }));
             break;
           }
+          case "project": {
+            ws.send(JSON.stringify({ parsedData }));
+            return;
+          }
 
           case "fetchChats": {
-            const { receiverId } = parsed;
-            if (!ws.userId || !receiverId) return;
+            const { receiverId } = parsedData;
+            if (!ws.userId) {
+              console.log("User not authenticated");
+              return;
+            }
 
             const room = await prisma.room.findFirst({
               where: {
@@ -95,7 +120,8 @@ export function setupWebSocket(server: Server) {
             });
 
             if (!room) {
-              return ws.send(JSON.stringify({ event: "noRoomFound" }));
+              ws.send(JSON.stringify({ event: "noRoomFound" }));
+              return;
             }
 
             const chats = await prisma.chat.findMany({
@@ -104,24 +130,58 @@ export function setupWebSocket(server: Server) {
             });
 
             await prisma.chat.updateMany({
-              where: { roomId: room.id, receiverId: ws.userId, isRead: false },
+              where: { roomId: room.id, receiverId: ws.userId },
               data: { isRead: true },
             });
 
-            ws.send(JSON.stringify({ event: "fetchChats", data: chats }));
+            ws.send(
+              JSON.stringify({
+                event: "fetchChats",
+                data: chats,
+              })
+            );
+            break;
+          }
+
+          case "unReadMessages": {
+            const { receiverId } = parsedData;
+            if (!ws.userId || !receiverId) {
+              console.log("Invalid unread messages payload");
+              return;
+            }
+
+            const room = await prisma.room.findFirst({
+              where: {
+                OR: [
+                  { senderId: ws.userId, receiverId },
+                  { senderId: receiverId, receiverId: ws.userId },
+                ],
+              },
+            });
+
+            if (!room) {
+              ws.send(JSON.stringify({ event: "noUnreadMessages", data: [] }));
+              return;
+            }
+
+            const unReadMessages = await prisma.chat.findMany({
+              where: { roomId: room.id, isRead: false, receiverId: ws.userId },
+            });
+
+            const unReadCount = unReadMessages.length;
+
+            ws.send(
+              JSON.stringify({
+                event: "unReadMessages",
+                data: { messages: unReadMessages, count: unReadCount },
+              })
+            );
             break;
           }
 
           case "messageList": {
-            console.log("messageList requested by user:", ws.userId); // <-- Added log to track messageList requests
-
-            if (!ws.userId) {
-              ws.send(JSON.stringify({ event: "error", message: "Not authenticated" }));
-              return;
-            }
-
             try {
-              // Fetch all rooms where the user is involved
+              // ✅ Get all rooms where user is either sender or receiver
               const rooms = await prisma.room.findMany({
                 where: {
                   OR: [{ senderId: ws.userId }, { receiverId: ws.userId }],
@@ -131,17 +191,17 @@ export function setupWebSocket(server: Server) {
                     orderBy: {
                       createdAt: "desc",
                     },
-                    take: 1, // Only latest message per room
+                    take: 1, // ✅ Get only the latest message per room
                   },
                 },
               });
 
-              // Get the other user's IDs from rooms
+              // ✅ Extract the other user involved in each room
               const userIds = rooms.map((room) =>
                 room.senderId === ws.userId ? room.receiverId : room.senderId
               );
 
-              // Fetch user profiles
+              // ✅ Get profile data for those users
               const userInfos = await prisma.user.findMany({
                 where: {
                   id: {
@@ -156,25 +216,20 @@ export function setupWebSocket(server: Server) {
                 },
               });
 
-              // Merge user info with last message per room
+              // ✅ Combine latest message with corresponding user
               const userWithLastMessages = rooms.map((room) => {
                 const otherUserId =
                   room.senderId === ws.userId ? room.receiverId : room.senderId;
-                const userInfo: any = userInfos.find(
-                  (userInfo) => userInfo.id === otherUserId
-                );
 
-                // Safely handle profileImage if undefined
-                userInfo.profileImage = userInfo?.profileImage || null;
+                const userInfo = userInfos.find((u) => u.id === otherUserId);
 
                 return {
                   user: userInfo || null,
-                  lastMessage: room.chats[0] || null,
+                  lastMessage: room.chats && room.chats.length > 0 ? room.chats[0] : null,
                 };
               });
 
-              console.log("Sending messageList data for user:", ws.userId); // <-- Added log before sending response
-
+              // ✅ Send to client
               ws.send(
                 JSON.stringify({
                   event: "messageList",
@@ -182,7 +237,10 @@ export function setupWebSocket(server: Server) {
                 })
               );
             } catch (error) {
-              console.error("Error fetching user list with last messages:", error);
+              console.error(
+                "Error fetching user list with last messages:",
+                error
+              );
               ws.send(
                 JSON.stringify({
                   event: "error",
@@ -193,53 +251,119 @@ export function setupWebSocket(server: Server) {
             break;
           }
 
-          case "unReadMessages": {
-            const { receiverId } = parsed;
-            if (!ws.userId || !receiverId) return;
 
-            const room = await prisma.room.findFirst({
-              where: {
-                OR: [
-                  { senderId: ws.userId, receiverId },
-                  { senderId: receiverId, receiverId: ws.userId },
-                ],
-              },
-            });
+          // case "groupMessage": {
+          //   const {groupId, message, images} = parsedData;
 
-            if (!room) {
-              return ws.send(
-                JSON.stringify({
-                  event: "noUnreadMessages",
-                  data: [],
-                })
-              );
-            }
+          //   if (!ws.userId || !groupId || !message) {
+          //     console.log("Invalid group message payload");
+          //     return;
+          //   }
 
-            const unRead = await prisma.chat.findMany({
-              where: {
-                roomId: room.id,
-                isRead: false,
-                receiverId: ws.userId,
-              },
-            });
+          //   // Check if the group exists
+          //   const isMember = await prisma.groupMember.findFirst({
+          //     where: {
+          //       groupId,
+          //       userId: ws.userId,
+          //     },
+          //   });
 
-            ws.send(
-              JSON.stringify({
-                event: "unReadMessages",
-                data: {
-                  messages: unRead,
-                  count: unRead.length,
-                },
-              })
-            );
-            break;
-          }
+          //   if(!isMember){
+          //     ws.send(JSON.stringify({
+          //       event: "error",
+          //       message: "You are not a member of this group",
+          //     })
+          //   );
+          //     return;
+          //   }
+
+          //   //create group message
+          //   const newMessage = await prisma.groupMessage.create({
+          //     data: {
+          //       groupId,
+          //       senderId: isMember.id,
+          //       message,
+          //       images: images || [],
+          //     },
+          //     include: {
+          //       sender: true,
+          //     }
+          //   });
+
+          //   // Broadcast the message to all group members
+          //   const groupMembers = await prisma.groupMember.findMany({
+          //     where: {
+          //       groupId,
+          //     },
+          //     select: {
+          //       userId: true,
+          //     },
+          //   });
+
+          //   groupMembers.forEach(({userId})=> {
+          //     const socket = userSockets.get(userId);
+          //     if(socket) {
+          //       socket.send(
+          //         JSON.stringify({
+          //           event: "groupMessage",
+          //           data: newMessage,
+          //         })
+          //       );
+          //     }
+          //   });
+          //   break;
+          // }
+
+          // case "fetchGroupMessages": {
+          //   const {groupId} = parsedData;
+
+          //   if(!ws.userId || !groupId){
+          //     return ;
+          //   }
+
+          //   const isMember = await prisma.groupMember.findFirst({
+          //     where: {
+          //       groupId,
+          //       userId: ws.userId,
+          //     },
+          //   });
+
+          //   if(!isMember){
+          //     ws.send(
+          //       JSON.stringify({
+          //         event: "error",
+          //         message: "You are not a member of this group",
+          //       })
+          //     );
+          //     return;
+          //   }
+
+          //   const messages = await prisma.groupMessage.findMany({
+          //     where: {
+          //       groupId,
+          //     },
+          //     orderBy: {
+          //       createdAt: "asc",
+          //     },
+          //     include: {
+          //       sender: true,
+          //     },
+          //   });
+
+          //   ws.send(
+          //     JSON.stringify({
+          //       event: "fetchGroupMessages",
+          //       data: messages,
+          //     })
+          //   );
+          //   break;
+          // }
 
           default:
-            console.log("⚠️ Unknown event:", parsed.event);
+            console.log("Unknown event type:", parsedData.event);
         }
-      } catch (err) {
-        console.error("❌ WebSocket error:", err);
+      } catch (error) {
+        console.error("Error handling WebSocket message:", error);
       }
     });
 
@@ -248,19 +372,95 @@ export function setupWebSocket(server: Server) {
         onlineUsers.delete(ws.userId);
         userSockets.delete(ws.userId);
 
-        broadcast(wss, {
+        broadcastToAll(wss, {
           event: "userStatus",
           data: { userId: ws.userId, isOnline: false },
         });
       }
+      console.log("User disconnected");
     });
   });
+
+  return wss;
 }
 
-function broadcast(wss: WebSocketServer, message: object) {
+function broadcastToAll(wss: WebSocketServer, message: object) {
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(message));
     }
   });
 }
+
+
+
+
+
+
+
+
+
+
+
+
+// // authenticate event
+
+// {
+//   "event": "authenticate",
+//   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MzRhZjgwM2Y1ZjZiNDZkYzczNGQzZSIsImVtYWlsIjoic2Fzb2xvdjk3NEBvZnVsYXIuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NDgyODMyODQsImV4cCI6MTc3OTgxOTI4NH0.tXjUf2Uljdj008YmmYu8R3CRyEh5LWSF9lG4re0jfKs"
+// }
+
+// // single message event
+
+// {
+//     "event": "message",
+//     "receiverId": "934593023490",
+//     "message": " this is single message",
+//     "images": []
+// }
+
+// // project event , own data seen
+// {
+//     "event": "project"
+// }
+
+
+
+// // fetchChats event
+
+// {
+//     "event": "fetchChats",
+//     "receiverId": "395839458392"
+// }
+
+// // unReadMessages
+
+// {
+//     "event": "unReadMessages",
+//     "receiverId": "935903890523"
+// }
+
+// //messageList single
+
+// {
+//     "event": "messageList",
+
+// }
+
+// //groupMessage
+
+// {
+//     "event": "groupMessage",
+//     "groupId": "345098902",
+//     "message": "this is test",
+//     "images": []
+// }
+
+
+// //fetchGroupMessages
+
+// {
+//     "event": "fetchGroupMessages",
+//     "groupId": "83459203859208"
+// }
+
