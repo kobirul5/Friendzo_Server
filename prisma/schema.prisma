@@ -21,6 +21,7 @@ model User {
   status       UserStatus @default(INACTIVE)
 
   isVerified       Boolean   @default(false)
+  isFaceVerified   Boolean   @default(false)
   otp              Int?
   expirationOtp    DateTime?
   gender           String?
@@ -49,16 +50,16 @@ model User {
   SenderRooms   Room[] @relation("SenderRooms")
   ReceiverRooms Room[] @relation("ReceiverRooms")
 
-  reportsMade    Report[]       @relation("ReportCreatedBy")
-  reportsOnMe    Report[]       @relation("ReportedUser")
-  blockedUsers   Block[]        @relation("BlockerRelation")
-  blockedByUsers Block[]        @relation("BlockedRelation")
+  reportsMade    Report[] @relation("ReportCreatedBy")
+  reportsOnMe    Report[] @relation("ReportedUser")
+  blockedUsers   Block[]  @relation("BlockerRelation")
+  blockedByUsers Block[]  @relation("BlockedRelation")
 
   // 🔔 Notifications where this user is the recipient
- notificationsReceived Notification[] @relation("Notification_recipientId")
+  notificationsReceived Notification[] @relation("Notification_recipientId")
 
   // 🔔 Notifications where this user is the sender
-  notificationsSent     Notification[] @relation("NotificationSender")
+  notificationsSent Notification[] @relation("NotificationSender")
 
   @@map("users")
 }

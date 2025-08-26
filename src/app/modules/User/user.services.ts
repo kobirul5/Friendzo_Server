@@ -135,6 +135,7 @@ const getUserProfile = async (userId: string) => {
     
       createdAt: true,
       updatedAt: true,
+      isFaceVerified: true,
     },
   });
   if (!user) {

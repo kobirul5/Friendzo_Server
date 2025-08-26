@@ -5,6 +5,7 @@ import sendResponse from "../../../shared/sendResponse";
 import httpStatus from "http-status";
 import { string } from "zod";
 import prisma from "../../../shared/prisma";
+import ApiError from "../../../errors/ApiErrors";
 
 const loginUser = catchAsync(async (req: Request, res: Response) => {
 
@@ -132,14 +133,14 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 const socialLoginController = catchAsync(async (req: Request, res: Response) => {
   const { provider, accessToken } = req.body;
   if (!provider || !accessToken) {
-    return sendResponse(res, {
-      statusCode: httpStatus.BAD_REQUEST,
-      success: false,
-      message: "Provider and access token are required",
-      data: null,
-    });
+    throw new ApiError(httpStatus.BAD_REQUEST, "Provider and access token are required");
   }
+
   const result = await AuthServices.socialLogin(provider, accessToken);
+  if (!result) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Social login failed");
+  }
+  
   res.cookie("token", result.token, { httpOnly: true });
   sendResponse(res, {
     statusCode: httpStatus.OK,
