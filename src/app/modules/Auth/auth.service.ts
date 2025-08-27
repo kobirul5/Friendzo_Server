@@ -8,7 +8,7 @@ import emailSender from "../../../shared/emailSender";
 import { UserRole, UserStatus } from "@prisma/client";
 import httpStatus from "http-status";
 import crypto from 'crypto';
-import { getGoogleUser,getFacebookUser } from "../../../shared/socilaAuthHelper"
+import { getGoogleUser, getFacebookUser } from "../../../shared/socilaAuthHelper"
 
 
 
@@ -18,10 +18,10 @@ import { getGoogleUser,getFacebookUser } from "../../../shared/socilaAuthHelper"
 //     where: {
 //       email: payload.email,
 //       role: payload.role as UserRole,
-      
+
 //     },
 //   });
-  
+
 //   if (!userData) {
 //   throw new ApiError(
 //     httpStatus.NOT_FOUND,
@@ -58,7 +58,7 @@ import { getGoogleUser,getFacebookUser } from "../../../shared/socilaAuthHelper"
 // };
 
 
-const loginUser = async (payload: { email: string; password: string;  fcmToken?: string }) => {
+const loginUser = async (payload: { email: string; password: string; fcmToken?: string }) => {
   const userData = await prisma.user.findFirst({
     where: {
       email: payload.email,
@@ -102,7 +102,7 @@ const loginUser = async (payload: { email: string; password: string;  fcmToken?:
     config.jwt.expires_in as string
   );
 
-  return { token: accessToken, role: userData.role , id:userData.id};
+  return { token: accessToken, role: userData.role, id: userData.id };
 };
 
 
@@ -223,7 +223,7 @@ const forgotPassword = async (payload: { email: string }) => {
 </div> `;
 
   // Send the OTP email to the user
-  await emailSender( userData.email, html,'Forgot Password OTP',);
+  await emailSender(userData.email, html, 'Forgot Password OTP',);
 
   // Update the user's OTP and expiration in the database
   await prisma.user.update({
@@ -234,7 +234,7 @@ const forgotPassword = async (payload: { email: string }) => {
     },
   });
 
-  return { message: 'Reset password OTP sent to your email successfully',otp };
+  return { message: 'Reset password OTP sent to your email successfully', otp };
 };
 
 
@@ -298,7 +298,7 @@ const resendOtp = async (email: string) => {
     },
   });
 
-  return { message: 'OTP resent successfully'};
+  return { message: 'OTP resent successfully' };
 };
 
 
@@ -348,7 +348,7 @@ const resetPassword = async (payload: { password: string; email: string }) => {
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'This user is not found!');
   }
-  
+
 
   // Hash the new password
   const hashedPassword = await bcrypt.hash(payload.password, 10);
@@ -423,11 +423,11 @@ const deleteAccount = async (userId: string) => {
   });
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-  } 
+  }
   // Delete the user account
   await prisma.user.delete({
     where: { id: userId },
-  }); 
+  });
   return { message: 'Account deleted successfully' };
 };
 
