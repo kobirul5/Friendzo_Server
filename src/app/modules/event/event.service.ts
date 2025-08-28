@@ -1,4 +1,5 @@
 import { PrismaClient, Event as EventModel } from '@prisma/client';
+import ApiError from '../../../errors/ApiErrors';
 
 const prisma = new PrismaClient();
 
@@ -47,6 +48,24 @@ const deleteEvent = async (id: string): Promise<EventModel> => {
   });
 };
 
+// all events 
+const getAllEvents = async (userId: string): Promise<EventModel[]> => {
+  
+const user = await prisma.user.findUnique({
+  where: { id: userId }
+});
+
+if (!user) {
+  throw new ApiError(404, "User Not authorized");
+}
+
+const result = await prisma.event.findMany({
+  orderBy: { createdAt: 'desc' },
+});
+
+  return result
+}
+
 // Export all
 export const eventService = {
   createEvent,
@@ -54,4 +73,5 @@ export const eventService = {
   getEventById,
   updateEvent,
   deleteEvent,
+  getAllEvents
 };

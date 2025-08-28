@@ -106,12 +106,23 @@ const deleteEvent = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllEvents = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const result = await eventService.getAllEvents(userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Events fetched successfully',
+    data: result,
+  });
+});
 
 export const eventController = {
     createEvent,
     getUserEvent,
     getSingleEvent,
     updateEvent,
-    deleteEvent
+    deleteEvent,
+    getAllEvents
 }
 
