@@ -61,17 +61,7 @@ if (!user) {
 
 const result = await prisma.event.findMany({
   orderBy: { createdAt: 'desc' },
-  include: {
-    user: {
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        profileImage: true
-      },
-    },
-  }
+
 });
 
   return result
