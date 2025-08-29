@@ -67,6 +67,7 @@ const result = await prisma.event.findMany({
         id: true,
         firstName: true,
         lastName: true,
+        email: true,
         profileImage: true
       },
     },
