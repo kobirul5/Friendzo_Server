@@ -54,7 +54,7 @@ const getCommentsByMemoryService = async (memoryId: string) => {
 
 
 
-const deleteCommentService = async (commentId: string) => {
+const deleteCommentService = async (commentId: string, userId: string) => {
   // Check if comment exists
   const comment = await prisma.comment.findUnique({
     where: { id: commentId },
@@ -62,6 +62,10 @@ const deleteCommentService = async (commentId: string) => {
 
   if (!comment) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Comment not found.');
+  }
+
+  if (comment.userId !== userId) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'You are not authorized. You cannot delete this comment.');
   }
 
   // Delete comment

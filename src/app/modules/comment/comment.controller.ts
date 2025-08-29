@@ -45,12 +45,13 @@ const getCommentsByMemory = catchAsync(async (req: Request, res: Response) => {
 
 const deleteComment = catchAsync(async (req: Request, res: Response) => {
   const { commentId } = req.params;
+  const userId = req.user.id
 
   if (!commentId) {
     throw new ApiError(400, 'commentId is required.');
   }
 
-  const result = await commentService.deleteCommentService(commentId);
+  const result = await commentService.deleteCommentService(commentId, userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

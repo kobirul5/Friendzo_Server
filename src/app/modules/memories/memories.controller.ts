@@ -106,12 +106,25 @@ const deleteMemory = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getUserMemoriesAllUsers = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+
+  const memories = await memoriesService.getMemoriesAllUsers(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Memories fetched successfully',
+    data: memories,
+  });
+})
 
 export const memoriesController = {
     createMemory,
     getUserMemories,
     getSingleMemory,
     updateMemory,
-    deleteMemory
+    deleteMemory,
+    getUserMemoriesAllUsers
 }
 

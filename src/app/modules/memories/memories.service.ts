@@ -1,4 +1,5 @@
 import { PrismaClient, Memory } from '@prisma/client';
+import ApiError from '../../../errors/ApiErrors';
 const prisma = new PrismaClient();
 
 // Create Memory
@@ -47,6 +48,34 @@ const deleteMemory = async (id: string): Promise<Memory> => {
   });
 };
 
+// Get all memories
+const getMemoriesAllUsers = async (userId: string): Promise<Memory[]> => {
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId }
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User Not authorized");
+  }
+  const result = await prisma.memory.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          profileImage: true
+        },
+      }
+    }
+  });
+
+  return result
+};
+
 
 // Export all
 export const memoriesService = {
@@ -55,4 +84,5 @@ export const memoriesService = {
   getMemoryById,
   updateMemory,
   deleteMemory,
+  getMemoriesAllUsers
 };
