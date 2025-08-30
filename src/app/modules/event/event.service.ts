@@ -1,5 +1,6 @@
 import { PrismaClient, Event as EventModel } from '@prisma/client';
 import ApiError from '../../../errors/ApiErrors';
+import { haversine } from '../../../shared/haversine';
 
 const prisma = new PrismaClient();
 
@@ -49,33 +50,92 @@ const deleteEvent = async (id: string): Promise<EventModel> => {
 };
 
 // all events 
-const getAllEvents = async (userId: string): Promise<EventModel[]> => {
-  
-const user = await prisma.user.findUnique({
-  where: { id: userId }
-});
+// const getAllEvents = async (userId: string): Promise<EventModel[]> => {
 
-if (!user) {
-  throw new ApiError(404, "User Not authorized");
-}
+//   const user = await prisma.user.findUnique({
+//     where: { id: userId }
+//   });
 
-const result = await prisma.event.findMany({
-  orderBy: { createdAt: 'desc' },
-  include: {
-    user: {
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        profileImage: true
+
+//   if (!user) {
+//     throw new ApiError(404, "User Not authorized");
+//   }
+
+
+
+//   const result = await prisma.event.findMany({
+//     orderBy: { createdAt: 'desc' },
+//     include: {
+//       user: {
+//         select: {
+//           id: true,
+//           firstName: true,
+//           lastName: true,
+//           email: true,
+//           profileImage: true,
+//           lat: true,
+//           lng: true,
+//         },
+//       },
+//     }
+//   });
+
+
+//   let distanceInKm = 0;
+
+//   if (user.lat || user.lng) {
+//     distanceInKm = haversine({ lat: user.lat!, lng: user.lng! }, { lat: result., lng: 0 });
+//   }
+
+// console.log("Distance in KM:", distanceInKm);
+
+
+//   return result
+// }
+
+const getAllEvents = async (userId: string): Promise<any[]> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User Not authorized");
+  }
+
+  const events = await prisma.event.findMany({
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          profileImage: true,
+        },
       },
     },
-  }
-});
+  });
 
-  return result
-}
+  
+  const eventsWithDistance = events.map((event) => {
+    let distanceInKm = null;
+
+    if (user.lat != null && user.lng != null && event?.lat != null && event?.lng != null) {
+      distanceInKm = haversine(
+        { lat: user.lat, lng: user.lng },
+        { lat: event.lat, lng: event.lng }
+      );
+    }
+
+    return {
+      ...event,
+      distanceInKm,
+    };
+  });
+
+  return eventsWithDistance;
+};
+
 
 // Export all
 export const eventService = {
