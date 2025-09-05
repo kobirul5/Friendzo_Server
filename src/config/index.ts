@@ -5,9 +5,9 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 
 export default {
     env: process.env.NODE_ENV,
-    stripe_key:process.env.STRIPE_SECRET_KEY,
+    stripe_key: process.env.STRIPE_SECRET_KEY,
     port: process.env.PORT,
-    bcrypt_salt_rounds:process.env.BCRYPT_SALT_ROUNDS,
+    bcrypt_salt_rounds: process.env.BCRYPT_SALT_ROUNDS,
     jwt: {
         jwt_secret: process.env.JWT_SECRET,
         expires_in: process.env.EXPIRES_IN,
@@ -25,6 +25,13 @@ export default {
         stripe_secret_key: process.env.STRIPE_SECRET_KEY,
         stripe_publishable_key: process.env.STRIPE_PUBLISHABLE_KEY,
         stripe_webhook_secret: process.env.STRIPE_WEBHOOK_SECRET,
-      },
+    },
+    digitalOcean: {
+        endpoint: process.env.DO_SPACE_ENDPOINT,
+        originEndpoint: process.env.DO_SPACE_ORIGIN_ENDPOINT,
+        accessKey: process.env.DO_SPACE_ACCESS_KEY,
+        secretKey: process.env.DO_SPACE_SECRET_KEY,
+        bucket: process.env.DO_SPACE_BUCKET,
+    },
 
 }

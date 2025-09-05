@@ -57,7 +57,7 @@ const updateProfile = upload.fields([
   { name: "banner", maxCount: 1 },
 ]);
 
-// ✅ Fixed Cloudinary Upload (Now supports buffer)
+//  Fixed Cloudinary Upload (Now supports buffer)
 const uploadToCloudinary = async (file: Express.Multer.File): Promise<{ Location: string; public_id: string }> => {
   if (!file) {
     throw new Error("File is required for uploading.");
@@ -77,7 +77,7 @@ const uploadToCloudinary = async (file: Express.Multer.File): Promise<{ Location
           return reject(error);
         }
 
-        // ✅ Explicitly return `Location` and `public_id`
+        //  Explicitly return `Location` and `public_id`
         resolve({
           Location: result?.secure_url || "", // Cloudinary URL
           public_id: result?.public_id || "",
@@ -90,7 +90,7 @@ const uploadToCloudinary = async (file: Express.Multer.File): Promise<{ Location
   });
 };
 
-// ✅ Unchanged: DigitalOcean Upload
+//  Unchanged: DigitalOcean Upload
 const uploadToDigitalOcean = async (file: Express.Multer.File) => {
   if (!file) {
     throw new Error("File is required for uploading.");
@@ -101,7 +101,7 @@ const uploadToDigitalOcean = async (file: Express.Multer.File) => {
     const uploadParams = {
       Bucket: process.env.DO_SPACE_BUCKET || "",
       Key,
-      Body: file.buffer, // ✅ Use buffer instead of file path
+      Body: file.buffer, // Use buffer instead of file path
       ACL: "public-read" as ObjectCannedACL,
       ContentType: file.mimetype,
     };
@@ -122,7 +122,7 @@ const uploadToDigitalOcean = async (file: Express.Multer.File) => {
   }
 };
 
-// ✅ No Name Changes, Just Fixes
+// No Name Changes, Just Fixes
 export const fileUploader = {
   upload,
   uploadSingle,
