@@ -49,17 +49,44 @@ const deleteMemory = async (id: string): Promise<Memory> => {
 };
 
 // Get all memories
-const getMemoriesAllUsers = async (userId: string): Promise<Memory[]> => {
+// const getMemoriesAllUsers = async (userId: string): Promise<Memory[]> => {
 
+//   const user = await prisma.user.findUnique({
+//     where: { id: userId }
+//   });
+
+//   if (!user) {
+//     throw new ApiError(404, "User Not authorized");
+//   }
+//   const result = await prisma.memory.findMany({
+//     orderBy: { createdAt: 'desc' },
+//     include: {
+//       user: {
+//         select: {
+//           id: true,
+//           firstName: true,
+//           lastName: true,
+//           email: true,
+//           profileImage: true
+//         },
+//       }
+//     }
+//   });
+
+//   return result
+// };
+
+const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
   const user = await prisma.user.findUnique({
-    where: { id: userId }
+    where: { id: userId },
   });
 
   if (!user) {
-    throw new ApiError(404, "User Not authorized");
+    throw new ApiError(404, "User not authorized");
   }
-  const result = await prisma.memory.findMany({
-    orderBy: { createdAt: 'desc' },
+
+  const memories = await prisma.memory.findMany({
+    orderBy: { createdAt: "desc" },
     include: {
       user: {
         select: {
@@ -67,13 +94,23 @@ const getMemoriesAllUsers = async (userId: string): Promise<Memory[]> => {
           firstName: true,
           lastName: true,
           email: true,
-          profileImage: true
+          profileImage: true,
         },
-      }
-    }
+      },
+      _count: {
+        select: {
+          MemoryLike: {
+            where: { userId }, // শুধু এই user এর like
+          },
+        },
+      },
+    },
   });
 
-  return result
+  return memories.map((memory) => ({
+    ...memory,
+    isLiked: memory._count.MemoryLike > 0, // শুধুমাত্র user যেগুলিতে like দিয়েছে
+  }));
 };
 
 

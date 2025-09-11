@@ -48,12 +48,6 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
 
 
 
-
-
-
-
-
-
 const getUserProfile = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const user = await userService.getUserProfile(userId);

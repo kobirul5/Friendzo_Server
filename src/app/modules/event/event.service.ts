@@ -49,49 +49,6 @@ const deleteEvent = async (id: string): Promise<EventModel> => {
   });
 };
 
-// all events 
-// const getAllEvents = async (userId: string): Promise<EventModel[]> => {
-
-//   const user = await prisma.user.findUnique({
-//     where: { id: userId }
-//   });
-
-
-//   if (!user) {
-//     throw new ApiError(404, "User Not authorized");
-//   }
-
-
-
-//   const result = await prisma.event.findMany({
-//     orderBy: { createdAt: 'desc' },
-//     include: {
-//       user: {
-//         select: {
-//           id: true,
-//           firstName: true,
-//           lastName: true,
-//           email: true,
-//           profileImage: true,
-//           lat: true,
-//           lng: true,
-//         },
-//       },
-//     }
-//   });
-
-
-//   let distanceInKm = 0;
-
-//   if (user.lat || user.lng) {
-//     distanceInKm = haversine({ lat: user.lat!, lng: user.lng! }, { lat: result., lng: 0 });
-//   }
-
-// console.log("Distance in KM:", distanceInKm);
-
-
-//   return result
-// }
 
 const getAllEvents = async (userId: string): Promise<any[]> => {
   const user = await prisma.user.findUnique({
