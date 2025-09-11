@@ -2,10 +2,6 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import { IUser } from "./user.interface";
 import * as bcrypt from "bcrypt";
-import { IPaginationOptions } from "../../../interfaces/paginations";
-import { paginationHelper } from "../../../helpars/paginationHelper";
-import { Prisma, User } from "@prisma/client";
-import { userSearchAbleFields } from "./user.costant";
 import config from "../../../config";
 import httpStatus from "http-status";
 import { Request } from "express";
@@ -18,10 +14,6 @@ import { json } from "stream/consumers";
 import { jwtHelpers } from "../../../helpars/jwtHelpers";
 import emailSender from "../../../shared/emailSender";
 import { registrationOtpTemplate } from "./registrationOtpTemplate";
-
-// Create a new user in the database.
-
-
 
 
 const createUserIntoDb = async (payload: IUser) => {
@@ -140,10 +132,6 @@ const updateUserProfile = async (userId: string, updateData: Partial<IUser>, fil
 
   return updatedUser;
 };
-
-
-
-
 
 
 const getUserProfile = async (userId: string) => {
