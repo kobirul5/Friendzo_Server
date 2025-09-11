@@ -99,19 +99,36 @@ const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
       },
       _count: {
         select: {
-          MemoryLike: {
-            where: { userId }, // শুধু এই user এর like
-          },
+          MemoryLike: true,   // total likes count
+          Comment: true // total comments count
         },
+      },
+      MemoryLike: {
+        where: { userId }, // check if this user liked it
+        select: { id: true },
       },
     },
   });
+  const formattedMemories = memories.map((memory) => {
+    const totalLikes = memory._count.MemoryLike;
+    const totalComments = memory._count.Comment;
+    const isLiked = memory.MemoryLike.length > 0;
 
-  return memories.map((memory) => ({
-    ...memory,
-    isLiked: memory._count.MemoryLike > 0, // শুধুমাত্র user যেগুলিতে like দিয়েছে
-  }));
+    const { _count, MemoryLike, ...rest } = memory;
+
+    return {
+      ...rest,
+      totalLikes,
+      totalComments,
+      isLiked,
+    };
+  });
+
+  return formattedMemories;
+
+
 };
+
 
 
 // Export all
