@@ -6,6 +6,7 @@ export interface IUser {
   firstName?: string;
   lastName?: string;
   password?: string;
+  referralCode?: string;
   phoneNumber?: string;
   fcmToken?: string;
   profileImage?: string;

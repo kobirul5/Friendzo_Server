@@ -20,6 +20,13 @@ model User {
   role         UserRole   @default(USER)
   status       UserStatus @default(INACTIVE)
 
+  // 🔑 Referral fields
+  referralCode String  @unique
+  referredBy   String? @db.ObjectId
+  referrer     User?   @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  referrals    User[]  @relation("UserReferrals")
+  isDatingMode Boolean @default(false)
+
   isVerified       Boolean   @default(false)
   isFaceVerified   Boolean   @default(false)
   otp              Int?
@@ -110,11 +117,11 @@ enum UserRole {
 model EventLike {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId String @db.ObjectId
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -219,25 +226,7 @@ model Block {
   @@unique([blockerId, blockedUserId]) // Prevent duplicate blocks
 }
 
-// model Review {
-//   id          String         @id @default(auto()) @map("_id") @db.ObjectId
-//   rating      Int
-//   comment     String
-//   createdAt   DateTime       @default(now())
-//   updatedAt   DateTime       @updatedAt
 
-//   // ✅ এখানে projectId এবং annotation ঠিক করে দিচ্ছি
-//   createProjectId   String         @db.ObjectId @unique
-//   createProject     CreateProduct  @relation(fields: [createProjectId], references: [id]) 
-
-//   providerId  String?         @db.ObjectId
-//   provider    User?           @relation("UserReviews", fields: [providerId], references: [id])
-
-//   customerId  String         @db.ObjectId
-//   customer    User           @relation("CustomerReviews", fields: [customerId], references: [id])
-
-//   @@map("reviews")
-// }
 
 model Notification {
   id          String           @id @default(auto()) @map("_id") @db.ObjectId

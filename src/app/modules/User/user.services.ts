@@ -7,32 +7,126 @@ import httpStatus from "http-status";
 import { Request } from "express";
 import { fileUploader } from "../../../helpars/fileUploader";
 import { string } from "zod";
-import crypto from 'crypto';
-import jwt, { Secret } from 'jsonwebtoken';
+import crypto from "crypto";
+import jwt, { Secret } from "jsonwebtoken";
 // import emailSender from "../../../shared/emailSender";
 import { json } from "stream/consumers";
 import { jwtHelpers } from "../../../helpars/jwtHelpers";
 import emailSender from "../../../shared/emailSender";
 import { registrationOtpTemplate } from "./registrationOtpTemplate";
+import { getRefferId } from "../../../helpars/generateRefferId";
+
+// const createUserIntoDb = async (payload: IUser) => {
+//   const { email, password, fcmToken, referredBy } = payload;
+
+//   // Check if user already exists
+//   const existingUser = await prisma.user.findUnique({
+//     where: { email },
+//   });
+
+//   if (existingUser) {
+//     throw new ApiError(httpStatus.BAD_REQUEST, "User already exists");
+//   }
+
+//   const refID = getRefferId();
+
+//   // Hash the password
+//   if (!password) {
+//     throw new ApiError(httpStatus.BAD_REQUEST, "Password is required");
+//   }
+//   const hashedPassword = await bcrypt.hash(password, 10);
+
+//   // Create the new user
+//   const newUser = await prisma.user.create({
+//     data: {
+//       email,
+//       password: hashedPassword,
+//       referralCode: refID,
+      
+//       role: "USER",
+//       status: "ACTIVE",
+//       fcmToken,
+//     },
+//   });
+
+//   if (!newUser) {
+//     throw new ApiError(httpStatus.BAD_REQUEST, "Failed to create user");
+//   }
+
+//   // Generate a new OTP
+//   const otp = Number(crypto.randomInt(1000, 9999));
+
+//   // Set OTP expiration time to 5 minutes from now
+//   const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
+
+//   // Update the user with the OTP and expiration time
+//   await prisma.user.update({
+//     where: { id: newUser.id },
+//     data: {
+//       otp,
+//       expirationOtp: otpExpires,
+//     },
+//   });
+
+//   await emailSender(
+//     newUser.email,
+//     registrationOtpTemplate(otp),
+//     "User Email Verification OTP"
+//   );
+
+//   // Generate JWT token
+//   const token = jwtHelpers.generateToken(
+//     {
+//       id: newUser.id,
+//       email: newUser.email,
+//       role: newUser.role,
+//     },
+//     config.jwt.jwt_secret as Secret,
+//     config.jwt.expires_in!
+//   );
+
+//   // Return user info & token
+//   return {
+//     user: {
+//       id: newUser.id,
+//       email: newUser.email,
+//       role: newUser.role,
+//       status: newUser.status,
+//     },
+//     accessToken: token,
+//   };
+// };
 
 
-const createUserIntoDb = async (payload: IUser) => {
-  const { email, password, fcmToken } = payload;
+const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
+  const { email, password, fcmToken, referredId } = payload;
 
   // Check if user already exists
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  });
-
+  const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
     throw new ApiError(httpStatus.BAD_REQUEST, "User already exists");
   }
 
-  // Hash the password
-  if (!password) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Password is required");
-  }
+  // Hash password
+  if (!password) throw new ApiError(httpStatus.BAD_REQUEST, "Password is required");
   const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Generate unique referral code for the new user
+  let newReferralCode = getRefferId();
+  // Ensure uniqueness in DB
+  while (await prisma.user.findUnique({ where: { referralCode: newReferralCode } })) {
+    newReferralCode = getRefferId();
+  }
+
+  // Handle referral if a referral code was provided
+  let referredByUserId: string | undefined;
+  if (referredId) {
+    const referrer = await prisma.user.findUnique({ where: { referralCode: referredId } });
+    if (!referrer) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid referral code");
+  }
+    referredByUserId = referrer.id;
+  }
 
   // Create the new user
   const newUser = await prisma.user.create({
@@ -42,39 +136,31 @@ const createUserIntoDb = async (payload: IUser) => {
       role: "USER",
       status: "ACTIVE",
       fcmToken,
+      referralCode: newReferralCode,
+      referredBy: referredByUserId,
     },
   });
 
-  if (!newUser) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Failed to create user");
-  }
+  if (!newUser) throw new ApiError(httpStatus.BAD_REQUEST, "Failed to create user");
 
-  // Generate a new OTP
+  // Generate OTP
   const otp = Number(crypto.randomInt(1000, 9999));
-
-  // Set OTP expiration time to 5 minutes from now
   const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
- 
-
-  // Update the user with the OTP and expiration time
   await prisma.user.update({
     where: { id: newUser.id },
-    data: {
-      otp,
-      expirationOtp: otpExpires,
-    },
+    data: { otp, expirationOtp: otpExpires },
   });
-  
-   await emailSender(newUser.email, registrationOtpTemplate(otp), 'User Email Verification OTP',);
+
+  await emailSender(
+    newUser.email,
+    registrationOtpTemplate(otp),
+    "User Email Verification OTP"
+  );
 
   // Generate JWT token
   const token = jwtHelpers.generateToken(
-    {
-      id: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-    },
+    { id: newUser.id, email: newUser.email, role: newUser.role },
     config.jwt.jwt_secret as Secret,
     config.jwt.expires_in!
   );
@@ -86,13 +172,20 @@ const createUserIntoDb = async (payload: IUser) => {
       email: newUser.email,
       role: newUser.role,
       status: newUser.status,
+      referralCode: newUser.referralCode,
+      referredBy: newUser.referredBy || null,
     },
     accessToken: token,
   };
 };
 
 
-const updateUserProfile = async (userId: string, updateData: Partial<IUser>, file?: Express.Multer.File) => {
+
+const updateUserProfile = async (
+  userId: string,
+  updateData: Partial<IUser>,
+  file?: Express.Multer.File
+) => {
   // Check if user exists
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -100,8 +193,6 @@ const updateUserProfile = async (userId: string, updateData: Partial<IUser>, fil
   if (!user) {
     throw new ApiError(404, "User not found");
   }
-
-
 
   // If file exists, upload and set profileImage url
   if (file) {
@@ -133,7 +224,6 @@ const updateUserProfile = async (userId: string, updateData: Partial<IUser>, fil
   return updatedUser;
 };
 
-
 const getUserProfile = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -157,15 +247,9 @@ const getUserProfile = async (userId: string) => {
   return user;
 };
 
-
-
-
-
-
 export const userService = {
   createUserIntoDb,
   updateUserProfile,
   getUserProfile,
   // deleteUserDocumentImage,
-
-}; 
+};

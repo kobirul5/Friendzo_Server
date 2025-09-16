@@ -2,24 +2,33 @@ import { UserRole } from "@prisma/client";
 import prisma from "../../shared/prisma";
 import * as bcrypt from "bcrypt";
 import config from "../../config";
+import { getRefferId } from "../../helpars/generateRefferId";
+
+
 export const initiateSuperAdmin = async () => {
-  const hashedPassword=await bcrypt.hash('123456789',Number(config.bcrypt_salt_rounds))
+  const hashedPassword = await bcrypt.hash(
+    '123456789',
+    Number(config.bcrypt_salt_rounds)
+  );
+
+  // Generate unique referral code using getRefferId()
+  let referralCode = getRefferId();
+  while (await prisma.user.findUnique({ where: { referralCode } })) {
+    referralCode = getRefferId();
+  }
+
   const payload: any = {
-    // username: "Admin",
-    email: "belalhossain22000@gmail.com",
-    // phoneNumber: "1234567890",
+    email: "admin@gmail.com",
     password: hashedPassword,
     role: UserRole.ADMIN,
     lat: 23.8103,
     lng: 90.4125,
+    referralCode, // <-- attach unique referral code
   };
 
   const isExistUser = await prisma.user.findUnique({
     where: {
-      // username: payload.username,
       email: payload.email,
-     
-
     },
   });
 
