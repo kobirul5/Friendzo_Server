@@ -180,7 +180,6 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
 };
 
 
-
 const updateUserProfile = async (
   userId: string,
   updateData: Partial<IUser>,
