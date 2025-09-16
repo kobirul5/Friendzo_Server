@@ -95,8 +95,9 @@ const getSingleMemory = catchAsync(async (req: Request, res: Response) => {
 
 const deleteMemory = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
+  const userId = req.user.id;
 
-  const deletedMemory = await memoriesService.deleteMemory(id);
+  const deletedMemory = await memoriesService.deleteMemory({ id, userId});
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

@@ -1,5 +1,6 @@
-import { PrismaClient, Memory } from '@prisma/client';
-import ApiError from '../../../errors/ApiErrors';
+import { PrismaClient, Memory } from "@prisma/client";
+import ApiError from "../../../errors/ApiErrors";
+import { deleteFile } from "../../../helpars/fileDelete";
 const prisma = new PrismaClient();
 
 // Create Memory
@@ -18,7 +19,7 @@ const createMemory = async (data: {
 const getMemoriesByUser = async (userId: string): Promise<Memory[]> => {
   return await prisma.memory.findMany({
     where: { userId },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 };
 
@@ -29,11 +30,12 @@ const getMemoryById = async (id: string): Promise<Memory | null> => {
   });
 };
 
-
 // Update memory
 const updateMemory = async (
   id: string,
-  data: Partial<Pick<Memory, 'image' | 'description' | 'address' | 'lat' | 'lng'>>
+  data: Partial<
+    Pick<Memory, "image" | "description" | "address" | "lat" | "lng">
+  >
 ): Promise<Memory> => {
   return await prisma.memory.update({
     where: { id },
@@ -42,39 +44,30 @@ const updateMemory = async (
 };
 
 // Delete memory
-const deleteMemory = async (id: string): Promise<Memory> => {
-  return await prisma.memory.delete({
+const deleteMemory = async ({ id, userId }: { id: string; userId: string }) => {
+  const memory = await prisma.memory.findUnique({
     where: { id },
   });
+
+  if (!memory) {
+    throw new ApiError(404, "Memory not found");
+  }
+
+  if (memory.userId !== userId) {
+    throw new ApiError(403, "You are not authorized to delete this memory");
+  }
+
+  if (memory.image) {
+    // Delete image from DigitalOcean Spaces
+    await deleteFile.deleteFileFromDigitalOcean(memory.image);
+  }
+
+  await prisma.memory.delete({
+    where: { id },
+  });
+
+  return null;
 };
-
-// Get all memories
-// const getMemoriesAllUsers = async (userId: string): Promise<Memory[]> => {
-
-//   const user = await prisma.user.findUnique({
-//     where: { id: userId }
-//   });
-
-//   if (!user) {
-//     throw new ApiError(404, "User Not authorized");
-//   }
-//   const result = await prisma.memory.findMany({
-//     orderBy: { createdAt: 'desc' },
-//     include: {
-//       user: {
-//         select: {
-//           id: true,
-//           firstName: true,
-//           lastName: true,
-//           email: true,
-//           profileImage: true
-//         },
-//       }
-//     }
-//   });
-
-//   return result
-// };
 
 const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
   const user = await prisma.user.findUnique({
@@ -99,8 +92,8 @@ const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
       },
       _count: {
         select: {
-          MemoryLike: true,   // total likes count
-          Comment: true // total comments count
+          MemoryLike: true, // total likes count
+          Comment: true, // total comments count
         },
       },
       MemoryLike: {
@@ -125,11 +118,7 @@ const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
   });
 
   return formattedMemories;
-
-
 };
-
-
 
 // Export all
 export const memoriesService = {
@@ -138,5 +127,5 @@ export const memoriesService = {
   getMemoryById,
   updateMemory,
   deleteMemory,
-  getMemoriesAllUsers
+  getMemoriesAllUsers,
 };
