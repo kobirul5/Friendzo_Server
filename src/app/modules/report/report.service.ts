@@ -6,8 +6,16 @@ import ApiError from '../../../errors/ApiErrors';
 const createReportService = async (data: any, reporterId: string) => {
     const {reportedUserId,  description } = data;
 
+    const reportedUser = await prisma.user.findUnique({
+      where: { id: reportedUserId },
+    })
+
+    if (!reportedUser) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Reported user not found");
+    }
+
     if (!reportedUserId || !description) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Missing required fields");
+      throw new ApiError(httpStatus.BAD_REQUEST, "Missing required fields, You must provide reportedUserId and description");
     }
 
     // Create the report

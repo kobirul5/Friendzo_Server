@@ -99,7 +99,7 @@ const removeMemoryLikeService = async (userId: string, memoryId: string) => {
   return { message: "Like removed successfully." };
 };
 
-const getDayliMyLikeService = async (userId: string) => {
+const getDailyMyLikeService = async (userId: string) => {
 
   const startOfToday = dayjs().startOf("day").toDate();
   const endOfToday = dayjs().endOf("day").toDate();
@@ -119,7 +119,7 @@ const getDayliMyLikeService = async (userId: string) => {
 }
 
 
-const getDayliMyWeeklyService = async (userId: string) => {
+const getMyWeeklyService = async (userId: string) => {
 
 
  const now = new Date();
@@ -158,6 +158,6 @@ export const likeService = {
   getMemoryLikeCountService,
   getMemoryLikedUsersService,
   removeMemoryLikeService,
-  getDayliMyLikeService,
-  getDayliMyWeeklyService
+  getDailyMyLikeService,
+  getMyWeeklyService
 };

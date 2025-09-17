@@ -10,7 +10,7 @@ import ApiError from '../../../errors/ApiErrors';
 const createBlock = catchAsync(async (req, res:Response) => {
   const blockerId = req.user.id;
   const blockedUserId = req.body.blockedUserId
-  const result = await blockService.createBlockBetweenUsers(blockerId as string, blockedUserId);
+  const result = await blockService.createBlockBetweenUsers({blockerId, blockedUserId});
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,

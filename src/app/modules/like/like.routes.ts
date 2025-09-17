@@ -18,7 +18,7 @@ likeController.createMemoryLike,
 );
 
 router.get('/memories/:id', auth(), likeController.getMemoryLikeStats);
-router.get('/dayli-like', auth(), likeController.getDayliMyLike);
+router.get('/daily-like', auth(), likeController.getDayliMyLike);
 router.get('/weekly-like', auth(), likeController.getWeeklyMyLike);
 
 

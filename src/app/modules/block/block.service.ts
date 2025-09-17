@@ -4,7 +4,16 @@ import prisma from '../../../shared/prisma';
 import ApiError from '../../../errors/ApiErrors';
 
 
-const createBlockBetweenUsers  = async (blockedUserId: string, blockerId: string) => {
+const createBlockBetweenUsers  = async ({blockedUserId, blockerId}: {blockedUserId: string, blockerId: string}) => {
+
+  const findBlockedUser = await prisma.user.findUnique({
+    where: { id: blockedUserId },
+  });
+  console.log(blockerId,findBlockedUser);
+
+  if (!findBlockedUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Blocked user not found");
+  }
   
   if (blockerId === blockedUserId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "You cannot block yourself");

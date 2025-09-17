@@ -94,12 +94,12 @@ const getDayliMyLike = catchAsync(async (req:any, res:Response) => {
 
   const userId = req.user.id
 
-  const result = await likeService.getDayliMyLikeService(userId);
+  const result = await likeService.getDailyMyLikeService(userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Dayli Like Get successfully',
+    message: 'Daily Like Get successfully',
     data: result,
   });
 })
@@ -107,12 +107,12 @@ const getWeeklyMyLike = catchAsync(async (req:any, res:Response) => {
 
   const userId = req.user.id
 
-  const result = await likeService.getDayliMyWeeklyService(userId);
+  const result = await likeService.getMyWeeklyService(userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Dayli Like Get successfully',
+    message: 'Weekly Like Get successfully',
     data: result,
   });
 })
