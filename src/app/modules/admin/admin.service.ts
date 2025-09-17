@@ -366,11 +366,13 @@ const createInterestService = async (interestData: {
   });
   return interest;
 };
-
+// get all interests
 const getAllInterestsService = async () => {
   const interests = await prisma.interest.findMany();
   return interests;
 };
+
+
 
 export const adminService = {
   getTotalUsersService,
