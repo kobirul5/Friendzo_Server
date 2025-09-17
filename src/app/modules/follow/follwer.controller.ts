@@ -88,6 +88,18 @@ const acceptOrRejectFollwershipRequest = catchAsync(async (req: Request, res: Re
   });
 })
 
+const getMyAllFriends = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id; 
+  const { type } = req.params; // type can be 'all', 'mutual', etc.
+  const result = await follwerService.getMyAllFriends(userId, type);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Friends retrieved successfully',
+    data: result,
+  });
+});
 
 
 export const follwerController = {
@@ -96,5 +108,6 @@ export const follwerController = {
   unfollowUser,
   getMyAllFollwer,
   getMyAllFollowing,
-  acceptOrRejectFollwershipRequest
+  acceptOrRejectFollwershipRequest,
+  getMyAllFriends,
 };

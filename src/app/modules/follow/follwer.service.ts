@@ -14,10 +14,12 @@ const createFollowerAndFollowingService = async (payload: {
     throw new ApiError(httpStatus.BAD_REQUEST, "You cannot follow yourself");
   }
 
-  if(modeType !== ModeType.DATING && modeType !== ModeType.SOCIAL){
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid mode type, it should be DATING or SOCIAL");
+  if (modeType !== ModeType.DATING && modeType !== ModeType.SOCIAL) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid mode type, it should be DATING or SOCIAL"
+    );
   }
-
 
   const following = await prisma.user.findUnique({
     where: { id: followingId },
@@ -27,8 +29,7 @@ const createFollowerAndFollowingService = async (payload: {
     throw new ApiError(httpStatus.NOT_FOUND, "Following user not found");
   }
 
-
-   //  Application-level check for duplicates
+  //  Application-level check for duplicates
   const alreadyFollowing = await prisma.follow.findFirst({
     where: {
       followerId,
@@ -38,7 +39,10 @@ const createFollowerAndFollowingService = async (payload: {
   });
 
   if (alreadyFollowing) {
-    throw new ApiError(httpStatus.CONFLICT, "Already following this user with this mode");
+    throw new ApiError(
+      httpStatus.CONFLICT,
+      "Already following this user with this mode"
+    );
   }
 
   if (alreadyFollowing) {
@@ -144,8 +148,12 @@ const unfollowUserService = async (followerId: string, followingId: string) => {
   return { unfollowed: true };
 };
 
-
-const acceptOrRejectFollwershipRequestService = async (userId: string, followId: string, modeType: ModeType, status: RequestStatus) => {
+const acceptOrRejectFollwershipRequestService = async (
+  userId: string,
+  followId: string,
+  modeType: ModeType,
+  status: RequestStatus
+) => {
   // Check if follow relation exists
 
   const follow = await prisma.follow.findFirst({
@@ -156,28 +164,40 @@ const acceptOrRejectFollwershipRequestService = async (userId: string, followId:
     },
   });
 
-  if(!follow){
+  if (!follow) {
     throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
   }
 
-  if(follow.followerId === userId){
-    throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized to accept or reject this request");
+  if (follow.followerId === userId) {
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "You are not authorized to accept or reject this request"
+    );
   }
 
-  if(follow.followingId !== userId){
-    throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized to accept or reject this request");
+  if (follow.followingId !== userId) {
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "You are not authorized to accept or reject this request"
+    );
   }
 
-  console.log(followId, follow.followingId)
+  console.log(followId, follow.followingId);
 
- if(status !== RequestStatus.ACCEPTED && status !== RequestStatus.REJECTED && status !== RequestStatus.CANCELED){
-   throw new ApiError(httpStatus.BAD_REQUEST, "Invalid status. status should be ACCEPTED, REJECTED or CANCELLED");
- }
+  if (
+    status !== RequestStatus.ACCEPTED &&
+    status !== RequestStatus.REJECTED &&
+    status !== RequestStatus.CANCELED
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid status. status should be ACCEPTED, REJECTED or CANCELLED"
+    );
+  }
 
   if (!follow) {
     throw new Error("Follow relationship not found");
   }
-
 
   const acceptOrReject = await prisma.follow.update({
     where: {
@@ -185,14 +205,71 @@ const acceptOrRejectFollwershipRequestService = async (userId: string, followId:
       modeType,
     },
     data: {
-      requestStatus: status
+      requestStatus: status,
     },
   });
 
   return acceptOrReject;
+};
 
 
-}
+
+const getMyAllFriends = async (userId: string, type: string) => {
+
+  if(type !== 'social' && type !== 'dating' && type !== 'all'){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid type. type should be social, dating or all, type muste be social or dating or all");
+  }
+
+  let modeType : ModeType | undefined = undefined;
+  if(type === 'social'){
+    modeType = ModeType.SOCIAL;
+  }else if(type === 'dating'){
+    modeType = ModeType.DATING;
+  }
+
+  // Friends are users who have accepted each other's follow requests
+  const friends = await prisma.follow.findMany({
+    where: {
+      OR: [
+        {
+          followerId: userId,
+          requestStatus: RequestStatus.ACCEPTED,
+          modeType
+        },  
+        {
+          followingId: userId,
+          requestStatus: RequestStatus.ACCEPTED,
+          modeType
+        },
+      ],
+    },
+    include: {
+      follower: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          profileImage: true,
+        },
+      },
+      following: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          profileImage: true,
+        },
+      },
+    },
+  });
+
+  return {
+    friends: friends.map((f) =>
+      f.followerId === userId ? f.following : f.follower
+    ),
+  };
+};
+
 
 export const follwerService = {
   createFollowerAndFollowingService,
@@ -200,5 +277,6 @@ export const follwerService = {
   getMyFollowerService,
   getMyNetworkCount,
   getMyFollowingService,
-  acceptOrRejectFollwershipRequestService
+  acceptOrRejectFollwershipRequestService,
+  getMyAllFriends,
 };
