@@ -203,7 +203,7 @@ const getTodaysBuzz = async (userId: string) => {
 // };
 
 
-const getPeopleBySharedInterests = async (userId: string) => {
+const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, interest: string}) => {
   // 1️ Get current user's interests
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -217,7 +217,7 @@ const getPeopleBySharedInterests = async (userId: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
-  const currentUserInterests = currentUser.interests;
+  const currentUserInterests = interest? [interest] :  currentUser.interests;
 
   if (!currentUserInterests || currentUserInterests.length === 0) {
     return []; // or throw an error if interests are required
@@ -256,13 +256,13 @@ const getPeopleBySharedInterests = async (userId: string) => {
 
     return {
       ...user,
-      sharedInterestPercentage: matchPercentage,
+      interestPercentage: matchPercentage,
     };
   });
 
   // Optional: sort by highest match first
   usersWithMatchPercentage.sort(
-    (a, b) => b.sharedInterestPercentage - a.sharedInterestPercentage
+    (a, b) => b.interestPercentage - a.interestPercentage
   );
 
   return usersWithMatchPercentage;

@@ -39,7 +39,8 @@ const getTodaysBuzzController = catchAsync(async (req: Request, res: Response) =
 
 const getPeopleBySharedInterestsController = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user?.id;
-  const result = await discoverByInterestService.getPeopleBySharedInterests(userId);
+    const interest = req.query.interest as string;
+  const result = await discoverByInterestService.getPeopleBySharedInterests({userId, interest});
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

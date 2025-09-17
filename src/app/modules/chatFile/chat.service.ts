@@ -1,3 +1,4 @@
+
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
 
@@ -13,7 +14,23 @@ const shareMemoryThorwChat = async ({
   imageUrls?: string[];
 }) => {
   if (!userId || !friendsIds?.length || !message) {
-    throw new Error("Invalid parameters");
+    throw new ApiError(httpStatus.BAD_REQUEST,"Invalid parameters. friendsIds, and message are required.");
+  }
+
+  // Check if the user exists
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "User not found");
+  }
+
+  // Check if the friend exists
+  console.log(friendsIds);
+  for (const friendId of friendsIds) {
+    const friend = await prisma.user.findUnique({ where: { id: friendId } });
+
+    if (!friend) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Friend not found");
+    }
   }
 
   const results = [];
