@@ -7,9 +7,9 @@ import { Request, Response } from 'express';
 const createFollwer = catchAsync(async (req:Request, res:Response) => {
 
   const followerId = req.user.id; 
-  const { followingId } = req.body;
+  const { followingId, modeType } = req.body;
 
-  const result = await follwerService.createFollowerAndFollowingService({followerId, followingId});
+  const result = await follwerService.createFollowerAndFollowingService({followerId, followingId, modeType});
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
@@ -73,10 +73,28 @@ const unfollowUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const acceptOrRejectFollwershipRequest = catchAsync(async (req: Request, res: Response) => {
+  const followerId = req.user.id; 
+  const {followId, modeType , status} = req.body;
+
+  const result = await follwerService.acceptOrRejectFollwershipRequestService(followerId, followId, modeType, status);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Request accepted or rejected successfully',
+    data: result,
+  });
+})
+
+
+
 export const follwerController = {
   createFollwer,
   getMyFollowersAndFollowingCount,
   unfollowUser,
   getMyAllFollwer,
-  getMyAllFollowing
+  getMyAllFollowing,
+  acceptOrRejectFollwershipRequest
 };

@@ -224,21 +224,9 @@ const updateUserProfile = async (
 };
 
 const getUserProfile = async (userId: string) => {
+  
   const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      phoneNumber: true,
-      profileImage: true,
-      role: true,
-
-      createdAt: true,
-      updatedAt: true,
-      isFaceVerified: true,
-    },
+    where: { id: userId }
   });
   if (!user) {
     throw new ApiError(404, "User not found");

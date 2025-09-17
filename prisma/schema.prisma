@@ -13,7 +13,7 @@ model User {
   firstName    String?
   lastName     String?
   email        String     @unique
-  about       String?    @default("")
+  about        String?    @default("")
   phoneNumber  String?
   password     String?
   interests    String[]   @default([])
@@ -158,15 +158,15 @@ model Comment {
 model Follow {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  follower   User   @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
-  followerId String @db.ObjectId
-
-  following   User   @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
-  followingId String @db.ObjectId
+  follower      User          @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followerId    String        @db.ObjectId
+  requestStatus RequestStatus @default(PENDING)
+  modeType      ModeType      @default(SOCIAL)
+  following     User          @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+  followingId   String        @db.ObjectId
 
   createdAt DateTime @default(now())
 
-  @@unique([followerId, followingId])
 }
 
 model Chat {
@@ -227,8 +227,6 @@ model Block {
   @@unique([blockerId, blockedUserId]) // Prevent duplicate blocks
 }
 
-
-
 model Notification {
   id          String           @id @default(auto()) @map("_id") @db.ObjectId
   type        NotificationType
@@ -260,6 +258,18 @@ enum NotificationType {
   MEMORY_SHARE
   REPORT
   BLOCK
+}
+
+enum ModeType {
+  DATING
+  SOCIAL
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELED
 }
 
 // enum PaymentStatus {
