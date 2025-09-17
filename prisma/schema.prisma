@@ -8,18 +8,17 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
   profileImage String?
   firstName    String?
   lastName     String?
-  email        String     @unique
-  about        String?    @default("")
+  email        String  @unique
+  about        String? @default("")
   phoneNumber  String?
   password     String?
-  interests    String[]   @default([])
-  fcmToken     String?
-  role         UserRole   @default(USER)
-  status       UserStatus @default(INACTIVE)
+  fcmToken String?
+  role     UserRole   @default(USER)
+  status   UserStatus @default(INACTIVE)
 
   // 🔑 Referral fields
   referralCode String  @unique
@@ -28,11 +27,14 @@ model User {
   referrals    User[]  @relation("UserReferrals")
   isDatingMode Boolean @default(false)
 
-  isVerified       Boolean   @default(false)
-  isFaceVerified   Boolean   @default(false)
-  otp              Int?
-  expirationOtp    DateTime?
-  gender           String?
+  isVerified     Boolean   @default(false)
+  isFaceVerified Boolean   @default(false)
+  otp            Int?
+  expirationOtp  DateTime?
+  gender         String?
+  interestedGender      String[]  @default([])
+  interests      String[]  @default([])
+
   dob              DateTime?
   lat              Float?
   lng              Float?
@@ -71,6 +73,31 @@ model User {
 
   @@map("users")
 }
+
+model Interest {
+  id       String           @id @default(auto()) @map("_id") @db.ObjectId
+  name     String           @default("")
+  image    String?       @default("")
+  category InterestCategory @unique
+}
+
+enum InterestCategory {
+  TRAVEL
+  MOVIES
+  MUSIC
+  FOOTBALL
+  PETS_LOVE
+  GARDENING
+  WRITING
+  COOKING
+  NATURE
+  FASHION
+  DEBATE
+  SCIENCE
+  MEDITATION
+  GAMING
+}
+
 
 model Memory {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -166,7 +193,6 @@ model Follow {
   followingId   String        @db.ObjectId
 
   createdAt DateTime @default(now())
-
 }
 
 model Chat {

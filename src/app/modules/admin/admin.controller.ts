@@ -71,12 +71,33 @@ const getDailyReport = catchAsync(async (req, res) => {
 });
 
 
+const createInterest = catchAsync(async (req, res) => {
+  const result = await adminService.createInterestService(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: 'Interest created successfully',
+    data: result,
+  });
+});
 
+// 
+const getInterests = catchAsync(async (req, res) => {
+  const result = await adminService.getAllInterestsService(); 
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Interests retrieved successfully',
+    data: result,
+  });
+});
 export const adminController = {
   getTotalUsers,
   deleteUser,
   getTotalreport,
   getMonthlyReport,
   getweeklyReport,
-  getDailyReport
+  getDailyReport,
+  createInterest,
+  getInterests
 };

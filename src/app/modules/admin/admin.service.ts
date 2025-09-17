@@ -1,20 +1,18 @@
-import httpStatus from 'http-status';
-import prisma from '../../../shared/prisma';
-import ApiError from '../../../errors/ApiErrors';
-import { paginationHelper } from '../../../helpars/paginationHelper';
-import { IPaginationOptions } from '../../../interfaces/paginations';
-
-
+import httpStatus from "http-status";
+import prisma from "../../../shared/prisma";
+import ApiError from "../../../errors/ApiErrors";
+import { paginationHelper } from "../../../helpars/paginationHelper";
+import { IPaginationOptions } from "../../../interfaces/paginations";
+import { InterestCategory } from "@prisma/client";
 
 const getTotalReportService = async (options: IPaginationOptions) => {
-
   const totalReport = await prisma.report.count();
 
-  return totalReport
+  return totalReport;
 };
 const getTotalUsersService = async (options: IPaginationOptions) => {
-
-  const { page, limit, skip, sortBy, sortOrder } = paginationHelper.calculatePagination(options);
+  const { page, limit, skip, sortBy, sortOrder } =
+    paginationHelper.calculatePagination(options);
 
   // total count
   const totalUsers = await prisma.user.count();
@@ -53,9 +51,9 @@ const deleteUserService = async (userId: string) => {
 
   const result = await prisma.user.delete({
     where: {
-      id: existingUser.id
-    }
-  })
+      id: existingUser.id,
+    },
+  });
 
   return result;
 
@@ -232,7 +230,7 @@ const getMonthlyReportService = async () => {
       },
     },
     orderBy: {
-      createdAt: 'desc',
+      createdAt: "desc",
     },
   });
 
@@ -244,12 +242,10 @@ const getMonthlyReportService = async () => {
   };
 };
 
-
 const getweeklyReportService = async () => {
   const today = new Date();
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(today.getDate() - 7);
-
 
   const reports = await prisma.report.findMany({
     where: {
@@ -277,7 +273,7 @@ const getweeklyReportService = async () => {
       },
     },
     orderBy: {
-      createdAt: 'desc',
+      createdAt: "desc",
     },
   });
 
@@ -291,8 +287,16 @@ const getweeklyReportService = async () => {
 
 const getDailyReportService = async () => {
   const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+  const startOfDay = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+  const endOfDay = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() + 1
+  );
   const reports = await prisma.report.findMany({
     where: {
       createdAt: {
@@ -319,7 +323,7 @@ const getDailyReportService = async () => {
       },
     },
     orderBy: {
-      createdAt: 'desc',
+      createdAt: "desc",
     },
   });
   return {
@@ -328,15 +332,53 @@ const getDailyReportService = async () => {
     total: reports.length,
     reports,
   };
-}
+};
+
+const createInterestService = async (interestData: {
+  name: string;
+  image?: string;
+  category: InterestCategory;
+}) => {
+  // Check if interest with the same category already exists
+
+  if (!Object.values(InterestCategory).includes(interestData.category)) {
+    throw new ApiError(
+      400,
+      "Invalid interest category, must be one of: " +
+        Object.values(InterestCategory).join(", ")
+    );
+  }
+
+  const existingInterest = await prisma.interest.findUnique({
+    where: { category: interestData.category },
+  });
+
+  if (existingInterest) {
+    throw new ApiError(400, "Interest with the same category already exists");
+  }
+
+  const interest = await prisma.interest.create({
+    data: {
+      name: interestData.name,
+      image: interestData.image,
+      category: interestData.category as any, // Cast to enum type
+    },
+  });
+  return interest;
+};
+
+const getAllInterestsService = async () => {
+  const interests = await prisma.interest.findMany();
+  return interests;
+};
 
 export const adminService = {
-
   getTotalUsersService,
   deleteUserService,
   getTotalReportService,
   getMonthlyReportService,
   getweeklyReportService,
-  getDailyReportService
-
+  getDailyReportService,
+  createInterestService,
+  getAllInterestsService,
 };
