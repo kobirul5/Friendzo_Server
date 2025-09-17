@@ -4,6 +4,7 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { fileUploader } from "../../../helpars/fileUploader";
 import httpStatus from "http-status";
+import { chatService } from "./chat.service";
 
 // Upload chat images
 const uploadChatImages = catchAsync(async (req: Request, res: Response) => {
@@ -29,6 +30,26 @@ const uploadChatImages = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const shareMemoryThorwChat = catchAsync(async (req: Request, res: Response) => {
+  // Logic for sharing memory through chat
+
+  const result = await chatService.shareMemoryThorwChat({
+    userId: req.user.id,
+    friendsIds: req.body.friendsIds,
+    message: req.body.message,
+    imageUrls: req.body.imageUrls || [],
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Memory shared successfully",
+    data: result
+  });
+});
+
 export const ChatController = {
-  uploadChatImages
+  uploadChatImages,
+  shareMemoryThorwChat
 }; 

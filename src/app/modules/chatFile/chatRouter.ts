@@ -13,4 +13,10 @@ router.post(
   ChatController.uploadChatImages
 );
 
+router.post(
+  '/share-memory',
+  auth(),
+  ChatController.shareMemoryThorwChat
+);
+
 export const ChatRoutes = router; 

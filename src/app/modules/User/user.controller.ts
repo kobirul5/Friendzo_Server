@@ -50,7 +50,7 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
 
 const getUserProfile = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
-  const user = await userService.getUserProfile(userId);
+  const user = await userService.getSingleUser(userId);
   res.status(200).json({
     success: true,
     message: "User profile retrieved successfully!",

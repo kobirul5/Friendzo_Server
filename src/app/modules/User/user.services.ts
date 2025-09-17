@@ -16,6 +16,7 @@ import emailSender from "../../../shared/emailSender";
 import { registrationOtpTemplate } from "./registrationOtpTemplate";
 import { getRefferId } from "../../../helpars/generateRefferId";
 import { User } from "@prisma/client";
+import { deleteFile } from "../../../helpars/fileDelete";
 
 // const createUserIntoDb = async (payload: IUser) => {
 //   const { email, password, fcmToken, referredBy } = payload;
@@ -198,12 +199,9 @@ const updateUserProfile = async (
     throw new ApiError(404, "User not found");
   }
 
-  // If file exists, upload and set profileImage url
-  if (file) {
-    const uploadedImageUrl = await fileUploader.uploadToDigitalOcean(file);
-    updateData.profileImage = uploadedImageUrl.Location;
+  if (updateData.email) {
+    throw new ApiError(400, "Email cannot be updated");
   }
-
   if (updateData.interests && updateData.interests.length > 0) {
     // Validate interests against fixed array
 
@@ -227,6 +225,14 @@ const updateUserProfile = async (
           )}.`
       );
     }
+    const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+
+    // If file exists, upload and set profileImage url
+    if (file) {
+      const uploadedImageUrl = await fileUploader.uploadToDigitalOcean(file);
+      updateData.profileImage = uploadedImageUrl.Location;
+      
+    }
 
     // Update user profile with only provided fields
     const updatedUser = await prisma.user.update({
@@ -248,6 +254,14 @@ const updateUserProfile = async (
         interests: true,
       },
     });
+
+    if(!updatedUser){
+      throw new ApiError(400, "Failed to update user profile");
+    }
+
+    if (file && existingUser?.profileImage) {
+        await deleteFile.deleteFileFromDigitalOcean(existingUser.profileImage);
+      }
 
     return updatedUser;
   }
@@ -273,6 +287,12 @@ const getSingleUser = async (userId: string) => {
       lastName: true,
       profileImage: true,
       email: true,
+      phoneNumber: true,
+      gender: true,
+      about: true,
+      age: true,
+      memories: true,
+      event: true,
       interests: true, // string[]
     },
   });
@@ -288,7 +308,14 @@ const getSingleUser = async (userId: string) => {
     select: { id: true, name: true, image: true, category: true },
   });
 
-  return { ...user, interestsDetails };
+  const followrsCount = await prisma.follow.count({
+    where: { followingId: userId },
+  });
+  const followingsCount = await prisma.follow.count({
+    where: { followerId: userId },
+  });
+
+  return { ...user, interestsDetails, followrsCount, followingsCount };
 };
 
 export const userService = {

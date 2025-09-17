@@ -19,6 +19,7 @@ model User {
   fcmToken String?
   role     UserRole   @default(USER)
   status   UserStatus @default(INACTIVE)
+  age          Int?
 
   // 🔑 Referral fields
   referralCode String  @unique
