@@ -6,18 +6,71 @@ import ApiError from '../../../errors/ApiErrors';
 
 
 
- const getNearbyPeople = async (userId: string, lat: number, lng: number, radiusKm: number) => {
-  // Make sure user exists
+//  const getNearbyPeople = async (userId: string, lat: number, lng: number, radiusKm: number) => {
+//   // Make sure user exists
+//   const currentUser = await prisma.user.findUnique({
+//     where: { id: userId },
+//     select: { id: true },
+//   });
+
+//   if (!currentUser) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
+//   }
+
+//   // Get other users with coordinates
+//   const users = await prisma.user.findMany({
+//     where: {
+//       id: { not: userId },
+//       lat: { not: null },
+//       lng: { not: null },
+//     },
+//   });
+
+
+
+  
+//   // Filter by distance from (lat, lng)
+//  const nearbyUsers = users
+//   .map(user => {
+//     const { password, ...userWithoutPassword } = user;
+//     const distance = haversine({ lat, lng }, { lat: user.lat!, lng: user.lng! });
+//     return { ...userWithoutPassword, distanceInKm: +distance.toFixed(2) };
+//   })
+//   .filter(user => user.distanceInKm <= radiusKm);
+
+//   return nearbyUsers;
+// };
+
+
+
+ const getNearbyPeople = async (
+  userId: string,
+  lat?: number,
+  lng?: number,
+  radiusKm?: number
+) => {
+  // 1️ Check user exists
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true },
+    select: { id: true, lat: true, lng: true },
   });
 
   if (!currentUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
+  console.log("Current User:", currentUser);
 
-  // Get other users with coordinates
+  // 2️ Determine base coordinates (argument or user's DB coords)
+  const baseLat = lat ? lat : Number(currentUser.lat);
+  const baseLng = lng ? lng : Number(currentUser.lng);
+
+  console.log("Base Coordinates:", { baseLat, baseLng });
+
+  if (baseLat == null || baseLng == null) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "No valid coordinates found.");
+  }
+
+  // 3️ Fetch other users with valid coordinates
   const users = await prisma.user.findMany({
     where: {
       id: { not: userId },
@@ -26,18 +79,35 @@ import ApiError from '../../../errors/ApiErrors';
     },
   });
 
-  
-  // Filter by distance from (lat, lng)
- const nearbyUsers = users
-  .map(user => {
-    const { password, ...userWithoutPassword } = user;
-    const distance = haversine({ lat, lng }, { lat: user.lat!, lng: user.lng! });
-    return { ...userWithoutPassword, distanceInKm: +distance.toFixed(2) };
-  })
-  .filter(user => user.distanceInKm <= radiusKm);
+  // 4️ Calculate distance safely
+  const usersWithDistance = users
+    .map((user) => {
+      if (user.lat == null || user.lng == null) return null; // skip invalid coords
+
+      const { password, ...userWithoutPassword } = user as any;
+      const distance = haversine(
+        { lat: baseLat, lng: baseLng },
+        { lat: user.lat, lng: user.lng }
+      );
+
+      return { ...userWithoutPassword, distanceInKm: +distance.toFixed(2) };
+    })
+    .filter(Boolean); // remove null entries
+
+  // 5️ Apply radius filter if provided
+  let nearbyUsers = usersWithDistance;
+  if (radiusKm) {
+    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= radiusKm);
+  }
+
+  // 6️ Sort by nearest first
+  nearbyUsers.sort((a, b) => a.distanceInKm - b.distanceInKm);
 
   return nearbyUsers;
 };
+
+
+
 
 const getTodaysBuzz = async (userId: string) => {
   const todayStart = new Date();

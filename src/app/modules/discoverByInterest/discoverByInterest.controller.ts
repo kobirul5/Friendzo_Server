@@ -10,17 +10,8 @@ const getNearbyPeopleController = catchAsync(async (req: Request, res: Response)
 
   const lat = parseFloat(req.query.lat as string);
   const lng = parseFloat(req.query.lng as string);
-  const radiusKm = parseFloat(req.query.radiusKm as string || "10"); // default to 10km if not provided
+  const radiusKm = parseFloat(req.query.radiusKm as string ); // default to 10km if not provided
 
-
-
-  if (!userId) {
-    throw new Error("User not authenticated.");
-  }
-
-  if (isNaN(lat) || isNaN(lng)) {
-    throw new Error("Latitude and Longitude must be valid numbers.");
-  }
 
   const result = await discoverByInterestService.getNearbyPeople(userId, lat, lng, radiusKm);
 

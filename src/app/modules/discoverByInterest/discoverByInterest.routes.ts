@@ -7,6 +7,7 @@ const router = express.Router();
 
 
 router.get('/', auth(), discoverByInterestController.getNearbyPeopleController);
+
 router.get('/match', auth(), discoverByInterestController.getPeopleBySharedInterestsController);
 router.get('/today-buzz', auth(), discoverByInterestController.getTodaysBuzzController);
 
