@@ -145,19 +145,33 @@ const unfollowUserService = async (followerId: string, followingId: string) => {
 };
 
 
-const acceptOrRejectFollwershipRequestService = async (followerId: string, followingId: string, modeType: ModeType, status: RequestStatus) => {
+const acceptOrRejectFollwershipRequestService = async (userId: string, followId: string, modeType: ModeType, status: RequestStatus) => {
   // Check if follow relation exists
 
   const follow = await prisma.follow.findFirst({
     where: {
-      followerId,
-      followingId,
+      followerId: userId,
+      id: followId,
       modeType,
     },
   });
 
- if(status !== RequestStatus.ACCEPTED && status !== RequestStatus.REJECTED && status !== RequestStatus.PENDING){
-   throw new ApiError(httpStatus.BAD_REQUEST, "Invalid status. status should be ACCEPTED, REJECTED or PENDING");
+  if(!follow){
+    throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
+  }
+
+  if(follow.followerId === userId){
+    throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized to accept or reject this request");
+  }
+
+  if(follow.followingId !== userId){
+    throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized to accept or reject this request");
+  }
+
+  console.log(followId, follow.followingId)
+
+ if(status !== RequestStatus.ACCEPTED && status !== RequestStatus.REJECTED && status !== RequestStatus.CANCELED){
+   throw new ApiError(httpStatus.BAD_REQUEST, "Invalid status. status should be ACCEPTED, REJECTED or CANCELLED");
  }
 
   if (!follow) {

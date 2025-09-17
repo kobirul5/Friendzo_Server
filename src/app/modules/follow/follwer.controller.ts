@@ -75,10 +75,10 @@ const unfollowUser = catchAsync(async (req: Request, res: Response) => {
 
 
 const acceptOrRejectFollwershipRequest = catchAsync(async (req: Request, res: Response) => {
-  const followerId = req.user.id; 
+  const userId = req.user.id; 
   const {followId, modeType , status} = req.body;
 
-  const result = await follwerService.acceptOrRejectFollwershipRequestService(followerId, followId, modeType, status);
+  const result = await follwerService.acceptOrRejectFollwershipRequestService(userId, followId, modeType, status);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
