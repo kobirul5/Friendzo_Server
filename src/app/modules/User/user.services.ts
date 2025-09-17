@@ -15,6 +15,7 @@ import { jwtHelpers } from "../../../helpars/jwtHelpers";
 import emailSender from "../../../shared/emailSender";
 import { registrationOtpTemplate } from "./registrationOtpTemplate";
 import { getRefferId } from "../../../helpars/generateRefferId";
+import { User } from "@prisma/client";
 
 // const createUserIntoDb = async (payload: IUser) => {
 //   const { email, password, fcmToken, referredBy } = payload;
@@ -42,7 +43,7 @@ import { getRefferId } from "../../../helpars/generateRefferId";
 //       email,
 //       password: hashedPassword,
 //       referralCode: refID,
-      
+
 //       role: "USER",
 //       status: "ACTIVE",
 //       fcmToken,
@@ -97,7 +98,6 @@ import { getRefferId } from "../../../helpars/generateRefferId";
 //   };
 // };
 
-
 const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
   const { email, password, fcmToken, referredId } = payload;
 
@@ -108,23 +108,28 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
   }
 
   // Hash password
-  if (!password) throw new ApiError(httpStatus.BAD_REQUEST, "Password is required");
+  if (!password)
+    throw new ApiError(httpStatus.BAD_REQUEST, "Password is required");
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Generate unique referral code for the new user
   let newReferralCode = getRefferId();
   // Ensure uniqueness in DB
-  while (await prisma.user.findUnique({ where: { referralCode: newReferralCode } })) {
+  while (
+    await prisma.user.findUnique({ where: { referralCode: newReferralCode } })
+  ) {
     newReferralCode = getRefferId();
   }
 
   // Handle referral if a referral code was provided
   let referredByUserId: string | undefined;
   if (referredId) {
-    const referrer = await prisma.user.findUnique({ where: { referralCode: referredId } });
+    const referrer = await prisma.user.findUnique({
+      where: { referralCode: referredId },
+    });
     if (!referrer) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid referral code");
-  }
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid referral code");
+    }
     referredByUserId = referrer.id;
   }
 
@@ -141,7 +146,8 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
     },
   });
 
-  if (!newUser) throw new ApiError(httpStatus.BAD_REQUEST, "Failed to create user");
+  if (!newUser)
+    throw new ApiError(httpStatus.BAD_REQUEST, "Failed to create user");
 
   // Generate OTP
   const otp = Number(crypto.randomInt(1000, 9999));
@@ -179,10 +185,9 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
   };
 };
 
-
 const updateUserProfile = async (
   userId: string,
-  updateData: Partial<IUser>,
+  updateData: Partial<User>,
   file?: Express.Multer.File
 ) => {
   // Check if user exists
@@ -199,34 +204,58 @@ const updateUserProfile = async (
     updateData.profileImage = uploadedImageUrl.Location;
   }
 
-  // Update user profile with only provided fields
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      ...updateData,
-      updatedAt: new Date(),
-    },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      phoneNumber: true,
-      profileImage: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-      interests: true,
-    },
-  });
+  if (updateData.interests && updateData.interests.length > 0) {
+    // Validate interests against fixed array
 
-  return updatedUser;
+    const interests = await prisma.interest.findMany({
+      select: { name: true },
+    });
+
+    const CategoriesArray = interests.map((interest) => interest.name);
+
+    const invalidNames = updateData.interests.filter(
+      (name) =>
+        !CategoriesArray.includes(name as (typeof CategoriesArray)[number])
+    );
+
+    if (invalidNames.length > 0) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        `Invalid interest names: ${invalidNames.join(", ")}. ` +
+          `You must use one of the following names: ${CategoriesArray.join(
+            ", "
+          )}.`
+      );
+    }
+
+    // Update user profile with only provided fields
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...updateData,
+        updatedAt: new Date(),
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phoneNumber: true,
+        profileImage: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+        interests: true,
+      },
+    });
+
+    return updatedUser;
+  }
 };
 
 const getUserProfile = async (userId: string) => {
-  
   const user = await prisma.user.findUnique({
-    where: { id: userId }
+    where: { id: userId },
   });
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -234,9 +263,38 @@ const getUserProfile = async (userId: string) => {
   return user;
 };
 
+const getSingleUser = async (userId: string) => {
+  // 1️⃣ fetch user
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      profileImage: true,
+      email: true,
+      interests: true, // string[]
+    },
+  });
+
+  if (!user) throw new ApiError(404, "User not found");
+
+  const interestsDetails = await prisma.interest.findMany({
+    where: {
+      OR: user.interests.map((name) => ({
+        name: { equals: name, mode: "insensitive" },
+      })),
+    },
+    select: { id: true, name: true, image: true, category: true },
+  });
+
+  return { ...user, interestsDetails };
+};
+
 export const userService = {
   createUserIntoDb,
   updateUserProfile,
   getUserProfile,
+  getSingleUser,
   // deleteUserDocumentImage,
 };

@@ -217,7 +217,7 @@ const acceptOrRejectFollwershipRequestService = async (
 const getMyAllFriends = async (userId: string, type: string) => {
 
   if(type !== 'social' && type !== 'dating' && type !== 'all'){
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid type. type should be social, dating or all, type muste be social or dating or all");
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid type. type should be social, dating or all, type muste be social or dating");
   }
 
   let modeType : ModeType | undefined = undefined;

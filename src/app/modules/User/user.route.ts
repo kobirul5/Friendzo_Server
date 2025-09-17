@@ -17,5 +17,10 @@ router.put("/update-profile", auth(), fileUploader.uploadSingle, userController.
 router.get("/profile", auth(), userController.getUserProfile);
 
 
+router.get("/:id", auth(), userController.getSingleUser);
+
+// router.delete("/:id", auth(), userController.deleteUser);
+
+
 
 export const userRoutes = router;
