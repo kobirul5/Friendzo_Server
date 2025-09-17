@@ -159,8 +159,52 @@ const getTodaysBuzz = async (userId: string) => {
 };
 
 
+// const getPeopleBySharedInterests = async (userId: string) => {
+//   // Get current user's interests
+//   const currentUser = await prisma.user.findUnique({
+//     where: { id: userId },
+//     select: {
+//       id: true,
+//       interests: true,
+//     },
+//   });
+
+//   if (!currentUser) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
+//   }
+
+//   const currentUserInterests = currentUser.interests;
+
+//   if (!currentUserInterests || currentUserInterests.length === 0) {
+//     return []; // or throw an error if interests are required
+//   }
+
+//   // Get other users who share at least one interest
+//   const matchedUsers = await prisma.user.findMany({
+//     where: {
+//       id: { not: userId },
+//       interests: {
+//         hasSome: currentUserInterests,
+//       },
+//     },
+//     select: {
+//       id: true,
+//       firstName: true,
+//       lastName: true,
+//       profileImage: true,
+//       email: true,
+//       interests: true,
+//       gender: true,
+//       dob: true,
+//     },
+//   });
+
+//   return matchedUsers;
+// };
+
+
 const getPeopleBySharedInterests = async (userId: string) => {
-  // Get current user's interests
+  // 1️ Get current user's interests
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -179,7 +223,7 @@ const getPeopleBySharedInterests = async (userId: string) => {
     return []; // or throw an error if interests are required
   }
 
-  // Get other users who share at least one interest
+  // 2️ Get other users who share at least one interest
   const matchedUsers = await prisma.user.findMany({
     where: {
       id: { not: userId },
@@ -199,7 +243,29 @@ const getPeopleBySharedInterests = async (userId: string) => {
     },
   });
 
-  return matchedUsers;
+  // 3️ Calculate shared interests percentage
+  const usersWithMatchPercentage = matchedUsers.map((user) => {
+    const sharedCount = user.interests.filter((i) =>
+      currentUserInterests.includes(i)
+    ).length;
+
+    const matchPercentage =
+      currentUserInterests.length > 0
+        ? Math.round((sharedCount / currentUserInterests.length) * 100)
+        : 0;
+
+    return {
+      ...user,
+      sharedInterestPercentage: matchPercentage,
+    };
+  });
+
+  // Optional: sort by highest match first
+  usersWithMatchPercentage.sort(
+    (a, b) => b.sharedInterestPercentage - a.sharedInterestPercentage
+  );
+
+  return usersWithMatchPercentage;
 };
 
 
