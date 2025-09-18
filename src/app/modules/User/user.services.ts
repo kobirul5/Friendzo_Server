@@ -225,46 +225,47 @@ const updateUserProfile = async (
           )}.`
       );
     }
-    const existingUser = await prisma.user.findUnique({ where: { id: userId } });
-
-    // If file exists, upload and set profileImage url
-    if (file) {
-      const uploadedImageUrl = await fileUploader.uploadToDigitalOcean(file);
-      updateData.profileImage = uploadedImageUrl.Location;
-      
-    }
-
-    // Update user profile with only provided fields
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...updateData,
-        updatedAt: new Date(),
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        phoneNumber: true,
-        profileImage: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-        interests: true,
-      },
-    });
-
-    if(!updatedUser){
-      throw new ApiError(400, "Failed to update user profile");
-    }
-
-    if (file && existingUser?.profileImage) {
-        await deleteFile.deleteFileFromDigitalOcean(existingUser.profileImage);
-      }
-
-    return updatedUser;
   }
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  // If file exists, upload and set profileImage url
+  if (file) {
+    const uploadedImageUrl = await fileUploader.uploadToDigitalOcean(file);
+    updateData.profileImage = uploadedImageUrl.Location;
+  }
+
+  // Update user profile with only provided fields
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...updateData,
+      updatedAt: new Date(),
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phoneNumber: true,
+      profileImage: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+      interests: true,
+    },
+  });
+
+  if (!updatedUser) {
+    throw new ApiError(400, "Failed to update user profile");
+  }
+
+  if (file && existingUser?.profileImage) {
+    await deleteFile.deleteFileFromDigitalOcean(existingUser.profileImage);
+  }
+
+  return updatedUser;
 };
 
 const getUserProfile = async (userId: string) => {

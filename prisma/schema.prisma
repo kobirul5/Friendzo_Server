@@ -10,6 +10,7 @@ datasource db {
 model User {
   id           String  @id @default(auto()) @map("_id") @db.ObjectId
   profileImage String?
+  datingImage  String[] @default([])
   firstName    String?
   lastName     String?
   email        String  @unique
@@ -35,6 +36,8 @@ model User {
   gender         String?
   interestedGender      String[]  @default([])
   interests      String[]  @default([])
+  datingInterests String[]  @default([])
+  datingAbout     String?   @default("") 
 
   dob              DateTime?
   lat              Float?
@@ -66,10 +69,10 @@ model User {
   blockedUsers   Block[]  @relation("BlockerRelation")
   blockedByUsers Block[]  @relation("BlockedRelation")
 
-  // 🔔 Notifications where this user is the recipient
+  //  Notifications where this user is the recipient
   notificationsReceived Notification[] @relation("Notification_recipientId")
 
-  // 🔔 Notifications where this user is the sender
+  //  Notifications where this user is the sender
   notificationsSent Notification[] @relation("NotificationSender")
 
   @@map("users")

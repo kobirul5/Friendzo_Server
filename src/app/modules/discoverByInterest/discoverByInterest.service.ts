@@ -217,7 +217,33 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
-  const currentUserInterests = interest? [interest] :  currentUser.interests;
+   const currentUserInterests = interest? [interest] :  currentUser.interests;
+
+   if (currentUserInterests && currentUserInterests.length > 0) {
+    // Validate interests against fixed array
+
+    const interests = await prisma.interest.findMany({
+      select: { name: true },
+    });
+
+    const CategoriesArray = interests.map((interest) => interest.name);
+
+    const invalidNames = currentUserInterests.filter(
+      (name) =>
+        !CategoriesArray.includes(name as (typeof CategoriesArray)[number])
+    );
+
+    if (invalidNames.length > 0) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        `Invalid interest names: ${invalidNames.join(", ")}. ` +
+          `You must use one of the following names: ${CategoriesArray.join(
+            ", "
+          )}.`
+      );
+    }
+  }
+
 
   if (!currentUserInterests || currentUserInterests.length === 0) {
     return []; // or throw an error if interests are required
