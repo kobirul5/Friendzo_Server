@@ -71,6 +71,10 @@ model User {
   blockedUsers   Block[]  @relation("BlockerRelation")
   blockedByUsers Block[]  @relation("BlockedRelation")
 
+  purchases     GiftPurchase[] // যে user gift কিনেছে
+  sentGifts     GiftSend[]     @relation("GiftSender") // যে user gift পাঠিয়েছে
+  receivedGifts GiftSend[]     @relation("GiftReceiver") // যে user gift পেয়েছে
+
   //  Notifications where this user is the recipient
   notificationsReceived Notification[] @relation("Notification_recipientId")
 
@@ -281,13 +285,40 @@ model Notification {
 
 // Dating and Social modes
 model GiftCard {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  gender    String
-  category  GiftCategory
-  image     String
-  price     Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  gender       String
+  category     GiftCategory
+  image        String
+  price        Float
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  GiftPurchase GiftPurchase[]
+  GiftSend     GiftSend[]
+}
+
+model GiftPurchase {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId 
+  giftCardId String   @db.ObjectId
+  createdAt  DateTime @default(now())
+   updatedAt    DateTime       @updatedAt
+  // Relations
+  user     User     @relation(fields: [userId], references: [id])
+  giftCard GiftCard @relation(fields: [giftCardId], references: [id])
+}
+
+model GiftSend {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  giftCardId String   @db.ObjectId
+  createdAt  DateTime @default(now())
+   updatedAt    DateTime       @updatedAt
+
+  // Relations
+  sender   User     @relation("GiftSender", fields: [senderId], references: [id])
+  receiver User     @relation("GiftReceiver", fields: [receiverId], references: [id])
+  giftCard GiftCard @relation(fields: [giftCardId], references: [id])
 }
 
 enum GiftCategory {

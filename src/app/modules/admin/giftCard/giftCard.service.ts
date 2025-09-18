@@ -3,6 +3,7 @@ import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
 import { fileUploader } from "../../../../helpars/fileUploader";
 import { deleteFile } from "../../../../helpars/fileDelete";
+import { GiftCategory } from "@prisma/client";
 
 const createGiftCard = async ({ data, userId, imagesFile }: any) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -18,11 +19,17 @@ const createGiftCard = async ({ data, userId, imagesFile }: any) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Image is required.");
   }
 
+  if(data.category !== GiftCategory.ESSENTIAL && data.category !== GiftCategory.EXCLUSIVE && data.category !== GiftCategory.MAJESTIC){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid category. category must be one of: ESSENTIAL, EXCLUSIVE, MAJESTIC");
+  }
+
+
   // Only take  image
   const uploaded = await fileUploader.uploadToDigitalOcean(imagesFile);
 
   const dataToSave: any = {
     ...data,
+    price: parseFloat(data.price),
     image: uploaded.Location, // single string
   };
 
