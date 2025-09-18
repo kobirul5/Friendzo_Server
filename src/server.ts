@@ -1,10 +1,10 @@
 import { Server } from "http";
 import config from "./config";
 
-
 import prisma from "./shared/prisma";
 import app from "./app";
 import { setupWebSocket } from "./helpars/websocket";
+import { initiateSuperAdmin } from "./app/db/db";
 
 let server: Server;
 
@@ -13,6 +13,7 @@ async function startServer() {
     console.log("Server is listiening on port ", config.port);
   });
   setupWebSocket(server);
+  await initiateSuperAdmin();
 }
 
 async function main() {
@@ -21,7 +22,7 @@ async function main() {
     if (server) {
       server.close(() => {
         console.info("Server closed!");
-        restartServer(); 
+        restartServer();
       });
     } else {
       process.exit(1);

@@ -20,7 +20,7 @@ model User {
   role         UserRole   @default(USER)
   status       UserStatus @default(INACTIVE)
   age          Int?
-  address      String? @default("")
+  address      String?    @default("")
 
   // 🔑 Referral fields
   referralCode String  @unique
@@ -33,9 +33,9 @@ model User {
   isFaceVerified   Boolean   @default(false)
   otp              Int?
   expirationOtp    DateTime?
-  gender           String? @default("")
+  gender           String?   @default("")
   // dating 
-  interestedGender String  @default("")
+  interestedGender String    @default("")
   interests        String[]  @default([])
   datingInterests  String[]  @default([])
   datingAbout      String?   @default("")
@@ -277,6 +277,23 @@ model Notification {
   updatedAt DateTime @updatedAt
 
   @@map("notifications")
+}
+
+// Dating and Social modes
+model GiftCard {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  gender    String
+  category  GiftCategory
+  image     String
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum GiftCategory {
+  ESSENTIAL
+  EXCLUSIVE
+  MAJESTIC
 }
 
 enum NotificationType {
