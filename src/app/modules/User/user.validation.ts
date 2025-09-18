@@ -4,9 +4,7 @@ import { UserRole } from "@prisma/client";
 
 const CreateUserValidationSchema = z.object({
   email: z.string().email("Invalid email address").min(1, "Email is required"), // Ensure email is provided and is valid
-
   name: z.string().optional(),
-
   phoneNumber: z.string().optional().default(""),
 
   password: z
@@ -22,7 +20,7 @@ const UserLoginValidationSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters long")
     .nonempty("Password is required"),
-    // role:z.nativeEnum(UserRole)
+  // role:z.nativeEnum(UserRole)
 });
 
 const userUpdateSchema = z.object({
@@ -32,8 +30,16 @@ const userUpdateSchema = z.object({
   profession: z.string().optional(),
 });
 
+const updateDatingProfileSchema = z.object({
+  interestedGender: z.string().optional(),
+  datingInterests: z.array(z.string()).optional(),
+  datingAbout: z.string().optional(),
+});
+
+
 export const UserValidation = {
   CreateUserValidationSchema,
   UserLoginValidationSchema,
   userUpdateSchema,
+  updateDatingProfileSchema,
 };

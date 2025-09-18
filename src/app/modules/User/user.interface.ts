@@ -23,3 +23,10 @@ export interface IUser {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface UpdateDatingProfileInput {
+  interestedGender?: string;
+  datingInterests?: string[];
+  datingAbout?: string;
+  datingImage?: string[];
+}

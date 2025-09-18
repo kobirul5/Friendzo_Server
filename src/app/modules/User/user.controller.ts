@@ -1,34 +1,19 @@
-  import httpStatus from "http-status";
+import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { userService } from "./user.services";
 import { Request, Response } from "express";
-import pick from "../../../shared/pick";
-import { userFilterableFields } from "./user.costant";
-import { fileUploader } from "../../../helpars/fileUploader";
-import ApiError from "../../../errors/ApiErrors";
-import emailSender from "../../../shared/emailSender";
-import prisma from "../../../shared/prisma";
-import bcrypt from "bcrypt";
-import dayjs from "dayjs";
-import { IUser } from "./user.interface";
-
-
-
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
-     const result = await userService.createUserIntoDb(req.body);
+  const result = await userService.createUserIntoDb(req.body);
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
-    message: 'User registered successfully',
+    message: "User registered successfully",
     data: result,
   });
-
-  
 });
-
 
 const updateProfile = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
@@ -44,10 +29,6 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
-
-
-
 const getUserProfile = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const user = await userService.getSingleUser(userId);
@@ -57,7 +38,6 @@ const getUserProfile = catchAsync(async (req: Request, res: Response) => {
     data: user,
   });
 });
-
 
 const getSingleUser = catchAsync(async (req: Request, res: Response) => {
   const userId = req.params.id;
@@ -70,6 +50,30 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 
+//  updateDatingProfile
+
+const updateDatingProfile = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+
+  // Parse JSON from form-data
+  const updateData = JSON.parse(req.body.data);
+
+  // Multiple files
+  const filesObj = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+
+  // Get array for field 'images'
+  const files = filesObj?.images; // array or undefined
+
+
+  const user = await userService.updateDatingProfile(userId, updateData, files);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Dating profile updated successfully",
+    data: user,
+  });
+});
 
 // const deleteUserDocumentImage = catchAsync(async (req: Request, res: Response) => {
 //   const userId = req.params.id;
@@ -88,16 +92,11 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
 //   });
 // });
 
-
-
-
-
 export const userController = {
   createUser,
   updateProfile,
   getUserProfile,
   getSingleUser,
+  updateDatingProfile,
   // deleteUserDocumentImage,
-  
- 
 };

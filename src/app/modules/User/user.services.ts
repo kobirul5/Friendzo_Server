@@ -1,6 +1,6 @@
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
-import { IUser } from "./user.interface";
+import { IUser, UpdateDatingProfileInput } from "./user.interface";
 import * as bcrypt from "bcrypt";
 import config from "../../../config";
 import httpStatus from "http-status";
@@ -319,10 +319,202 @@ const getSingleUser = async (userId: string) => {
   return { ...user, interestsDetails, followrsCount, followingsCount };
 };
 
+//  const updateDatingProfile = async (
+//   userId: string,
+//   updateData: UpdateDatingProfileInput,
+//   files?: Express.Multer.File[] // multiple files
+// ) => {
+//   // 1. Check if user exists
+//   const user = await prisma.user.findUnique({
+//     where: { id: userId },
+//   });
+//   if (!user) {
+//     throw new ApiError(404, "User not found");
+//   }
+
+//   // 2. Prepare merged data
+//   const mergedData: any = {};
+
+//   // Overwrite string fields
+//   if (updateData.interestedGender) {
+//     mergedData.interestedGender = updateData.interestedGender;
+//   }
+
+//   if (updateData.datingAbout) {
+//     mergedData.datingAbout = updateData.datingAbout;
+//   }
+
+//    if (updateData.datingInterests && updateData.datingInterests.length > 0) {
+//     // Validate interests against fixed array
+
+//     const interests = await prisma.interest.findMany({
+//       select: { name: true },
+//     });
+
+//     const CategoriesArray = interests.map((interest) => interest.name);
+
+//     const invalidNames = updateData.datingInterests.filter(
+//       (name) =>
+//         !CategoriesArray.includes(name as (typeof CategoriesArray)[number])
+//     );
+
+//     if (invalidNames.length > 0) {
+//       throw new ApiError(
+//         httpStatus.BAD_REQUEST,
+//         `Invalid interest names: ${invalidNames.join(", ")}. ` +
+//           `You must use one of the following names: ${CategoriesArray.join(
+//             ", "
+//           )}.`
+//       );
+//     }
+//   }
+
+//   // Merge array fields
+//   if (updateData.datingInterests) {
+//     mergedData.datingInterests = [
+//       ...new Set([...(user.datingInterests || []), ...updateData.datingInterests]),
+//     ];
+//   }
+//   // Handle multiple file uploads for datingImage
+//   if (files && files.length > 0) {
+//     const uploadedUrls: string[] = [];
+
+//     for (const file of files) {
+//       const uploaded = await fileUploader.uploadToDigitalOcean(file);
+//       console.log("Uploaded file URL:", uploaded.Location);
+//       uploadedUrls.push(uploaded.Location);
+//     }
+
+//     mergedData.datingImage = [
+//       ...new Set([...(user.datingImage || []), ...uploadedUrls]),
+//     ];
+//   }
+
+//   // 3. Update user profile
+//   const updatedUser = await prisma.user.update({
+//     where: { id: userId },
+//     data: {
+//       ...mergedData,
+//       updatedAt: new Date(),
+//     },
+//     select: {
+//       id: true,
+//       datingAbout: true,
+//       datingInterests:true,
+//       datingImage: true,
+//       interestedGender: true,
+//       updatedAt: true,
+//     },
+//   });
+
+//   if (!updatedUser) {
+//     throw new ApiError(400, "Failed to update user profile");
+//   }
+
+//   return updatedUser;
+// };
+
+
+const updateDatingProfile = async (
+  userId: string,
+  updateData: UpdateDatingProfileInput,
+  files?: Express.Multer.File[] // multiple files, optional
+) => {
+  // 1. Check if user exists
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // 2. Prepare merged data
+  const mergedData: any = {};
+
+  // Overwrite string fields
+  if (updateData.interestedGender) {
+    // Prisma expects array, wrap single string
+    mergedData.interestedGender = updateData.interestedGender;
+  }
+
+  if (updateData.datingAbout) {
+    mergedData.datingAbout = updateData.datingAbout;
+  }
+
+  // Validate datingInterests if provided
+  if (updateData.datingInterests && updateData.datingInterests.length > 0) {
+    const interests = await prisma.interest.findMany({ select: { name: true } });
+    const CategoriesArray = interests.map(i => i.name);
+
+    const invalidNames = updateData.datingInterests.filter(
+      name => !CategoriesArray.includes(name)
+    );
+
+    if (invalidNames.length > 0) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        `Invalid interest names: ${invalidNames.join(", ")}. Must be one of: ${CategoriesArray.join(", ")}.`
+      );
+    }
+
+    // Merge array
+    mergedData.datingInterests = [
+      ...new Set([...(user.datingInterests || []), ...updateData.datingInterests])
+    ];
+  }
+
+  if(!files){
+    throw new ApiError(400, "No files uploaded");
+  }
+
+  // Handle multiple file uploads if files are provided
+  if (files && files.length > 0) {
+    const uploadedUrls: string[] = [];
+    for (const file of files) {
+      const uploaded = await fileUploader.uploadToDigitalOcean(file);
+      uploadedUrls.push(uploaded.Location);
+    }
+
+    mergedData.datingImage = [
+      ...new Set([...(user.datingImage || []), ...uploadedUrls])
+    ];
+  }
+
+
+  
+  // 3. Update user profile
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...mergedData,
+      updatedAt: new Date(),
+    },
+    select: {
+      id: true,
+      datingAbout: true,
+      datingInterests: true,
+      datingImage: true,
+      interestedGender: true,
+      updatedAt: true,
+    },
+  });
+
+
+  if (!updatedUser) {
+    await deleteFile.deleteFileFromDigitalOcean(mergedData.datingImage);
+    throw new ApiError(400, "Failed to update user profile");
+  }
+
+  return updatedUser;
+};
+
+
+
 export const userService = {
   createUserIntoDb,
   updateUserProfile,
   getUserProfile,
   getSingleUser,
+  updateDatingProfile,
   // deleteUserDocumentImage,
 };

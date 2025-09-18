@@ -7,7 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
-import streamifier from "streamifier"; 
+import streamifier from "streamifier";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -37,7 +37,6 @@ const upload = multer({ storage });
 const cloudinaryStorage = new CloudinaryStorage({
   cloudinary,
   params: {
-  
     public_id: (req, file) => `${Date.now()}_${file.originalname}`,
   },
 });
@@ -58,7 +57,9 @@ const updateProfile = upload.fields([
 ]);
 
 //  Fixed Cloudinary Upload (Now supports buffer)
-const uploadToCloudinary = async (file: Express.Multer.File): Promise<{ Location: string; public_id: string }> => {
+const uploadToCloudinary = async (
+  file: Express.Multer.File
+): Promise<{ Location: string; public_id: string }> => {
   if (!file) {
     throw new Error("File is required for uploading.");
   }

@@ -8,18 +8,17 @@ datasource db {
 }
 
 model User {
-  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
   profileImage String?
-  datingImage  String[] @default([])
   firstName    String?
   lastName     String?
-  email        String  @unique
-  about        String? @default("")
+  email        String     @unique
+  about        String?    @default("")
   phoneNumber  String?
   password     String?
-  fcmToken String?
-  role     UserRole   @default(USER)
-  status   UserStatus @default(INACTIVE)
+  fcmToken     String?
+  role         UserRole   @default(USER)
+  status       UserStatus @default(INACTIVE)
   age          Int?
 
   // 🔑 Referral fields
@@ -29,15 +28,17 @@ model User {
   referrals    User[]  @relation("UserReferrals")
   isDatingMode Boolean @default(false)
 
-  isVerified     Boolean   @default(false)
-  isFaceVerified Boolean   @default(false)
-  otp            Int?
-  expirationOtp  DateTime?
-  gender         String?
-  interestedGender      String[]  @default([])
-  interests      String[]  @default([])
-  datingInterests String[]  @default([])
-  datingAbout     String?   @default("") 
+  isVerified       Boolean   @default(false)
+  isFaceVerified   Boolean   @default(false)
+  otp              Int?
+  expirationOtp    DateTime?
+  gender           String?
+  // dating 
+  interestedGender String  @default("")
+  interests        String[]  @default([])
+  datingInterests  String[]  @default([])
+  datingAbout      String?   @default("")
+  datingImage      String[]  @default([])
 
   dob              DateTime?
   lat              Float?
@@ -81,7 +82,7 @@ model User {
 model Interest {
   id       String           @id @default(auto()) @map("_id") @db.ObjectId
   name     String           @unique
-  image    String?       @default("")
+  image    String?          @default("")
   category InterestCategory @unique
 }
 
@@ -101,7 +102,6 @@ enum InterestCategory {
   MEDITATION
   GAMING
 }
-
 
 model Memory {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
