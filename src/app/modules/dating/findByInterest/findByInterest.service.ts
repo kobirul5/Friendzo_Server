@@ -9,6 +9,8 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
     select: {
       id: true,
       interests: true,
+      gender: true,
+      interestedGender: true,
     },
   });
 
@@ -53,6 +55,7 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
     where: {
       id: { not: userId },
       isDatingMode: true,
+      gender: currentUser.interestedGender,
       interests: {
         hasSome: currentUserInterests,
       },
@@ -63,6 +66,7 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
       lastName: true,
       profileImage: true,
       email: true,
+      address: true,
       interests: true,
       gender: true,
       dob: true,

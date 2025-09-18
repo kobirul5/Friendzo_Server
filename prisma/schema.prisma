@@ -20,6 +20,7 @@ model User {
   role         UserRole   @default(USER)
   status       UserStatus @default(INACTIVE)
   age          Int?
+  address      String? @default("")
 
   // 🔑 Referral fields
   referralCode String  @unique
@@ -32,7 +33,7 @@ model User {
   isFaceVerified   Boolean   @default(false)
   otp              Int?
   expirationOtp    DateTime?
-  gender           String?
+  gender           String? @default("")
   // dating 
   interestedGender String  @default("")
   interests        String[]  @default([])
