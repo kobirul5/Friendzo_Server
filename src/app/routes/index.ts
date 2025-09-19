@@ -16,6 +16,8 @@ import { findByInterestRoutes } from "../modules/dating/findByInterest/findByInt
 import { giftCardRoutes } from "../modules/admin/giftCard/giftCard.routes";
 import { coinsRoutes } from "../modules/admin/coins/coins.routes";
 import { giftRoutes } from "../modules/dating/gift/gift.routes";
+import path from "path";
+import { datingCoinsRoutes } from "../modules/dating/coins/coins.routes";
 
 // import { ReviewRoutes } from "../modules/review/review.route";
 
@@ -91,6 +93,10 @@ const moduleRoutes = [
   {
     path: "/coins",
     route: coinsRoutes
+  },
+  {
+    path: "/dating-coins",
+    route: datingCoinsRoutes
   }
  
   // {

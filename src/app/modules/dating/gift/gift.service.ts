@@ -105,6 +105,8 @@ const getGiftCardList = async ({
   return result;
 };
 
+
+
 export const giftService = {
   buyGiftCard,
   getGiftCardList,
