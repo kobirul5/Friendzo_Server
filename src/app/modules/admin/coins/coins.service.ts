@@ -2,33 +2,50 @@
 import httpStatus from 'http-status';
 import prisma from '../../../../shared/prisma';
 import ApiError from '../../../../errors/ApiErrors';
+import { fileUploader } from '../../../../helpars/fileUploader';
+import { deleteFile } from '../../../../helpars/fileDelete';
 
 
-const createIntoDb = async (data: any, userId: string) => {
-  const {coinAmount,price} = data;
+const coinsCreate = async ({ data, userId, imagesFile }: any) => { 
+
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found')
+  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+
+  if (user.role !== "ADMIN")
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "Unauthorized! Only Admin can create!"
+    );
+
+  if (!imagesFile) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Image is required.");
   }
 
-  if (user.role !== 'ADMIN') {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized! Only Admin can create!')
+  if(!data.price && data.coinAmount){
+    throw new ApiError(httpStatus.BAD_REQUEST, "price and totalAmount is required.");
   }
-
-if (!coinAmount || !price) {
-  throw new ApiError(httpStatus.BAD_REQUEST, 'coinAmount and price are required');
-}
   
-  const result = await prisma.coins.create({
-    data: {
-      coinAmount,
-      price,
-    },
-  });
-  return result;
+
+  // Only take  image
+  const uploaded = await fileUploader.uploadToDigitalOcean(imagesFile);
+
+  const dataToSave: any = {
+    ...data,
+    price: parseFloat(data.price),
+    image: uploaded.Location, // single string
+  };
 
 
+  const created = await prisma.coins.create({ data: dataToSave });
+  console.log("created", created);
+  if (!created) {
+    await deleteFile.deleteFileFromDigitalOcean(uploaded.Location);
+    throw new ApiError(500, "Failed to create fashion.");
+  }
+
+  return created;
 };
+
 
 const getListFromDb = async () => {
   
@@ -74,7 +91,7 @@ const deleteItemFromDb = async (id: string) => {
 ;
 
 export const coinsService = {
-createIntoDb,
+coinsCreate,
 getListFromDb,
 getByIdFromDb,
 updateIntoDb,

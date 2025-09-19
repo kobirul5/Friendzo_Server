@@ -208,8 +208,41 @@ const getSingleUser = async (userId: string) => {
       lastName: true,
       profileImage: true,
       email: true,
+      totalCoins: true,
       phoneNumber: true,
       gender: true,
+      purchases:{
+        select:{
+          id: true,
+          giftCategory: true,
+          giftCard: {
+            select:{
+              gender: true,
+              category: true,
+              image: true,
+              price: true
+            }
+          },
+          createdAt: true,
+          updatedAt : true
+        }
+      },
+      receivedGifts:{
+        select:{
+          id: true,
+          giftCategory: true,
+          giftCard: {
+            select:{
+              gender: true,
+              category: true,
+              image: true,
+              price: true
+            }
+          },
+          createdAt: true,
+          updatedAt : true
+        }
+      },
       about: true,
       age: true,
       memories: true,

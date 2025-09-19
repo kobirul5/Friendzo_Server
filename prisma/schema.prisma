@@ -288,6 +288,7 @@ model Notification {
 
 model Coins {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  image      String
   coinAmount String
   price      Float
   createdAt  DateTime @default(now())
@@ -313,23 +314,25 @@ enum Gender {
 }
 
 model GiftPurchase {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String   @db.ObjectId
-  giftCardId String   @db.ObjectId
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  // Relations
-  user       User     @relation(fields: [userId], references: [id])
-  giftCard   GiftCard @relation(fields: [giftCardId], references: [id])
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String       @db.ObjectId
+  giftCardId   String       @db.ObjectId
+  giftCategory GiftCategory
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  // Relations 
+  user         User         @relation(fields: [userId], references: [id])
+  giftCard     GiftCard     @relation(fields: [giftCardId], references: [id])
 }
 
 model GiftSend {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  senderId   String   @db.ObjectId
-  receiverId String   @db.ObjectId
-  giftCardId String   @db.ObjectId
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  senderId     String       @db.ObjectId
+  receiverId   String       @db.ObjectId
+  giftCategory GiftCategory
+  giftCardId   String       @db.ObjectId
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   // Relations
   sender   User     @relation("GiftSender", fields: [senderId], references: [id])

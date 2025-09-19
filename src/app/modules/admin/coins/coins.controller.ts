@@ -4,8 +4,14 @@ import catchAsync from '../../../../shared/catchAsync';
 import sendResponse from '../../../../shared/sendResponse';
 
 const createCoins = catchAsync(async (req, res) => {
-  const userId = req.user.id;
-  const result = await coinsService.createIntoDb(req.body, userId);
+  const data = JSON.parse(req.body.data);
+    const userId = req.user.id;
+    const imagesFile = req.file as any;
+    const result = await coinsService.coinsCreate({
+      data,
+      userId,
+      imagesFile,
+    });
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,

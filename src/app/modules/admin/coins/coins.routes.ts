@@ -4,12 +4,14 @@ import { coinsValidation } from './coins.validation';
 import auth from '../../../middlewares/auth';
 import validateRequest from '../../../middlewares/validateRequest';
 import { UserRole } from '@prisma/client';
+import { fileUploader } from '../../../../helpars/fileUploader';
 
 const router = express.Router();
 
 router.post(
 '/',
 auth(UserRole.ADMIN),
+ fileUploader.uploadFile,
 // validateRequest(coinsValidation.createSchema),
 coinsController.createCoins,
 );

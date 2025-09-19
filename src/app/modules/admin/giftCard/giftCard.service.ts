@@ -19,12 +19,26 @@ const createGiftCard = async ({ data, userId, imagesFile }: any) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Image is required.");
   }
 
-  if(data.category !== GiftCategory.ESSENTIAL && data.category !== GiftCategory.EXCLUSIVE && data.category !== GiftCategory.MAJESTIC){
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid category. category must be one of: ESSENTIAL, EXCLUSIVE, MAJESTIC");
+  if (
+    data.category !== GiftCategory.ESSENTIAL &&
+    data.category !== GiftCategory.EXCLUSIVE &&
+    data.category !== GiftCategory.MAJESTIC
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid category. category must be one of: ESSENTIAL, EXCLUSIVE, MAJESTIC"
+    );
   }
 
-  if(data.gender !== Gender.HIM && data.gender !== Gender.HER && data.gender !== Gender.EVERYONE){
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid gender. gender must be one of: HIM, HER, EVERYONE");
+  if (
+    data.gender !== Gender.HIM &&
+    data.gender !== Gender.HER &&
+    data.gender !== Gender.EVERYONE
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid gender. gender must be one of: HIM, HER, EVERYONE"
+    );
   }
 
   // Only take  image
@@ -36,7 +50,6 @@ const createGiftCard = async ({ data, userId, imagesFile }: any) => {
     image: uploaded.Location, // single string
   };
 
-
   const created = await prisma.giftCard.create({ data: dataToSave });
   if (!created) {
     await deleteFile.deleteFileFromDigitalOcean(uploaded.Location);
@@ -46,9 +59,55 @@ const createGiftCard = async ({ data, userId, imagesFile }: any) => {
   return created;
 };
 
+//  buy gift card
+
+const buyGiftCard = async ({ data, userId }: any) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+
+  if (
+    data.giftCategory !== GiftCategory.ESSENTIAL &&
+    data.giftCategory !== GiftCategory.EXCLUSIVE &&
+    data.giftCategory !== GiftCategory.MAJESTIC
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid category. category must be one of: ESSENTIAL, EXCLUSIVE, MAJESTIC"
+    );
+  }
+
+  const giftCard = await prisma.giftCard.findUnique({
+    where: { id: data.giftCardId, category: data.giftCategory },
+  });
+  if (!giftCard)
+    throw new ApiError(httpStatus.NOT_FOUND, "GiftCard not found! With this Id and giftCategory");
+
+
+  if(user.totalCoins < giftCard.price) throw new ApiError(httpStatus.BAD_REQUEST, "You don't have enough coins to buy this gift card!");
+
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      totalCoins: user.totalCoins - giftCard.price,
+    },
+  });
 
 
 
+  const result = await prisma.giftPurchase.create({
+    data: {
+      userId: user.id,
+      giftCardId: giftCard.id,
+      giftCategory: giftCard.category,
+    },
+    select: {
+      giftCard:true
+    }
+  });
+
+  return result;
+};
 
 const getListFromDb = async () => {
   const result = await prisma.giftCard.findMany();
@@ -89,6 +148,7 @@ const deleteItemFromDb = async (id: string) => {
 };
 export const giftCardService = {
   createGiftCard,
+  buyGiftCard,
   getListFromDb,
   getByIdFromDb,
   updateIntoDb,

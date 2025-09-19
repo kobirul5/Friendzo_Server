@@ -21,6 +21,23 @@ const createGiftCard = catchAsync(async (req, res) => {
   });
 });
 
+const buyGiftCard = catchAsync(async (req, res) => {
+  const data = req.body
+  const userId = req.user.id;
+  const result = await giftCardService.buyGiftCard({
+    data,
+    userId
+  });
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "GiftCard created successfully",
+    data: result,
+  });
+})
+
+
+
 const getGiftCardList = catchAsync(async (req, res) => {
   const result = await giftCardService.getListFromDb();
   sendResponse(res, {
@@ -63,6 +80,7 @@ const deleteGiftCard = catchAsync(async (req, res) => {
 
 export const giftCardController = {
   createGiftCard,
+  buyGiftCard,
   getGiftCardList,
   getGiftCardById,
   updateGiftCard,
