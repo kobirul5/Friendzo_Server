@@ -182,7 +182,6 @@ const acceptOrRejectFollwershipRequestService = async (
     );
   }
 
-  console.log(followId, follow.followingId);
 
   if (
     status !== RequestStatus.ACCEPTED &&

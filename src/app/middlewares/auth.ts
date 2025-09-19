@@ -15,7 +15,6 @@ const auth = (...roles: string[]) => {
     next: NextFunction
   ) => {
     try {
-      console.log("request body",req.body)
       const token = req.headers.authorization;
 
       if (!token) {

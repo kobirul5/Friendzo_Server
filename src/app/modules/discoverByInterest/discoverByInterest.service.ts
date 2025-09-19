@@ -3,6 +3,7 @@ import httpStatus from 'http-status';
 import prisma from '../../../shared/prisma';
 import { haversine } from '../../../shared/haversine';
 import ApiError from '../../../errors/ApiErrors';
+import { UserRole } from '@prisma/client';
 
 
 
@@ -58,13 +59,12 @@ import ApiError from '../../../errors/ApiErrors';
   if (!currentUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
-  console.log("Current User:", currentUser);
+
 
   // 2️ Determine base coordinates (argument or user's DB coords)
   const baseLat = lat ? lat : Number(currentUser.lat);
   const baseLng = lng ? lng : Number(currentUser.lng);
 
-  console.log("Base Coordinates:", { baseLat, baseLng });
 
   if (baseLat == null || baseLng == null) {
     throw new ApiError(httpStatus.BAD_REQUEST, "No valid coordinates found.");
@@ -76,6 +76,7 @@ import ApiError from '../../../errors/ApiErrors';
       id: { not: userId },
       lat: { not: null },
       lng: { not: null },
+      role: {not: UserRole.ADMIN},
     },
   });
 
@@ -140,6 +141,7 @@ const getTodaysBuzz = async (userId: string) => {
     lng: {
       not: null,       
     },
+    role: {not: UserRole.ADMIN},
   },
     select: {
       id: true,
@@ -253,6 +255,7 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
   const matchedUsers = await prisma.user.findMany({
     where: {
       id: { not: userId },
+      role: {not: UserRole.ADMIN},
       interests: {
         hasSome: currentUserInterests,
       },
@@ -263,6 +266,7 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
       lastName: true,
       profileImage: true,
       email: true,
+      role: true,
       interests: true,
       gender: true,
       dob: true,

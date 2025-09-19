@@ -9,7 +9,7 @@ const createBlockBetweenUsers  = async ({blockedUserId, blockerId}: {blockedUser
   const findBlockedUser = await prisma.user.findUnique({
     where: { id: blockedUserId },
   });
-  console.log(blockerId,findBlockedUser);
+
 
   if (!findBlockedUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "Blocked user not found");

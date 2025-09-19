@@ -24,7 +24,7 @@ const shareMemoryThorwChat = async ({
   }
 
   // Check if the friend exists
-  console.log(friendsIds);
+
   for (const friendId of friendsIds) {
     const friend = await prisma.user.findUnique({ where: { id: friendId } });
 
