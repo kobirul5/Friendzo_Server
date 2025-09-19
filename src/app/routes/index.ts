@@ -18,6 +18,7 @@ import { coinsRoutes } from "../modules/admin/coins/coins.routes";
 import { giftRoutes } from "../modules/dating/gift/gift.routes";
 import path from "path";
 import { datingCoinsRoutes } from "../modules/dating/coins/coins.routes";
+import { paymentsRoutes } from "../modules/payments/payments.routes";
 
 // import { ReviewRoutes } from "../modules/review/review.route";
 
@@ -97,6 +98,10 @@ const moduleRoutes = [
   {
     path: "/dating-coins",
     route: datingCoinsRoutes
+  },
+  {
+    path: "/payment",
+    route: paymentsRoutes
   }
  
   // {

@@ -358,6 +358,19 @@ enum NotificationType {
   BLOCK
 }
 
+model Payment {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+  senderId          String        @db.ObjectId
+  amount          Float
+  currency        String        @default("USD")
+  method          PaymentMethod
+  paymentMethodId String
+  status          PaymentStatus @default(PENDING)
+  transactionId   String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
 enum ModeType {
   DATING
   SOCIAL
@@ -370,9 +383,14 @@ enum RequestStatus {
   CANCELED
 }
 
-// enum PaymentStatus {
-//   PENDING
-//   COMPLETED
-//   REFUNDED
-//   REQUIRES_CAPTURE
-// }
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  REFUNDED
+  REQUIRES_CAPTURE
+}
