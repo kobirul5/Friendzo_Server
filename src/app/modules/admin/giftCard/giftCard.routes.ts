@@ -14,7 +14,6 @@ router.post(
   giftCardController.createGiftCard
 );
 
-router.post("/buy-gift-card", auth(), giftCardController.buyGiftCard);
 
 router.get("/", auth(), giftCardController.getGiftCardList);
 

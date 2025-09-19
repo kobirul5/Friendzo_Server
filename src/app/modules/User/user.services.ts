@@ -211,38 +211,6 @@ const getSingleUser = async (userId: string) => {
       totalCoins: true,
       phoneNumber: true,
       gender: true,
-      purchases:{
-        select:{
-          id: true,
-          giftCategory: true,
-          giftCard: {
-            select:{
-              gender: true,
-              category: true,
-              image: true,
-              price: true
-            }
-          },
-          createdAt: true,
-          updatedAt : true
-        }
-      },
-      receivedGifts:{
-        select:{
-          id: true,
-          giftCategory: true,
-          giftCard: {
-            select:{
-              gender: true,
-              category: true,
-              image: true,
-              price: true
-            }
-          },
-          createdAt: true,
-          updatedAt : true
-        }
-      },
       about: true,
       age: true,
       memories: true,
@@ -268,11 +236,64 @@ const getSingleUser = async (userId: string) => {
   const followingsCount = await prisma.follow.count({
     where: { followerId: userId },
   });
+  const gifts = await getGifts(userId);
 
-  return { ...user, interestsDetails, followrsCount, followingsCount };
+  return { ...user, interestsDetails, followrsCount, followingsCount, gifts};
+};
+
+// get gifts
+const getGifts = async (userId: string) => {
+  // 1. Purchases groupBy
+  const purchases = await prisma.giftPurchase.groupBy({
+    by: ["giftCardId"],
+    where: { userId },
+    _count: { giftCardId: true },
+  });
+
+  // Purchases giftCard details
+  const purchaseGiftCards = await prisma.giftCard.findMany({
+    where: { id: { in: purchases.map((p) => p.giftCardId) } },
+  });
+
+  const purchasesData = purchases.map((p) => {
+    const giftCard = purchaseGiftCards.find((gc) => gc.id === p.giftCardId);
+    return {
+      giftCardId: p.giftCardId,
+      count: p._count.giftCardId,
+      giftCard,
+    };
+  });
+
+  // 2. Received groupBy
+  const received = await prisma.giftSend.groupBy({
+    by: ["giftCardId"],
+    where: { receiverId: userId },
+    _count: { giftCardId: true },
+  });
+
+  // Received giftCard details
+  const receivedGiftCards = await prisma.giftCard.findMany({
+    where: { id: { in: received.map((r) => r.giftCardId) } },
+  });
+
+  const receivedData = received.map((r) => {
+    const giftCard = receivedGiftCards.find((gc) => gc.id === r.giftCardId);
+    return {
+      giftCardId: r.giftCardId,
+      count: r._count.giftCardId,
+      giftCard,
+    };
+  });
+
+  // 3. Final response
+  return{
+     purchases: purchasesData,
+      received: receivedData,
+  }
 };
 
 
+//  update dating profile
 const updateDatingProfile = async (
   userId: string,
   updateData: UpdateDatingProfileInput,
