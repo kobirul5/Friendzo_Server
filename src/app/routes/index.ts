@@ -14,6 +14,7 @@ import { discoverByInterestRoutes } from "../modules/discoverByInterest/discover
 import { ChatRoutes } from "../modules/chatFile/chatRouter";
 import { findByInterestRoutes } from "../modules/dating/findByInterest/findByInterest.routes";
 import { giftCardRoutes } from "../modules/admin/giftCard/giftCard.routes";
+import { coinsRoutes } from "../modules/admin/coins/coins.routes";
 
 // import { ReviewRoutes } from "../modules/review/review.route";
 
@@ -81,6 +82,10 @@ const moduleRoutes = [
   {
     path: "/gift-card",
     route: giftCardRoutes
+  },
+  {
+    path: "/coins",
+    route: coinsRoutes
   }
  
   // {

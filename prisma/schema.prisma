@@ -35,6 +35,7 @@ model User {
   expirationOtp    DateTime?
   gender           String?   @default("")
   // dating 
+  totalCoins       Float     @default(0)
   interestedGender String    @default("")
   interests        String[]  @default([])
   datingInterests  String[]  @default([])
@@ -284,9 +285,18 @@ model Notification {
 }
 
 // Dating and Social modes
+
+model Coins {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  coinAmount String
+  price      Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 model GiftCard {
   id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  gender       String
+  gender       Gender         @default(HIM)
   category     GiftCategory
   image        String
   price        Float
@@ -296,15 +306,21 @@ model GiftCard {
   GiftSend     GiftSend[]
 }
 
+enum Gender {
+  HIM
+  HER
+  EVERYONE
+}
+
 model GiftPurchase {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String   @db.ObjectId 
+  userId     String   @db.ObjectId
   giftCardId String   @db.ObjectId
   createdAt  DateTime @default(now())
-   updatedAt    DateTime       @updatedAt
+  updatedAt  DateTime @updatedAt
   // Relations
-  user     User     @relation(fields: [userId], references: [id])
-  giftCard GiftCard @relation(fields: [giftCardId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+  giftCard   GiftCard @relation(fields: [giftCardId], references: [id])
 }
 
 model GiftSend {
@@ -313,7 +329,7 @@ model GiftSend {
   receiverId String   @db.ObjectId
   giftCardId String   @db.ObjectId
   createdAt  DateTime @default(now())
-   updatedAt    DateTime       @updatedAt
+  updatedAt  DateTime @updatedAt
 
   // Relations
   sender   User     @relation("GiftSender", fields: [senderId], references: [id])

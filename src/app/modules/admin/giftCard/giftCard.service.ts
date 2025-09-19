@@ -3,7 +3,7 @@ import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
 import { fileUploader } from "../../../../helpars/fileUploader";
 import { deleteFile } from "../../../../helpars/fileDelete";
-import { GiftCategory } from "@prisma/client";
+import { Gender, GiftCategory } from "@prisma/client";
 
 const createGiftCard = async ({ data, userId, imagesFile }: any) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -23,6 +23,9 @@ const createGiftCard = async ({ data, userId, imagesFile }: any) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid category. category must be one of: ESSENTIAL, EXCLUSIVE, MAJESTIC");
   }
 
+  if(data.gender !== Gender.HIM && data.gender !== Gender.HER && data.gender !== Gender.EVERYONE){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid gender. gender must be one of: HIM, HER, EVERYONE");
+  }
 
   // Only take  image
   const uploaded = await fileUploader.uploadToDigitalOcean(imagesFile);
