@@ -147,7 +147,9 @@ model Event {
 enum UserStatus {
   ACTIVE
   INACTIVE
+  BLOCKED
 }
+
 
 enum UserRole {
   USER

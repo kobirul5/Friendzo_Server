@@ -142,6 +142,22 @@ const getMyAllFollwingRequest = catchAsync(async (req: Request, res: Response) =
   });
 });
 
+
+const getAllSuggestedUsers = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id; 
+  const { type } = req.params;
+
+  const result = await follwerService.getAllSuggestedUsers({userId, type});
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Suggested users retrieved successfully',
+    data: result,
+  });
+});
+
+
 export const follwerController = {
   createFollwer,
   getMyFollowersAndFollowingCount,
@@ -152,5 +168,6 @@ export const follwerController = {
   getMyAllFriends,
   getMyAllFollwerRequest,
   getMyAllFollwingRequest,
-  unfollowDatingUser
+  unfollowDatingUser,
+  getAllSuggestedUsers
 };

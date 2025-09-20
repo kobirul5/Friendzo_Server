@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
-import { ModeType, RequestStatus } from "@prisma/client";
+import { ModeType, RequestStatus, UserStatus } from "@prisma/client";
 
 const createFollowerAndFollowingService = async (payload: {
   userId: string;
@@ -376,6 +376,93 @@ const getMyAllFollwingRequest = async ({userId, type}: {userId: string, type: st
 
 }
 
+//  getAllSuggestedUsers
+
+const getAllSuggestedUsers = async ({
+  userId,
+  type,
+}: {
+  userId: string;
+  type: string;
+}) => {
+  if (type !== 'social' && type !== 'dating') {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      'Invalid type. Type must be "social" or "dating"'
+    );
+  }
+
+  const modeType: ModeType = type === 'social' ? ModeType.SOCIAL : ModeType.DATING;
+
+  // 1️ Get the current user
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { interests: true, lat: true, lng: true },
+  });
+
+  if (!currentUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // 2️ Get all users except blocked & self
+  const users = await prisma.user.findMany({
+    where: {
+      id: { not: userId },
+      isDatingMode: type === 'dating' ? true : undefined,
+      blockedByUsers: { none: { blockerId: userId } }, // users who blocked me
+       blockedUsers: { none: { blockerId: userId } },   // users I blocked
+      status: UserStatus.ACTIVE, // ignore inactive or blocked users
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      profileImage: true,
+      address: true,
+      interests: true,
+      createdAt: true,
+      lat: true,
+      lng: true,
+    },
+  });
+
+  // 3️ Sort users
+  const suggestedUsers = users
+    .map(user => {
+      let score = 0;
+
+      // Interest match score
+      const commonInterests = user.interests.filter(i => currentUser.interests.includes(i));
+      score += commonInterests.length * 10;
+
+      // Optional: proximity score (simple distance formula)
+      if (user.lat && user.lng && currentUser.lat && currentUser.lng) {
+        const distance = Math.sqrt(
+          (user.lat - currentUser.lat) ** 2 + (user.lng - currentUser.lng) ** 2
+        );
+        score += 1 / (distance + 0.01); // closer users get slightly higher score
+      }
+
+      // New user boost
+      const isNew =
+        new Date().getTime() - new Date(user.createdAt).getTime() <
+        7 * 24 * 60 * 60 * 1000; // 1 week
+      if (isNew) score += 5;
+
+      return { ...user, score };
+    })
+    .sort((a, b) => b.score - a.score); // descending
+
+  return suggestedUsers.map(user => ({
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    profileImage: user.profileImage,
+    address: user.address,
+    interests: user.interests,
+  }));
+};
+
 
 export const follwerService = {
   createFollowerAndFollowingService,
@@ -387,5 +474,6 @@ export const follwerService = {
   acceptOrRejectFollwershipRequestService,
   getMyAllFriends,
   getMyAllFollwerRequest,
-  getMyAllFollwingRequest
+  getMyAllFollwingRequest,
+  getAllSuggestedUsers,
 };

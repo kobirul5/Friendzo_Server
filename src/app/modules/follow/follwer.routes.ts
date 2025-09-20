@@ -18,5 +18,6 @@ router.post("/accept-or-reject", auth(), follwerController.acceptOrRejectFollwer
 router.get("/friends/:type", auth(), follwerController.getMyAllFriends);
 router.get("/follwer-request/:type", auth(), follwerController.getMyAllFollwerRequest);
 router.get("/follwing-request/:type", auth(), follwerController.getMyAllFollwingRequest);
+router.get("/suggested-user/:type", auth(), follwerController.getAllSuggestedUsers);
 
 export const follwerRoutes = router;
