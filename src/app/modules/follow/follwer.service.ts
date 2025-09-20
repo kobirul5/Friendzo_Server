@@ -4,13 +4,13 @@ import ApiError from "../../../errors/ApiErrors";
 import { ModeType, RequestStatus } from "@prisma/client";
 
 const createFollowerAndFollowingService = async (payload: {
+  userId: string;
   followerId: string;
-  followingId: string;
   modeType: ModeType;
 }) => {
-  const { followerId, followingId, modeType } = payload;
+  const { userId, followerId, modeType } = payload;
 
-  if (followerId === followingId) {
+  if (userId === followerId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "You cannot follow yourself");
   }
 
@@ -22,7 +22,7 @@ const createFollowerAndFollowingService = async (payload: {
   }
 
   const following = await prisma.user.findUnique({
-    where: { id: followingId },
+    where: { id: followerId , },
   });
 
   if (!following) {
@@ -33,7 +33,7 @@ const createFollowerAndFollowingService = async (payload: {
   const alreadyFollowing = await prisma.follow.findFirst({
     where: {
       followerId,
-      followingId,
+      followingId: userId,
       modeType,
     },
   });
@@ -53,7 +53,7 @@ const createFollowerAndFollowingService = async (payload: {
     data: {
       followerId,
       modeType,
-      followingId,
+      followingId: userId,
     },
   });
 
@@ -156,10 +156,20 @@ const acceptOrRejectFollwershipRequestService = async (
 ) => {
   // Check if follow relation exists
 
+  if (
+    status !== RequestStatus.ACCEPTED &&
+    status !== RequestStatus.CANCELED
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid status. status should be ACCEPTED or CANCELLED"
+    );
+  }
+
   const follow = await prisma.follow.findFirst({
     where: {
-      followerId: userId,
       id: followId,
+      followerId: userId,
       modeType,
     },
   });
@@ -183,16 +193,7 @@ const acceptOrRejectFollwershipRequestService = async (
   }
 
 
-  if (
-    status !== RequestStatus.ACCEPTED &&
-    status !== RequestStatus.REJECTED &&
-    status !== RequestStatus.CANCELED
-  ) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Invalid status. status should be ACCEPTED, REJECTED or CANCELLED"
-    );
-  }
+  
 
   if (!follow) {
     throw new Error("Follow relationship not found");
@@ -310,7 +311,40 @@ const getMyAllFollwerRequest = async ({userId, type}: {userId: string, type: str
 
 
 const getMyAllFollwingRequest = async ({userId, type}: {userId: string, type: string}) => {
-  
+
+  if(type !== 'social' && type !== 'dating'){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid type. type should be social, dating, type muste be social or dating");
+  }
+
+  let modeType : ModeType | undefined = undefined;
+  if(type === 'social'){
+    modeType = ModeType.SOCIAL;
+  }else if(type === 'dating'){
+    modeType = ModeType.DATING;
+  }
+
+  const follwingRequests = await prisma.follow.findMany({
+    where: {
+      followerId: userId,
+      requestStatus: RequestStatus.PENDING,
+      modeType
+    },
+    include: {
+      following: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          profileImage: true,
+          address: true
+        },
+      },
+    },
+  })
+
+
+  return follwingRequests
+
 }
 
 

@@ -264,7 +264,7 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
 
    const following = await prisma.follow.findMany({
     where: {
-      followerId: userId
+      followerId: userId,
     },
     select: { followingId: true },
   });

@@ -6,10 +6,10 @@ import { Request, Response } from 'express';
 
 const createFollwer = catchAsync(async (req:Request, res:Response) => {
 
-  const followerId = req.user.id; 
-  const { followingId, modeType } = req.body;
+  const userId = req.user.id; 
+  const { followerId, modeType } = req.body;
 
-  const result = await follwerService.createFollowerAndFollowingService({followerId, followingId, modeType});
+  const result = await follwerService.createFollowerAndFollowingService({userId, followerId, modeType});
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,

@@ -59,8 +59,8 @@ model User {
   EventLike     EventLike[]
   MemoryLike    MemoryLike[]
   Comment       Comment[]
-  followers     Follow[]     @relation("Followers")
-  following     Follow[]     @relation("Following")
+  followers     Follow[]     @relation("Followers") // amy jare follw kortase,
+  following     Follow[]     @relation("Following") // ami jare follw kortasi
   SentChats     Chat[]       @relation("SentChats")
   ReceivedChats Chat[]       @relation("ReceivedChats")
 
