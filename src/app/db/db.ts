@@ -17,6 +17,7 @@ export const initiateSuperAdmin = async () => {
     referralCode = getRefferId();
   }
 
+
   const payload: any = {
     email: "admin@gmail.com",
     password: hashedPassword,

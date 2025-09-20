@@ -15,12 +15,10 @@ import { ChatRoutes } from "../modules/chatFile/chatRouter";
 import { findByInterestRoutes } from "../modules/dating/findByInterest/findByInterest.routes";
 import { giftCardRoutes } from "../modules/admin/giftCard/giftCard.routes";
 import { coinsRoutes } from "../modules/admin/coins/coins.routes";
-import { giftRoutes } from "../modules/dating/gift/gift.routes";
-import path from "path";
+import { datingGiftRoutes} from "../modules/dating/gift/gift.routes";
 import { datingCoinsRoutes } from "../modules/dating/coins/coins.routes";
 import { paymentsRoutes } from "../modules/payments/payments.routes";
 
-// import { ReviewRoutes } from "../modules/review/review.route";
 
 
 
@@ -89,7 +87,7 @@ const moduleRoutes = [
   },
   {
     path:"/gift",
-    route: giftRoutes
+    route: datingGiftRoutes
   },
   {
     path: "/coins",
@@ -103,11 +101,7 @@ const moduleRoutes = [
     path: "/payment",
     route: paymentsRoutes
   }
- 
-  // {
-  //   path: "/reviews",
-  //   route: ReviewRoutes,
-  // }
+
 
 ];
 
