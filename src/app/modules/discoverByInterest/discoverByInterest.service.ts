@@ -262,10 +262,20 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
     return []; // or throw an error if interests are required
   }
 
+   const following = await prisma.follow.findMany({
+    where: {
+      followerId: userId
+    },
+    select: { followingId: true },
+  });
+
+  const excludedIds = following.map(f => f.followingId);
+ 
+
   // 2️ Get other users who share at least one interest
   const matchedUsers = await prisma.user.findMany({
     where: {
-      id: { not: userId },
+      id: { not: { in: [userId, ...excludedIds] } },
       role: {not: UserRole.ADMIN},
       interests: {
         hasSome: currentUserInterests,
