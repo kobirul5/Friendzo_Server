@@ -317,12 +317,12 @@ const getMyAllFollwerRequest = async ({userId, type}: {userId: string, type: str
 
   const follwerRequests = await prisma.follow.findMany({
     where: {
-      followingId: userId,
+      followerId: userId,
       requestStatus: RequestStatus.PENDING,
       modeType
     },
     include: {
-      follower: {
+      following: {
         select: {
           id: true,
           firstName: true,
@@ -354,12 +354,12 @@ const getMyAllFollwingRequest = async ({userId, type}: {userId: string, type: st
 
   const follwingRequests = await prisma.follow.findMany({
     where: {
-      followerId: userId,
+      followingId: userId,
       requestStatus: RequestStatus.PENDING,
       modeType
     },
     include: {
-      following: {
+      follower: {
         select: {
           id: true,
           firstName: true,

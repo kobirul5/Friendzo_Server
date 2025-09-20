@@ -198,11 +198,11 @@ model Comment {
 model Follow {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  follower      User          @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  follower      User          @relation("Following", fields: [followerId], references: [id], onDelete: Cascade) // ami jare follw kortasi
   followerId    String        @db.ObjectId
   requestStatus RequestStatus @default(PENDING)
   modeType      ModeType      @default(SOCIAL)
-  following     User          @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+  following     User          @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade) // amy jare follw kortase,
   followingId   String        @db.ObjectId
 
   createdAt DateTime @default(now())
