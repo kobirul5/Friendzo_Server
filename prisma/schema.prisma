@@ -72,9 +72,12 @@ model User {
   blockedUsers   Block[]  @relation("BlockerRelation")
   blockedByUsers Block[]  @relation("BlockedRelation")
 
-  purchases     GiftPurchase[] // যে user gift কিনেছে
-  sentGifts     GiftSend[]     @relation("GiftSender") // যে user gift পাঠিয়েছে
-  receivedGifts GiftSend[]     @relation("GiftReceiver") // যে user gift পেয়েছে
+  purchases     GiftPurchase[]
+  sentGifts     GiftSend[]     @relation("GiftSender")
+  receivedGifts GiftSend[]     @relation("GiftReceiver")
+  sendCoin     CoinGiftSend[] @relation("CoinGiftSender")
+  receivedCoin CoinGiftSend[] @relation("CoinGiftReceiver")
+  payments      Payment[]
 
   //  Notifications where this user is the recipient
   notificationsReceived Notification[] @relation("Notification_recipientId")
@@ -295,6 +298,19 @@ model Coins {
   updatedAt  DateTime @updatedAt
 }
 
+model CoinGiftSend {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  totalCoin     Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  sender   User  @relation("CoinGiftSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User  @relation("CoinGiftReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
 model GiftCard {
   id           String         @id @default(auto()) @map("_id") @db.ObjectId
   gender       Gender         @default(HIM)
@@ -360,7 +376,7 @@ enum NotificationType {
 
 model Payment {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
-  senderId          String        @db.ObjectId
+  senderId        String        @db.ObjectId
   amount          Float
   currency        String        @default("USD")
   method          PaymentMethod
@@ -369,6 +385,7 @@ model Payment {
   transactionId   String?       @unique
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+  sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
 }
 
 enum ModeType {

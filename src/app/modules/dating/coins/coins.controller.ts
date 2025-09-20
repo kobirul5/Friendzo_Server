@@ -4,6 +4,7 @@ import ApiError from '../../../../errors/ApiErrors';
 import prisma from '../../../../shared/prisma';
 import catchAsync from '../../../../shared/catchAsync';
 import sendResponse from '../../../../shared/sendResponse';
+import { paymentsService } from '../../payments/payments.service';
 
 
 
@@ -20,12 +21,36 @@ const getCoinList = catchAsync(async (req, res) => {
 });
 
 const buyCoin = catchAsync(async (req, res) => {
-  const data = req.body;
-  const userId = req.user.id;
-  const result = await coinsService.buyCoin({
-    data,
-    userId,
+ const { paymentMethod, coinId, currency } = req.body;
+   const userId = req.user.id;
+ 
+   const result = await paymentsService.createCoinPurchase({
+     paymentMethod,
+     coinId,
+     currency,
+     userId,
+   });
+   
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Coins buy successfully",
+    data: result,
   });
+});
+
+const sendCoin  = catchAsync(async (req, res) => {
+ const { paymentMethod, coinId, currency, recipients } = req.body;
+   const userId = req.user.id;
+ 
+   const result = await paymentsService.createGiftCoinPurchase({
+     paymentMethod,
+     coinId,
+     currency,
+     recipients,
+     userId,
+   });
+   
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
@@ -37,5 +62,6 @@ const buyCoin = catchAsync(async (req, res) => {
 
 export const coinsController = {
   getCoinList,
-  buyCoin
+  buyCoin,
+  sendCoin
 };
