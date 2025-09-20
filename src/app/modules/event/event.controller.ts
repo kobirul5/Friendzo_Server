@@ -25,7 +25,7 @@ import ApiError from '../../../errors/ApiErrors';
     throw new Error("Invalid JSON in 'data' field.");
   }
 
-  const { description, address, lat, lng } = parsedData;
+  const { description, startedAt, address, lat, lng } = parsedData;
 
   // Step 2: Upload image to DigitalOcean Spaces
   const uploadedFile = await fileUploader.uploadToDigitalOcean(file);
@@ -36,6 +36,7 @@ import ApiError from '../../../errors/ApiErrors';
     image: imageUrl,
     description,
     address,
+    createdAt: new Date(startedAt),
     lat: parseFloat(lat),
     lng: parseFloat(lng),
     userId,

@@ -9,6 +9,7 @@ const createEvent = async (data: {
   image: string;
   description: string;
   address?: string;
+  createdAt: Date;
   lat: number;
   lng: number;
   userId: string;
