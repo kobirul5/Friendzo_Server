@@ -15,5 +15,7 @@ router.delete("/unfollow", auth(), follwerController.unfollowUser);
 // 
 router.post("/accept-or-reject", auth(), follwerController.acceptOrRejectFollwershipRequest);
 router.get("/friends/:type", auth(), follwerController.getMyAllFriends);
+router.get("/follwer-request/:type", auth(), follwerController.getMyAllFollwerRequest);
+router.get("follwing-request/:type", auth(), follwerController.getMyAllFollwingRequest);
 
 export const follwerRoutes = router;

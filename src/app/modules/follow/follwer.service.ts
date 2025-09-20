@@ -249,6 +249,7 @@ const getMyAllFriends = async (userId: string, type: string) => {
           firstName: true,
           lastName: true,
           profileImage: true,
+          address: true
         },
       },
       following: {
@@ -257,6 +258,7 @@ const getMyAllFriends = async (userId: string, type: string) => {
           firstName: true,
           lastName: true,
           profileImage: true,
+          address: true
         },
       },
     },
@@ -270,6 +272,48 @@ const getMyAllFriends = async (userId: string, type: string) => {
 };
 
 
+const getMyAllFollwerRequest = async ({userId, type}: {userId: string, type: string}) => {
+
+  if(type !== 'social' && type !== 'dating'){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid type. type should be social, dating, type muste be social or dating");
+  }
+
+  let modeType : ModeType | undefined = undefined;
+  if(type === 'social'){
+    modeType = ModeType.SOCIAL;
+  }else if(type === 'dating'){
+    modeType = ModeType.DATING;
+  }
+
+  const follwerRequests = await prisma.follow.findMany({
+    where: {
+      followingId: userId,
+      requestStatus: RequestStatus.PENDING,
+      modeType
+    },
+    include: {
+      follower: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          profileImage: true,
+          address: true
+        },
+      },
+    },
+  })
+
+
+  return follwerRequests
+}
+
+
+const getMyAllFollwingRequest = async ({userId, type}: {userId: string, type: string}) => {
+  
+}
+
+
 export const follwerService = {
   createFollowerAndFollowingService,
   unfollowUserService,
@@ -278,4 +322,6 @@ export const follwerService = {
   getMyFollowingService,
   acceptOrRejectFollwershipRequestService,
   getMyAllFriends,
+  getMyAllFollwerRequest,
+  getMyAllFollwingRequest
 };

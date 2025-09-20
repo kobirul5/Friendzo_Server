@@ -102,6 +102,34 @@ const getMyAllFriends = catchAsync(async (req: Request, res: Response) => {
 });
 
 
+const getMyAllFollwerRequest = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id; 
+  const { type } = req.params;
+
+  const result = await follwerService.getMyAllFollwerRequest({userId, type});
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Follower requests retrieved successfully',
+    data: result,
+  });
+});
+
+const getMyAllFollwingRequest = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id; 
+  const { type } = req.params;
+
+  const result = await follwerService.getMyAllFollwingRequest({userId, type});
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Following requests retrieved successfully',
+    data: result,
+  });
+});
+
 export const follwerController = {
   createFollwer,
   getMyFollowersAndFollowingCount,
@@ -110,4 +138,6 @@ export const follwerController = {
   getMyAllFollowing,
   acceptOrRejectFollwershipRequest,
   getMyAllFriends,
+  getMyAllFollwerRequest,
+  getMyAllFollwingRequest
 };

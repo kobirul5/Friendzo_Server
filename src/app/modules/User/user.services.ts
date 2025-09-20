@@ -15,7 +15,7 @@ import { jwtHelpers } from "../../../helpars/jwtHelpers";
 import emailSender from "../../../shared/emailSender";
 import { registrationOtpTemplate } from "./registrationOtpTemplate";
 import { getRefferId } from "../../../helpars/generateRefferId";
-import { User } from "@prisma/client";
+import { Gender, User } from "@prisma/client";
 import { deleteFile } from "../../../helpars/fileDelete";
 
 
@@ -117,6 +117,22 @@ const updateUserProfile = async (
   });
   if (!user) {
     throw new ApiError(404, "User not found");
+  }
+
+  if(updateData.referralCode){
+    throw new ApiError(400, "Referral code cannot be updated");
+  }
+
+  if(updateData.referredBy){
+    throw new ApiError(400, "Referred by cannot be updated");
+  }
+
+  if (updateData.password) {
+    throw new ApiError(400, "Password cannot be updated");
+  }
+
+  if(updateData.interestedGender !== Gender.EVERYONE && updateData.interestedGender !== Gender.HIM && updateData.interestedGender !== Gender.HER){
+    throw new ApiError(400, "Invalid gender. gender must be one of: HIM, HER, EVERYONE");
   }
 
   if (updateData.email) {
