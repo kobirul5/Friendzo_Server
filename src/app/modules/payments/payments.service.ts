@@ -3,7 +3,7 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import { getTransactionId } from "../../../helpars/getTransactionId";
 import stripe from "../../../shared/stripe";
-import { PaymentStatus } from "@prisma/client";
+import { PaymentStatus, User } from "@prisma/client";
 
 const createCoinPurchase = async ({
   paymentMethod,
@@ -60,7 +60,6 @@ const createCoinPurchase = async ({
       );
     }
 
-
     const result = await prisma.$transaction(async (tx) => {
       // Create payment record
       const payment = await tx.payment.create({
@@ -78,7 +77,7 @@ const createCoinPurchase = async ({
       await tx.user.update({
         where: { id: userId },
         data: {
-        totalCoins: {
+          totalCoins: {
             increment: parseInt(coinPackage.coinAmount),
           },
         },
@@ -97,12 +96,11 @@ const createCoinPurchase = async ({
   }
 };
 
-
 const createGiftCoinPurchase = async ({
   paymentMethod,
   coinId,
-  userId,          // sender
-  recipients,      // array of gifted users
+  userId, // sender
+  recipients, // array of gifted users
   currency = "USD",
 }: {
   paymentMethod: string;
@@ -117,7 +115,21 @@ const createGiftCoinPurchase = async ({
   if (!sender) throw new ApiError(httpStatus.NOT_FOUND, "Sender not found");
 
   const coinPackage = await prisma.coins.findUnique({ where: { id: coinId } });
-  if (!coinPackage) throw new ApiError(httpStatus.NOT_FOUND, "Coin package not found");
+  if (!coinPackage)
+    throw new ApiError(httpStatus.NOT_FOUND, "Coin package not found");
+
+  for (const recipientId of recipients) {
+    const recipient = await prisma.user.findUnique({
+      where: { id: recipientId },
+    });
+
+    if (!recipient) {
+      throw new ApiError(
+        httpStatus.NOT_FOUND,
+        `Recipient with ID ${recipientId} not found`
+      );
+    }
+  }
 
   // Total cost = coin price * number of recipients
   const totalAmount = coinPackage.price * recipients.length;
@@ -140,7 +152,10 @@ const createGiftCoinPurchase = async ({
     });
 
     if (paymentIntent.status !== "succeeded") {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Payment failed. Please try again.");
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Payment failed. Please try again."
+      );
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -183,12 +198,14 @@ const createGiftCoinPurchase = async ({
     return result;
   } catch (error: any) {
     console.error("Gift coin purchase error:", error);
-    throw new ApiError(httpStatus.BAD_REQUEST, error.message || "Gift coin purchase failed");
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      error.message || "Gift coin purchase failed"
+    );
   }
 };
 
-
 export const paymentsService = {
   createCoinPurchase,
-  createGiftCoinPurchase
+  createGiftCoinPurchase,
 };
