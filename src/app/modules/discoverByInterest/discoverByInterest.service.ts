@@ -70,13 +70,24 @@ import { UserRole } from '@prisma/client';
     throw new ApiError(httpStatus.BAD_REQUEST, "No valid coordinates found.");
   }
 
+   const following = await prisma.follow.findMany({
+    where: {
+      followerId: userId
+    },
+    select: { followingId: true },
+  });
+
+  const excludedIds = following.map(f => f.followingId);
+ 
+
   // 3️ Fetch other users with valid coordinates
   const users = await prisma.user.findMany({
     where: {
-      id: { not: userId },
+      id: { notIn: [...excludedIds, userId] },
       lat: { not: null },
       lng: { not: null },
       role: {not: UserRole.ADMIN},
+      
     },
   });
 

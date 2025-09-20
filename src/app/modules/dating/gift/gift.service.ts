@@ -180,6 +180,12 @@ interface SendGiftInput {
       throw new Error("Not enough gifts purchased to send");
     }
 
+    if(receiverIds.length === 0){
+      throw new Error("No friends selected to send gift");
+    }
+
+
+
     // 2. Pick gifts to delete
     const giftsToDelete = await tx.giftPurchase.findMany({
       where: { userId: senderId, giftCardId },
