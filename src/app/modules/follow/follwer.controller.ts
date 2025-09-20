@@ -63,7 +63,19 @@ const unfollowUser = catchAsync(async (req: Request, res: Response) => {
   const followerId = req.user.id; 
   const {followingId} = req.body;
 
-  const result = await follwerService.unfollowUserService(followerId, followingId);
+  const result = await follwerService.unfollowUserSocialService(followerId, followingId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Unfollowed successfully',
+    data: result,
+  });
+});
+const unfollowDatingUser = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const {followId }= req.body
+  const result = await follwerService.unfollowUserDatingService(followId, userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -139,5 +151,6 @@ export const follwerController = {
   acceptOrRejectFollwershipRequest,
   getMyAllFriends,
   getMyAllFollwerRequest,
-  getMyAllFollwingRequest
+  getMyAllFollwingRequest,
+  unfollowDatingUser
 };

@@ -125,12 +125,13 @@ const getMyFollowingService = async (userId: string) => {
   };
 };
 
-const unfollowUserService = async (followerId: string, followingId: string) => {
+const unfollowUserSocialService = async (followerId: string, followingId: string) => {
   // Check if follow relation exists
   const follow = await prisma.follow.findFirst({
     where: {
       followerId,
       followingId,
+      modeType: ModeType.SOCIAL,
     },
   });
 
@@ -140,6 +141,33 @@ const unfollowUserService = async (followerId: string, followingId: string) => {
 
   // Delete the follow relation
   await prisma.follow.delete({
+    where: {
+      id: follow.id,
+    },
+  });
+
+  return { unfollowed: true };
+};
+
+const unfollowUserDatingService = async (followId: string , userId: string) => {
+  // Check if follow relation exists
+  const follow = await prisma.follow.findFirst({
+    where: {
+     id:followId,
+    //  modeType: ModeType.DATING
+    },
+  });
+
+  if (!follow) {
+    throw new ApiError(httpStatus.NOT_FOUND,"Follow relationship not found");
+  }
+
+  if (follow.followerId !== userId) {
+    throw new ApiError(httpStatus.BAD_REQUEST,"You are not authorized to unfollow this user");
+  }
+
+  // Delete the follow relation
+  await prisma.follow.deleteMany({
     where: {
       id: follow.id,
     },
@@ -162,17 +190,18 @@ const acceptOrRejectFollwershipRequestService = async (
   ) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Invalid status. status should be ACCEPTED or CANCELLED"
+      "Invalid status. status should be ACCEPTED or CANCELED"
     );
   }
 
   const follow = await prisma.follow.findFirst({
     where: {
       id: followId,
-      followerId: userId,
-      modeType,
+      // followingId: userId,
+      // modeType,
     },
   });
+
 
   if (!follow) {
     throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
@@ -199,9 +228,9 @@ const acceptOrRejectFollwershipRequestService = async (
     throw new Error("Follow relationship not found");
   }
 
-  const acceptOrReject = await prisma.follow.update({
+  const acceptOrReject = await prisma.follow.updateMany({
     where: {
-      id: follow.id,
+      id: followId,
       modeType,
     },
     data: {
@@ -209,7 +238,7 @@ const acceptOrRejectFollwershipRequestService = async (
     },
   });
 
-  return acceptOrReject;
+  return {massage: "Successfully updated"};
 };
 
 
@@ -350,7 +379,8 @@ const getMyAllFollwingRequest = async ({userId, type}: {userId: string, type: st
 
 export const follwerService = {
   createFollowerAndFollowingService,
-  unfollowUserService,
+  unfollowUserSocialService,
+  unfollowUserDatingService,
   getMyFollowerService,
   getMyNetworkCount,
   getMyFollowingService,

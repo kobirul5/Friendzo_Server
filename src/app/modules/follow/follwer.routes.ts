@@ -11,6 +11,7 @@ router.get("/count", auth(), follwerController.getMyFollowersAndFollowingCount);
 router.get("/follower", auth(), follwerController.getMyAllFollwer);
 router.get("/following", auth(), follwerController.getMyAllFollowing);
 router.delete("/unfollow", auth(), follwerController.unfollowUser);
+router.delete("/unfollow-dating", auth(), follwerController.unfollowDatingUser);
 
 // 
 router.post("/accept-or-reject", auth(), follwerController.acceptOrRejectFollwershipRequest);
