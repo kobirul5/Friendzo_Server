@@ -1,5 +1,4 @@
 import httpStatus from 'http-status';
-
 import { adminService } from './admin.service';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
@@ -91,6 +90,8 @@ const getInterests = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+
 export const adminController = {
   getTotalUsers,
   deleteUser,

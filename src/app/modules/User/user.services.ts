@@ -202,7 +202,7 @@ const updateUserProfile = async (
   }
 
   return updatedUser;
-};
+};    
 
 const getUserProfile = async (userId: string) => {
   const user = await prisma.user.findUnique({

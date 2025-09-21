@@ -7,6 +7,7 @@ import httpStatus from "http-status";
 import ApiError from "../../errors/ApiErrors";
 import { jwtHelpers } from "../../helpars/jwtHelpers";
 import prisma from "../../shared/prisma";
+import { UserStatus } from "@prisma/client";
 
 const auth = (...roles: string[]) => {
   return async (
@@ -36,9 +37,9 @@ const auth = (...roles: string[]) => {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
       }
 
-      // if (user.status === "BLOCKED") {
-      //   throw new ApiError(httpStatus.FORBIDDEN, "Your account is blocked!");
-      // }
+      if (user.status === UserStatus.BLOCKED) {
+        throw new ApiError(httpStatus.FORBIDDEN, "Your account is blocked!");
+      }
 
       req.user = verifiedUser as JwtPayload;
 

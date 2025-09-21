@@ -75,8 +75,8 @@ model User {
   purchases     GiftPurchase[]
   sentGifts     GiftSend[]     @relation("GiftSender")
   receivedGifts GiftSend[]     @relation("GiftReceiver")
-  sendCoin     CoinGiftSend[] @relation("CoinGiftSender")
-  receivedCoin CoinGiftSend[] @relation("CoinGiftReceiver")
+  sendCoin      CoinGiftSend[] @relation("CoinGiftSender")
+  receivedCoin  CoinGiftSend[] @relation("CoinGiftReceiver")
   payments      Payment[]
 
   //  Notifications where this user is the recipient
@@ -149,7 +149,6 @@ enum UserStatus {
   INACTIVE
   BLOCKED
 }
-
 
 enum UserRole {
   USER
@@ -304,13 +303,13 @@ model CoinGiftSend {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   senderId   String   @db.ObjectId
   receiverId String   @db.ObjectId
-  totalCoin     Float
+  totalCoin  Float
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   // Relations
-  sender   User  @relation("CoinGiftSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User  @relation("CoinGiftReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender   User @relation("CoinGiftSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("CoinGiftReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 }
 
 model GiftCard {
@@ -380,6 +379,7 @@ model Payment {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
   senderId        String        @db.ObjectId
   amount          Float
+  totalCoins      Float         @default(0)
   currency        String        @default("USD")
   method          PaymentMethod
   paymentMethodId String
@@ -388,6 +388,13 @@ model Payment {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model TotalVisitors {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @default("") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum ModeType {

@@ -177,11 +177,11 @@ interface SendGiftInput {
     });
 
     if (purchasedCount < receiverIds.length) {
-      throw new Error("Not enough gifts purchased to send");
+      throw new ApiError(httpStatus.BAD_REQUEST, "Not enough gifts purchased to send");
     }
 
     if(receiverIds.length === 0){
-      throw new Error("No friends selected to send gift");
+      throw new ApiError(httpStatus.BAD_REQUEST,"No friends selected to send gift");
     }
 
 
@@ -194,7 +194,7 @@ interface SendGiftInput {
     });
 
     if (giftsToDelete.length < receiverIds.length) {
-      throw new Error("Not enough gifts available to send.");
+      throw new ApiError(httpStatus.BAD_REQUEST,"Not enough gifts available to send.");
     }
 
     // 3. Delete from purchases

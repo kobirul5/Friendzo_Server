@@ -18,6 +18,7 @@ import { coinsRoutes } from "../modules/admin/coins/coins.routes";
 import { datingGiftRoutes} from "../modules/dating/gift/gift.routes";
 import { datingCoinsRoutes } from "../modules/dating/coins/coins.routes";
 import { paymentsRoutes } from "../modules/payments/payments.routes";
+import { userInfoRoutes } from "../modules/admin/userInfo/userInfo.routes";
 
 
 
@@ -100,6 +101,11 @@ const moduleRoutes = [
   {
     path: "/payment",
     route: paymentsRoutes
+  },
+  // dahboard
+  {
+    path: "/dashboard",
+    route: userInfoRoutes
   }
 
 

@@ -14,6 +14,7 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
     },
   });
 
+  console.log(currentUser,"------------------")
   if (!currentUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
