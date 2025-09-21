@@ -10,6 +10,7 @@ export interface IGetAllOptions {
   sortBy?: string; // Field to sort by
   sortOrder?: "asc" | "desc"; // Sorting order
   search?: string; // Optional search keyword
+  status?: UserStatus;
 }
 
 const dashboardStats = async (options: IGetAllOptions = {}, userId: string) => {
@@ -144,8 +145,9 @@ const dashboardStats = async (options: IGetAllOptions = {}, userId: string) => {
   };
 };
 const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
-  const { skip, limit, sortBy, sortOrder, page } =
-    paginationHelper.calculatePagination(options);
+
+
+  const { skip, limit, sortBy, sortOrder, page} = paginationHelper.calculatePagination(options);
 
   // Find requesting user
   const user = await prisma.user.findUnique({
@@ -153,21 +155,26 @@ const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
   });
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+    
   }
 
-  // Search filter (only active users)
+  if(options.status && options.status !== UserStatus.ACTIVE && options.status !== UserStatus.INACTIVE && options.status !== UserStatus.BLOCKED){
+    throw new ApiError(httpStatus.BAD_REQUEST, `Invalid status provided!, status should be ${UserStatus.ACTIVE}, ${UserStatus.INACTIVE} or ${UserStatus.BLOCKED} `);
+  }
+
+  // Search filter (filter by status if provided, default to ACTIVE)
   const searchFilter: Prisma.UserWhereInput = {
-    status: UserStatus.ACTIVE,
-    ...(options.search
-      ? {
-          OR: [
-            { firstName: { contains: options.search, mode: "insensitive" } },
-            { lastName: { contains: options.search, mode: "insensitive" } },
-            { email: { contains: options.search, mode: "insensitive" } },
-          ],
-        }
-      : {}),
-  };
+  ...(options.status ? { status: options.status } : {}), // filter only if status is provided
+  ...(options.search
+    ? {
+        OR: [
+          { firstName: { contains: options.search, mode: "insensitive" } },
+          { lastName: { contains: options.search, mode: "insensitive" } },
+          { email: { contains: options.search, mode: "insensitive" } },
+        ],
+      }
+    : {}),
+};
 
   // Fetch paginated users
   const users = await prisma.user.findMany({
@@ -181,6 +188,8 @@ const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
       lastName: true,
       email: true,
       profileImage: true,
+      status: true, // include status in the response
+      createdAt: true,
     },
   });
 
@@ -195,7 +204,7 @@ const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
 
   // Add serial number
   const usersWithSerial = users.map((user, index) => ({
-    serial: skip + index + 1, // serial starts from 1 for first user on first page
+    serial: skip + index + 1,
     ...user,
   }));
 
@@ -209,6 +218,7 @@ const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
     data: usersWithSerial,
   };
 };
+
 
 const getByIdFromDb = async (id: string) => {
   const result = await prisma.user.findUnique({ where: { id } });
