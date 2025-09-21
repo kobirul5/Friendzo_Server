@@ -12,10 +12,19 @@ export interface IGetAllOptions {
   search?: string; // Optional search keyword
 }
 
-const dashboardStats = async (options: IGetAllOptions = {}) => {
+const dashboardStats = async (options: IGetAllOptions = {}, userId: string) => {
   const { skip, limit, sortBy, sortOrder, page } =
     paginationHelper.calculatePagination(options);
 
+
+    const  user = await prisma.user.findUnique({
+      where: {
+        id: userId
+      }
+    })
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+    }
   // Search filter (if search is provided)
   const searchFilter: Prisma.UserWhereInput = {
     status: UserStatus.ACTIVE, // Only active users
@@ -134,6 +143,72 @@ const dashboardStats = async (options: IGetAllOptions = {}) => {
     data: users,
   };
 };
+const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
+  const { skip, limit, sortBy, sortOrder, page } =
+    paginationHelper.calculatePagination(options);
+
+  // Find requesting user
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+  }
+
+  // Search filter (only active users)
+  const searchFilter: Prisma.UserWhereInput = {
+    status: UserStatus.ACTIVE,
+    ...(options.search
+      ? {
+          OR: [
+            { firstName: { contains: options.search, mode: "insensitive" } },
+            { lastName: { contains: options.search, mode: "insensitive" } },
+            { email: { contains: options.search, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
+  // Fetch paginated users
+  const users = await prisma.user.findMany({
+    where: searchFilter,
+    skip,
+    take: limit,
+    orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      profileImage: true,
+    },
+  });
+
+  if (!users || users.length === 0) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Users not found!");
+  }
+
+  // Total count of users matching the filter
+  const totalUsersCount = await prisma.user.count({
+    where: searchFilter,
+  });
+
+  // Add serial number
+  const usersWithSerial = users.map((user, index) => ({
+    serial: skip + index + 1, // serial starts from 1 for first user on first page
+    ...user,
+  }));
+
+  return {
+    meta: {
+      page,
+      limit,
+      totalUsers: totalUsersCount,
+      totalPages: Math.ceil(totalUsersCount / limit),
+    },
+    data: usersWithSerial,
+  };
+};
 
 const getByIdFromDb = async (id: string) => {
   const result = await prisma.user.findUnique({ where: { id } });
@@ -145,5 +220,6 @@ const getByIdFromDb = async (id: string) => {
 
 export const userInfoService = {
   dashboardStats,
+  allUsers,
   getByIdFromDb,
 };

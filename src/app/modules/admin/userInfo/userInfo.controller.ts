@@ -6,8 +6,20 @@ import sendResponse from '../../../../shared/sendResponse';
 
 
 const dashboardStats = catchAsync(async (req, res) => {
-  const userId = req.user.id;              
-  const result = await userInfoService.dashboardStats();
+  const userId = req.user.id;
+  const options = req.query;              
+  const result = await userInfoService.dashboardStats(options, userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Dashboard stats retrieved successfully',
+    data: result,
+  });
+});
+const allUsers = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const options = req.query;              
+  const result = await userInfoService.allUsers(options, userId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -30,6 +42,7 @@ const getUserInfoById = catchAsync(async (req, res) => {
 
 export const userInfoController = {
   dashboardStats,
+  allUsers,
   getUserInfoById,
 
 };
