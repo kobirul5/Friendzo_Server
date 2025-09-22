@@ -131,6 +131,10 @@ const updateUserProfile = async (
     throw new ApiError(400, "Password cannot be updated");
   }
 
+  if(updateData.gender !== Gender.EVERYONE && updateData.gender !== Gender.HIM && updateData.gender !== Gender.HER){
+    throw new ApiError(400, "Invalid gender. gender must be one of: HIM, HER, EVERYONE");
+  }
+
   if(updateData.interestedGender !== Gender.EVERYONE && updateData.interestedGender !== Gender.HIM && updateData.interestedGender !== Gender.HER){
     throw new ApiError(400, "Invalid gender. gender must be one of: HIM, HER, EVERYONE");
   }
@@ -258,7 +262,7 @@ const getSingleUser = async (userId: string) => {
 };
 
 // get gifts
-const getGifts = async (userId: string) => {
+export const getGifts = async (userId: string) => {
   // 1. Purchases groupBy
   const purchases = await prisma.giftPurchase.groupBy({
     by: ["giftCardId"],

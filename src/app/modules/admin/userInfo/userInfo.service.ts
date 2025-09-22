@@ -3,6 +3,7 @@ import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
 import { paginationHelper } from "../../../../helpars/paginationHelper";
 import { Prisma, UserStatus } from "@prisma/client";
+import { getGifts } from "../../User/user.services";
 
 export interface IGetAllOptions {
   page?: number; // Current page number
@@ -11,21 +12,21 @@ export interface IGetAllOptions {
   sortOrder?: "asc" | "desc"; // Sorting order
   search?: string; // Optional search keyword
   status?: UserStatus;
+  isDating?: any;
 }
 
 const dashboardStats = async (options: IGetAllOptions = {}, userId: string) => {
   const { skip, limit, sortBy, sortOrder, page } =
     paginationHelper.calculatePagination(options);
 
-
-    const  user = await prisma.user.findUnique({
-      where: {
-        id: userId
-      }
-    })
-    if (!user) {
-      throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
-    }
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+  }
   // Search filter (if search is provided)
   const searchFilter: Prisma.UserWhereInput = {
     status: UserStatus.ACTIVE, // Only active users
@@ -104,7 +105,7 @@ const dashboardStats = async (options: IGetAllOptions = {}, userId: string) => {
     where: {
       status: UserStatus.INACTIVE,
     },
-  })
+  });
   // TODO:
   const totalVisitors = await prisma.totalVisitors.count();
 
@@ -121,7 +122,6 @@ const dashboardStats = async (options: IGetAllOptions = {}, userId: string) => {
     },
   });
 
-
   return {
     stats: {
       totalRevenue: totalRevenue._sum.amount,
@@ -133,7 +133,7 @@ const dashboardStats = async (options: IGetAllOptions = {}, userId: string) => {
       totalSocialUsers: totalSocialUsers,
       totalGiftCard: totalGiftCard,
       totalBlockedUsers: totalBlockedUsers,
-      totalInactiveUsers: totalInactiveUsers
+      totalInactiveUsers: totalInactiveUsers,
     },
     meta: {
       page,
@@ -145,9 +145,8 @@ const dashboardStats = async (options: IGetAllOptions = {}, userId: string) => {
   };
 };
 const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
-
-
-  const { skip, limit, sortBy, sortOrder, page} = paginationHelper.calculatePagination(options);
+  const { skip, limit, sortBy, sortOrder, page } =
+    paginationHelper.calculatePagination(options);
 
   // Find requesting user
   const user = await prisma.user.findUnique({
@@ -155,26 +154,49 @@ const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
   });
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
-    
   }
 
-  if(options.status && options.status !== UserStatus.ACTIVE && options.status !== UserStatus.INACTIVE && options.status !== UserStatus.BLOCKED){
-    throw new ApiError(httpStatus.BAD_REQUEST, `Invalid status provided!, status should be ${UserStatus.ACTIVE}, ${UserStatus.INACTIVE} or ${UserStatus.BLOCKED} `);
+  if (
+    options.status &&
+    options.status !== UserStatus.ACTIVE &&
+    options.status !== UserStatus.INACTIVE &&
+    options.status !== UserStatus.BLOCKED
+  ) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Invalid status provided!, status should be ${UserStatus.ACTIVE}, ${UserStatus.INACTIVE} or ${UserStatus.BLOCKED} `
+    );
+  }
+
+  // isDating query parameter
+  let isDatingFilter: boolean | undefined;
+  if (options.isDating !== undefined) {
+    if (typeof options.isDating === "string") {
+      isDatingFilter = options.isDating.toLowerCase() === "true";
+    } else {
+      isDatingFilter = options.isDating;
+    }
   }
 
   // Search filter (filter by status if provided, default to ACTIVE)
   const searchFilter: Prisma.UserWhereInput = {
-  ...(options.status ? { status: options.status } : {}), // filter only if status is provided
-  ...(options.search
-    ? {
-        OR: [
-          { firstName: { contains: options.search, mode: "insensitive" } },
-          { lastName: { contains: options.search, mode: "insensitive" } },
-          { email: { contains: options.search, mode: "insensitive" } },
-        ],
-      }
-    : {}),
-};
+    // status filter if provided
+    ...(options.status ? { status: options.status } : {}),
+
+    // isDating filter if provided
+    ...(isDatingFilter !== undefined ? { isDatingMode: isDatingFilter } : {}),
+
+    // search keyword filter
+    ...(options.search
+      ? {
+          OR: [
+            { firstName: { contains: options.search, mode: "insensitive" } },
+            { lastName: { contains: options.search, mode: "insensitive" } },
+            { email: { contains: options.search, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
 
   // Fetch paginated users
   const users = await prisma.user.findMany({
@@ -219,13 +241,51 @@ const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
   };
 };
 
-
 const getByIdFromDb = async (id: string) => {
-  const result = await prisma.user.findUnique({ where: { id } });
-  if (!result) {
-    throw new Error("UserInfo not found");
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      profileImage: true,
+      email: true,
+      totalCoins: true,
+      phoneNumber: true,
+      gender: true,
+      about: true,
+      age: true,
+      memories: true,
+      event: true,
+      interests: true, // string[]
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "UserInfo not found");
   }
-  return result;
+
+  if (!user) throw new ApiError(404, "User not found");
+
+  const interestsDetails = await prisma.interest.findMany({
+    where: {
+      OR: user.interests.map((name) => ({
+        name: { equals: name, mode: "insensitive" },
+      })),
+    },
+    select: { id: true, name: true, image: true, category: true },
+  });
+
+  const followrsCount = await prisma.follow.count({
+    where: { followingId: id },
+  });
+  const followingsCount = await prisma.follow.count({
+    where: { followerId: id },
+  });
+
+  const gifts = await getGifts(id);
+
+  return { ...user, interestsDetails, followrsCount, followingsCount, gifts };
 };
 
 export const userInfoService = {

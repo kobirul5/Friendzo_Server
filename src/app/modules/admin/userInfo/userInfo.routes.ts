@@ -9,7 +9,6 @@ const router = express.Router();
 
 router.get('/', auth(UserRole.ADMIN, UserRole.MANAGER), userInfoController.dashboardStats);
 router.get('/all-users', auth(UserRole.ADMIN, UserRole.MANAGER), userInfoController.allUsers);
-
 router.get('/:id', auth(), userInfoController.getUserInfoById);
 
 
