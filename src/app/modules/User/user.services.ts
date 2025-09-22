@@ -262,6 +262,56 @@ const getSingleUser = async (userId: string) => {
 };
 
 // get gifts
+// export const getGifts = async (userId: string) => {
+//   // 1. Purchases groupBy
+//   const purchases = await prisma.giftPurchase.groupBy({
+//     by: ["giftCardId"],
+//     where: { userId },
+//     _count: { giftCardId: true },
+//   });
+
+//   // Purchases giftCard details
+//   const purchaseGiftCards = await prisma.giftCard.findMany({
+//     where: { id: { in: purchases.map((p) => p.giftCardId) } },
+//   });
+
+//   const purchasesData = purchases.map((p) => {
+//     const giftCard = purchaseGiftCards.find((gc) => gc.id === p.giftCardId);
+//     return {
+//       giftCardId: p.giftCardId,
+//       count: p._count.giftCardId,
+//       giftCard,
+//     };
+//   });
+
+//   // 2. Received groupBy
+//   const received = await prisma.giftSend.groupBy({
+//     by: ["giftCardId"],
+//     where: { receiverId: userId },
+//     _count: { giftCardId: true },
+//   });
+
+//   // Received giftCard details
+//   const receivedGiftCards = await prisma.giftCard.findMany({
+//     where: { id: { in: received.map((r) => r.giftCardId) } },
+//   });
+
+//   const receivedData = received.map((r) => {
+//     const giftCard = receivedGiftCards.find((gc) => gc.id === r.giftCardId);
+//     return {
+//       giftCardId: r.giftCardId,
+//       count: r._count.giftCardId,
+//       giftCard,
+//     };
+//   });
+
+//   // 3. Final response
+//   return{
+//      purchases: purchasesData,
+//       received: receivedData,
+//   }
+// };
+
 export const getGifts = async (userId: string) => {
   // 1. Purchases groupBy
   const purchases = await prisma.giftPurchase.groupBy({
@@ -270,17 +320,17 @@ export const getGifts = async (userId: string) => {
     _count: { giftCardId: true },
   });
 
-  // Purchases giftCard details
+  // Fetch all gift cards used in purchases
   const purchaseGiftCards = await prisma.giftCard.findMany({
     where: { id: { in: purchases.map((p) => p.giftCardId) } },
   });
 
+  // Map purchases with counts
   const purchasesData = purchases.map((p) => {
     const giftCard = purchaseGiftCards.find((gc) => gc.id === p.giftCardId);
     return {
-      giftCardId: p.giftCardId,
+      ...giftCard,
       count: p._count.giftCardId,
-      giftCard,
     };
   });
 
@@ -291,7 +341,6 @@ export const getGifts = async (userId: string) => {
     _count: { giftCardId: true },
   });
 
-  // Received giftCard details
   const receivedGiftCards = await prisma.giftCard.findMany({
     where: { id: { in: received.map((r) => r.giftCardId) } },
   });
@@ -299,18 +348,27 @@ export const getGifts = async (userId: string) => {
   const receivedData = received.map((r) => {
     const giftCard = receivedGiftCards.find((gc) => gc.id === r.giftCardId);
     return {
-      giftCardId: r.giftCardId,
+      ...giftCard,
       count: r._count.giftCardId,
-      giftCard,
     };
   });
 
-  // 3. Final response
-  return{
-     purchases: purchasesData,
-      received: receivedData,
-  }
+  // 3. Group by category helper
+  const groupByCategory = (data: typeof purchasesData | typeof receivedData) => {
+    return data.reduce((acc, item) => {
+      if (!item.category) return acc;
+      if (!acc[item.category]) acc[item.category] = [];
+      acc[item.category].push(item);
+      return acc;
+    }, {} as Record<string, typeof data>);
+  };
+
+  return {
+    purchases: groupByCategory(purchasesData),
+    received: groupByCategory(receivedData),
+  };
 };
+
 
 
 //  update dating profile

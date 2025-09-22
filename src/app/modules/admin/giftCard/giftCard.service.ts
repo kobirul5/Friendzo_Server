@@ -60,9 +60,6 @@ const createGiftCard = async ({ data, userId, imagesFile }: any) => {
   return created;
 };
 
-//  buy gift card
-
-
 
 
  const getGiftCardList = async ({ userId, type = "ALL" }: IGetGiftCardList) => {
@@ -95,6 +92,19 @@ const createGiftCard = async ({ data, userId, imagesFile }: any) => {
   return giftCards; // ekta array e sob gift card
 };
 
+// delete
+const deleteItemFromDb = async (id: string) => {
+  if (!id) {
+    throw new ApiError(httpStatus.BAD_REQUEST,"Id is required");
+  }
+  const giftCard = await prisma.giftCard.findUnique({ where: { id } });
+  if (!giftCard) {
+    throw new ApiError(httpStatus.NOT_FOUND,"GiftCard not found");
+  }
+  const result = await prisma.giftCard.delete({ where: { id } });
+  return result;
+};
+
 const getByIdFromDb = async (id: string) => {
   const result = await prisma.giftCard.findUnique({ where: { id } });
   if (!result) {
@@ -115,18 +125,7 @@ const updateIntoDb = async (id: string, data: any) => {
   return transaction;
 };
 
-const deleteItemFromDb = async (id: string) => {
-  const transaction = await prisma.$transaction(async (prisma) => {
-    const deletedItem = await prisma.giftCard.delete({
-      where: { id },
-    });
 
-    // Add any additional logic if necessary, e.g., cascading deletes
-    return deletedItem;
-  });
-
-  return transaction;
-};
 export const giftCardService = {
   createGiftCard,
   getGiftCardList,
