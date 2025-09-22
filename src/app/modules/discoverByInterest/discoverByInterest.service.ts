@@ -124,7 +124,7 @@ const getNearbyPeople = async ( {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
-  console.log(lat," lat," , lng," lng," , radiusKm,    "radiusKm", search, "search", gender, "gender", minDistance, "minDistance", maxDistance, "maxDistance", "dfdaff---------------------");
+
   // 2️ Determine base coordinates
   const baseLat = lat ?? Number(currentUser.lat);
   const baseLng = lng ?? Number(currentUser.lng);
@@ -170,7 +170,7 @@ const getNearbyPeople = async ( {
         { lat: baseLat, lng: baseLng },
         { lat: user.lat, lng: user.lng }
       );
-      console.log(distance, "distance");
+
       return { ...userWithoutPassword, distanceInKm: +distance.toFixed(2) };
     })
     .filter(Boolean);
