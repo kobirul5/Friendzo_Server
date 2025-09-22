@@ -3,6 +3,8 @@ import httpStatus from "http-status";
 import { giftCardService } from "./giftCard.service";
 import catchAsync from "../../../../shared/catchAsync";
 import sendResponse from "../../../../shared/sendResponse";
+import { Gender } from "@prisma/client";
+import { GiftCardType } from "./giftCard.interface";
 
 const createGiftCard = catchAsync(async (req, res) => {
   const data = JSON.parse(req.body.data);
@@ -25,7 +27,9 @@ const createGiftCard = catchAsync(async (req, res) => {
 
 
 const getGiftCardList = catchAsync(async (req, res) => {
-  const result = await giftCardService.getListFromDb();
+  const userId = req.user.id;
+  const type = req.query.type as GiftCardType || "ALL";
+  const result = await giftCardService.getGiftCardList({ userId, type });
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

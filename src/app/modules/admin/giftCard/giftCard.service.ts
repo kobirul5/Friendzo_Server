@@ -4,6 +4,7 @@ import ApiError from "../../../../errors/ApiErrors";
 import { fileUploader } from "../../../../helpars/fileUploader";
 import { deleteFile } from "../../../../helpars/fileDelete";
 import { Gender, GiftCategory } from "@prisma/client";
+import { IGetGiftCardList } from "./giftCard.interface";
 
 const createGiftCard = async ({ data, userId, imagesFile }: any) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -62,9 +63,36 @@ const createGiftCard = async ({ data, userId, imagesFile }: any) => {
 //  buy gift card
 
 
-const getListFromDb = async () => {
-  const result = await prisma.giftCard.findMany();
-  return result;
+
+
+ const getGiftCardList = async ({ userId, type = "ALL" }: IGetGiftCardList) => {
+  // check user exists
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Unauthorized!, User not found!");
+  }
+
+  if(type !== "ALL" && type !== "ESSENTIAL" && type !== "EXCLUSIVE" && type !== "MAJESTIC"){
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid type. type must be one of: ALL, ESSENTIAL, EXCLUSIVE, MAJESTIC"
+    );
+  }
+
+  // build query dynamically
+  const categories: GiftCategory[] =
+    type === "ALL"
+      ? [GiftCategory.ESSENTIAL, GiftCategory.EXCLUSIVE, GiftCategory.MAJESTIC]
+      : [type as GiftCategory];
+
+  const giftCards = await prisma.giftCard.findMany({
+    where: {
+      category: { in: categories },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return giftCards; // ekta array e sob gift card
 };
 
 const getByIdFromDb = async (id: string) => {
@@ -101,7 +129,7 @@ const deleteItemFromDb = async (id: string) => {
 };
 export const giftCardService = {
   createGiftCard,
-  getListFromDb,
+  getGiftCardList,
   getByIdFromDb,
   updateIntoDb,
   deleteItemFromDb,
