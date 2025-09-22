@@ -6,7 +6,7 @@ import sendResponse from '../../../../shared/sendResponse';
 
 const getPostsList = catchAsync(async (req, res) => {
   const { page, limit, sortBy, sortOrder, search, userId } = req.query;
-    const result = await postsService.getListFromDb({
+    const result = await postsService.getPostsListFromDb({
     page: Number(page),
     limit: Number(limit),
     sortBy: sortBy as string,

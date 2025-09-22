@@ -3,6 +3,7 @@ import httpStatus from 'http-status';
 import prisma from '../../../../shared/prisma';
 import { paginationHelper } from '../../../../helpars/paginationHelper';
 import { Prisma } from '@prisma/client';
+import ApiError from '../../../../errors/ApiErrors';
 
 
 
@@ -16,7 +17,7 @@ interface IGetListParams {
   userId?: string;
 }
 
-export const getListFromDb = async (options: IGetListParams) => {
+ const getPostsListFromDb = async (options: IGetListParams) => {
   const { page, limit, skip, sortBy, sortOrder } =
     paginationHelper.calculatePagination(options);
 
@@ -68,16 +69,58 @@ export const getListFromDb = async (options: IGetListParams) => {
     data: items,
   };
 };
+
 const getByIdFromDb = async (id: string) => {
-  
-    const result = await prisma.memory.findUnique({ where: { id } });
-    if (!result) {
-      throw new Error('memory not found');
-    }
-    return result;
+const memory = await prisma.memory.findUnique({ where: { id } });
+if (!memory) {
+  throw new ApiError(httpStatus.NOT_FOUND, "Memory not found");
+}
+
+  const result = await prisma.memory.findUnique({
+    where: { id },
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          profileImage: true,
+        },
+      },
+      MemoryLike: true,
+      Comment: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              profileImage: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          MemoryLike: true,
+          Comment: true,
+        },
+      },
+    },
+  });
+
+  if (!result) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Memory not found");
+  }
+
+  return {
+    ...result,
+    likeCount: result._count.MemoryLike,
+    commentCount: result._count.Comment,
   };
-
-
+};
 
 const updateIntoDb = async (id: string, data: any) => {
   const transaction = await prisma.$transaction(async (prisma) => {
@@ -92,12 +135,17 @@ const updateIntoDb = async (id: string, data: any) => {
 };
 
 const deleteItemFromDb = async (id: string) => {
+
+  const memory = await prisma.memory.findUnique({ where: { id } });
+  if (!memory) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Memory not found");
+  }
+
   const transaction = await prisma.$transaction(async (prisma) => {
     const deletedItem = await prisma.memory.delete({
       where: { id },
     });
 
-    // Add any additional logic if necessary, e.g., cascading deletes
     return deletedItem;
   });
 
@@ -106,7 +154,7 @@ const deleteItemFromDb = async (id: string) => {
 
 
 export const postsService = {
-getListFromDb,
+getPostsListFromDb,
 getByIdFromDb,
 updateIntoDb,
 deleteItemFromDb,
