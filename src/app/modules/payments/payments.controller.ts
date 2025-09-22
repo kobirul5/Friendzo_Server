@@ -23,8 +23,20 @@ const createPayment = catchAsync(async (req, res) => {
   });
 });
 
+const getPaymentList = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const options = req.query;
+  const result = await paymentsService.getPaymentList( userId, options );
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Payment list retrieved successfully',
+    data: result,
+  });
+});
 
 
 export const paymentsController = {
-  createPayment
+  createPayment,
+  getPaymentList
 };

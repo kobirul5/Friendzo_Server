@@ -3,52 +3,116 @@ import httpStatus from 'http-status';
 import prisma from '../../../shared/prisma';
 import { haversine } from '../../../shared/haversine';
 import ApiError from '../../../errors/ApiErrors';
-import { UserRole } from '@prisma/client';
+import { Gender, Prisma, UserRole } from '@prisma/client';
 
 
 
-//  const getNearbyPeople = async (userId: string, lat: number, lng: number, radiusKm: number) => {
-//   // Make sure user exists
+// const getNearbyPeople = async (
+//   userId: string,
+//   lat?: number,
+//   lng?: number,
+//   radiusKm?: number,
+//   search?: string,
+//   gender?: string
+// ) => {
+//   // 1️ Check user exists
 //   const currentUser = await prisma.user.findUnique({
 //     where: { id: userId },
-//     select: { id: true },
+//     select: { id: true, lat: true, lng: true },
 //   });
 
 //   if (!currentUser) {
 //     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
 //   }
 
-//   // Get other users with coordinates
+//   if(gender && gender !== Gender.HIM && gender !== Gender.HER && gender !== Gender.EVERYONE){
+//     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid gender. gender must be one of: HIM, HER, EVERYONE");
+//   }
+
+//   // 2️ Determine base coordinates
+//   const baseLat = lat ?? Number(currentUser.lat);
+//   const baseLng = lng ?? Number(currentUser.lng);
+
+//   if (baseLat == null || baseLng == null) {
+//     throw new ApiError(httpStatus.BAD_REQUEST, "No valid coordinates found.");
+//   }
+
+//   // 3️ Get list of followed users to exclude
+//   const following = await prisma.follow.findMany({
+//     where: { followerId: userId },
+//     select: { followingId: true },
+//   });
+//   const excludedIds = following.map((f) => f.followingId);
+
+//   // 4️ Build dynamic search filter
+//   const dynamicWhere: Prisma.UserWhereInput = {
+//     id: { notIn: [...excludedIds, userId] },
+//     lat: { not: null },
+//     lng: { not: null },
+//     role: { not: UserRole.ADMIN },
+//     ...(gender ? { gender } : {}),
+//     ...(search
+//       ? {
+//           OR: [
+//             { firstName: { contains: search, mode: "insensitive" } },
+//             { lastName: { contains: search, mode: "insensitive" } },
+//           ],
+//         }
+//       : {}),
+//   };
+
+//   // 5️ Fetch users
 //   const users = await prisma.user.findMany({
-//     where: {
-//       id: { not: userId },
-//       lat: { not: null },
-//       lng: { not: null },
-//     },
+//     where: dynamicWhere,
 //   });
 
+//   // 6️ Calculate distance
+//   const usersWithDistance = users
+//     .map((user) => {
+//       if (user.lat == null || user.lng == null) return null;
 
+//       const { password, ...userWithoutPassword } = user as any;
+//       const distance = haversine(
+//         { lat: baseLat, lng: baseLng },
+//         { lat: user.lat, lng: user.lng }
+//       );
 
-  
-//   // Filter by distance from (lat, lng)
-//  const nearbyUsers = users
-//   .map(user => {
-//     const { password, ...userWithoutPassword } = user;
-//     const distance = haversine({ lat, lng }, { lat: user.lat!, lng: user.lng! });
-//     return { ...userWithoutPassword, distanceInKm: +distance.toFixed(2) };
-//   })
-//   .filter(user => user.distanceInKm <= radiusKm);
+//       return { ...userWithoutPassword, distanceInKm: +distance.toFixed(2) };
+//     })
+//     .filter(Boolean);
+
+//   // 7️ Apply radius filter
+//   let nearbyUsers = usersWithDistance;
+//   if (radiusKm) {
+//     nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= radiusKm);
+//   }
+
+//   // 8️ Sort by nearest
+//   nearbyUsers.sort((a, b) => a.distanceInKm - b.distanceInKm);
 
 //   return nearbyUsers;
 // };
 
 
-
- const getNearbyPeople = async (
-  userId: string,
-  lat?: number,
-  lng?: number,
-  radiusKm?: number
+const getNearbyPeople = async ( {
+    userId,
+    lat,
+    lng,
+    radiusKm,
+    minDistance,
+    maxDistance,
+    search,
+    gender,
+  } : {
+    userId: string;
+    lat?: number;
+    lng?: number;
+    radiusKm?: number;
+    minDistance?: number;
+    maxDistance?: number;
+    search?: string;
+    gender?: string;
+  }
 ) => {
   // 1️ Check user exists
   const currentUser = await prisma.user.findUnique({
@@ -60,59 +124,75 @@ import { UserRole } from '@prisma/client';
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
-
-  // 2️ Determine base coordinates (argument or user's DB coords)
-  const baseLat = lat ? lat : Number(currentUser.lat);
-  const baseLng = lng ? lng : Number(currentUser.lng);
-
+  console.log(lat," lat," , lng," lng," , radiusKm,    "radiusKm", search, "search", gender, "gender", minDistance, "minDistance", maxDistance, "maxDistance", "dfdaff---------------------");
+  // 2️ Determine base coordinates
+  const baseLat = lat ?? Number(currentUser.lat);
+  const baseLng = lng ?? Number(currentUser.lng);
 
   if (baseLat == null || baseLng == null) {
     throw new ApiError(httpStatus.BAD_REQUEST, "No valid coordinates found.");
   }
 
-   const following = await prisma.follow.findMany({
-    where: {
-      followerId: userId
-    },
+  // 3️ Find all following (exclude them)
+  const following = await prisma.follow.findMany({
+    where: { followerId: userId },
     select: { followingId: true },
   });
+  const excludedIds = following.map((f) => f.followingId);
 
-  const excludedIds = following.map(f => f.followingId);
- 
+  // 4️ Build dynamic where condition
+  const dynamicWhere: Prisma.UserWhereInput = {
+    id: { notIn: [...excludedIds, userId] },
+    lat: { not: null },
+    lng: { not: null },
+    role: { not: UserRole.ADMIN },
+    ...(gender ? { gender } : {}),
+    ...(search
+      ? {
+          OR: [
+            { firstName: { contains: search, mode: "insensitive" } },
+            { lastName: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
 
-  // 3️ Fetch other users with valid coordinates
-  const users = await prisma.user.findMany({
-    where: {
-      id: { notIn: [...excludedIds, userId] },
-      lat: { not: null },
-      lng: { not: null },
-      role: {not: UserRole.ADMIN},
-      
-    },
-  });
+  // 5️ Fetch other users
+  const users = await prisma.user.findMany({ where: dynamicWhere });
 
-  // 4️ Calculate distance safely
+  // 6️ Calculate distance
   const usersWithDistance = users
     .map((user) => {
-      if (user.lat == null || user.lng == null) return null; // skip invalid coords
-
+      if (user.lat == null || user.lng == null) return null;
       const { password, ...userWithoutPassword } = user as any;
       const distance = haversine(
         { lat: baseLat, lng: baseLng },
         { lat: user.lat, lng: user.lng }
       );
-
+      console.log(distance, "distance");
       return { ...userWithoutPassword, distanceInKm: +distance.toFixed(2) };
     })
-    .filter(Boolean); // remove null entries
+    .filter(Boolean);
 
-  // 5️ Apply radius filter if provided
+  // 7️ Apply radius filter (old support)
   let nearbyUsers = usersWithDistance;
   if (radiusKm) {
     nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= radiusKm);
   }
 
-  // 6️ Sort by nearest first
+  // 8️ Apply distance range filter (new support)
+  if (minDistance !== undefined && maxDistance !== undefined) {
+    nearbyUsers = nearbyUsers.filter(
+      (u) => u.distanceInKm >= minDistance && u.distanceInKm <= maxDistance
+    );
+  } else if (maxDistance !== undefined) {
+    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= maxDistance);
+  } else if (minDistance !== undefined) {
+    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm >= minDistance);
+  }
+
+  // 9️ Sort by nearest first
   nearbyUsers.sort((a, b) => a.distanceInKm - b.distanceInKm);
 
   return nearbyUsers;

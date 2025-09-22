@@ -3,7 +3,7 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import { getTransactionId } from "../../../helpars/getTransactionId";
 import stripe from "../../../shared/stripe";
-import { PaymentStatus, User } from "@prisma/client";
+import { PaymentStatus, Prisma, User } from "@prisma/client";
 
 const createCoinPurchase = async ({
   paymentMethod,
@@ -66,6 +66,7 @@ const createCoinPurchase = async ({
         data: {
           transactionId,
           amount: coinPackage.price,
+          totalCoins: parseInt(coinPackage.coinAmount),
           status: PaymentStatus.COMPLETED,
           senderId: userId,
           method: "CARD",
@@ -164,6 +165,7 @@ const createGiftCoinPurchase = async ({
         data: {
           transactionId,
           amount: totalAmount,
+          totalCoins: parseInt(coinPackage.coinAmount) * recipients.length,
           status: PaymentStatus.COMPLETED,
           senderId: userId,
           method: "CARD",
@@ -205,7 +207,82 @@ const createGiftCoinPurchase = async ({
   }
 };
 
+
+interface IPaymentListOptions {
+  skip?: number;
+  limit?: number;
+  page?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  search?: string; // optional: search by payment description, status, etc.
+}
+
+const getPaymentList = async (
+  userId: string,
+  options: IPaymentListOptions = {}
+) => {
+  // Convert to number to avoid Prisma error
+  const skip = Number(options.skip) || 0;
+  const limit = Number(options.limit) || 10;
+  const page = Number(options.page) || 1;
+  const sortBy = options.sortBy;
+  const sortOrder = options.sortOrder || "desc";
+  const search = options.search;
+
+  // Build filter: only payments sent by this user
+  const filter: Prisma.PaymentWhereInput = {
+    ...(search
+      ? {
+          sender: {
+            OR: [
+              { firstName: { contains: search, mode: "insensitive" } },
+              { lastName: { contains: search, mode: "insensitive" } },
+            ],
+          },
+        }
+      : {}),
+  };
+
+  // Fetch payments
+  const payments = await prisma.payment.findMany({
+    where: filter,
+    skip,
+    take: limit, // now guaranteed to be number
+    orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
+    include: {
+      sender: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  // Total count
+  const totalPaymentsCount = await prisma.payment.count({ where: filter });
+
+  // Add serial numbers
+  const paymentsWithSerial = payments.map((payment, index) => ({
+    serial: skip + index + 1,
+    ...payment,
+  }));
+
+  return {
+    meta: {
+      page,
+      limit,
+      totalPayments: totalPaymentsCount,
+      totalPages: Math.ceil(totalPaymentsCount / limit),
+    },
+    data: paymentsWithSerial,
+  };
+};
+
 export const paymentsService = {
   createCoinPurchase,
   createGiftCoinPurchase,
+  getPaymentList
 };
