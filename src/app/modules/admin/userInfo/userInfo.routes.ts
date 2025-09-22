@@ -8,8 +8,10 @@ const router = express.Router();
 
 
 router.get('/', auth(UserRole.ADMIN, UserRole.MANAGER), userInfoController.dashboardStats);
+router.put('/', auth(UserRole.ADMIN, UserRole.MANAGER), userInfoController.blockedAndUnblockedUserById);
 router.get('/all-users', auth(UserRole.ADMIN, UserRole.MANAGER), userInfoController.allUsers);
 router.get('/:id', auth(), userInfoController.getUserInfoById);
+router.delete('/:id', auth(UserRole.ADMIN, UserRole.MANAGER), userInfoController.deleteUserById);
 
 
 export const userInfoRoutes = router;

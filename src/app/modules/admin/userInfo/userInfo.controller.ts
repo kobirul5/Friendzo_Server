@@ -38,11 +38,35 @@ const getUserInfoById = catchAsync(async (req, res) => {
   });
 });
 
+const deleteUserById = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const {id} = req.params;
+  const result = await userInfoService.deleteUserByIdFromDb(userId, id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User deleted successfully',
+    data: result,
+  });
+});
 
+const blockedAndUnblockedUserById = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const {userId: id, status} = req.body;
+  const result = await userInfoService.blockedAndUnblockedUserByIdFromDb(userId, id, status);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: `User ${status} successfully`,
+    data: result,
+  });
+});
 
 export const userInfoController = {
   dashboardStats,
   allUsers,
   getUserInfoById,
+  deleteUserById,
+  blockedAndUnblockedUserById
 
 };

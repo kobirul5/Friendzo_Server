@@ -288,8 +288,76 @@ const getByIdFromDb = async (id: string) => {
   return { ...user, interestsDetails, followrsCount, followingsCount, gifts };
 };
 
+const deleteUserByIdFromDb = async (userId: string, id: string) => {
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (!currentUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "authorized!");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id },
+  });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+  const deletedUser = await prisma.user.delete({
+    where: { id },
+  });
+  return null;
+};
+
+const blockedAndUnblockedUserByIdFromDb = async (userId: string, id: string, status: UserStatus) => {
+
+  if(id === userId){
+    throw new ApiError(httpStatus.BAD_REQUEST, "You can't block yourself!");
+  }
+
+  if(!id || id.length === 0){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid id");
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+
+
+  if (!currentUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "authorized!");
+  }
+
+
+  if(status !== UserStatus.BLOCKED && status !== UserStatus.ACTIVE){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid status, status should be BLOCKED or ACTIVE");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id },
+  });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  if(user.status === status){
+    throw new ApiError(httpStatus.BAD_REQUEST, "User is already in this status");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id },
+    data: {
+      status: status,
+    },
+  });
+  return
+}
+
 export const userInfoService = {
   dashboardStats,
   allUsers,
   getByIdFromDb,
+  deleteUserByIdFromDb,
+  blockedAndUnblockedUserByIdFromDb
 };
