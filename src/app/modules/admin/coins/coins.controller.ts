@@ -21,7 +21,8 @@ const createCoins = catchAsync(async (req, res) => {
 });
 
 const getCoinsList = catchAsync(async (req, res) => {
-  const result = await coinsService.getListFromDb();
+  const userId = req.user.id;
+  const result = await coinsService.getListFromDb(userId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

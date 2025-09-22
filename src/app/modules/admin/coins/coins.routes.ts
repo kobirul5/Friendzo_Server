@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post(
 '/',
-auth(UserRole.ADMIN),
+auth(UserRole.ADMIN, UserRole.MANAGER),
  fileUploader.uploadFile,
 // validateRequest(coinsValidation.createSchema),
 coinsController.createCoins,

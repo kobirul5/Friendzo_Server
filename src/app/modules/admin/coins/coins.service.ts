@@ -47,9 +47,17 @@ const coinsCreate = async ({ data, userId, imagesFile }: any) => {
 };
 
 
-const getListFromDb = async () => {
+const getListFromDb = async (id: string) => {
+
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
   
     const result = await prisma.coins.findMany();
+    if(result.length === 0){
+      throw new ApiError(httpStatus.NOT_FOUND, 'Coins not found');
+    }
     return result;
 };
 

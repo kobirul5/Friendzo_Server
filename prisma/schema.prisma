@@ -315,6 +315,7 @@ model CoinGiftSend {
 
 model GiftCard {
   id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  name         String?        @default("")
   gender       Gender         @default(HIM)
   category     GiftCategory
   image        String
