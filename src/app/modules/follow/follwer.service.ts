@@ -444,17 +444,29 @@ const getAllSuggestedUsers = async ({
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  // 1️⃣ Get already followed userIds in this mode
-  const alreadyFollowedIds = await prisma.follow.findMany({
-    where: {
-      followingId: userId,
-      // requestStatus: RequestStatus.ACCEPTED,
-      modeType: modeType,
+  // // 1️⃣ Get already followed userIds in this mode
+  // const alreadyFollowedIds = await prisma.follow.findMany({
+  //   where: {
+  //     followerId: userId,
+  //     // requestStatus: RequestStatus.ACCEPTED,
+  //     modeType: modeType,
+  //   },
+  //   select: { followerId: true },
+  // });
+const alreadyFollowed = await prisma.user.findUnique({
+  where: { id: userId },
+  select: {
+    following: {
+      where: {
+        requestStatus: RequestStatus.PENDING,
+        modeType: modeType,
+      },
+      select: { followingId: true }, // ✅ 
     },
-    select: { followerId: true },
-  });
+  },
+});
 
-  const excludeIds = alreadyFollowedIds.map((f) => f.followerId);
+const excludeIds = alreadyFollowed?.following.map(f => f.followingId) || [];
 
   const whereId =
     excludeIds.length > 0 ? [currentUser.id, ...excludeIds] : [currentUser.id];
