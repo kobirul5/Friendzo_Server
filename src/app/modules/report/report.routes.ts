@@ -21,6 +21,7 @@ reportController.createReportPost,
 );
 
 router.get('/user', auth(UserRole.ADMIN, UserRole.MANAGER), reportController.getReportedUsers);
+router.get('/post', auth(UserRole.ADMIN, UserRole.MANAGER), reportController.getReportedPosts);
 
 router.delete(
 '/:id',

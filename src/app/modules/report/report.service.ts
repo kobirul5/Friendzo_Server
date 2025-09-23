@@ -1,6 +1,8 @@
 import httpStatus from "http-status";
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
+import { paginationHelper } from "../../../helpars/paginationHelper";
+import { Prisma } from "@prisma/client";
 
 const createReportUserService = async (data: any, reporterId: string) => {
   const { reportedUserId, description } = data;
@@ -91,14 +93,121 @@ const deleteReportService = async (reportId: string) => {
   return result;
 };
 
-const getReportedUsersService = async () => {
-  const result = await prisma.report.findMany();
-  return result;
+
+interface IGetReportedUsersOptions {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  search?: string;
+  
+}
+
+const getReportedUsersService = async (options: IGetReportedUsersOptions = {}) => {
+  const { page, limit, skip, sortBy, sortOrder, } = paginationHelper.calculatePagination(options);
+
+
+  const search = options.search;
+  // 1️ Build search filter with proper Prisma types
+  let searchFilter: Prisma.ReportWhereInput = {};
+  if (search) {
+    searchFilter = {
+      OR: [
+        { description: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+        {
+          reportedUser: {
+            OR: [
+              { firstName: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+              { lastName: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+            ],
+          },
+        },
+      ],
+    };
+  }
+
+  // 2️ Fetch reported users with pagination
+  const reported = await prisma.report.findMany({
+    skip,
+    take: limit,
+    orderBy: { [sortBy]: sortOrder },
+    where: searchFilter,
+    include: {
+      reportedUser: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          profileImage: true,
+        },
+      },
+    },
+  });
+
+  // 3️ Count total reports for meta
+  const total = await prisma.report.count({ where: searchFilter });
+
+  return {
+    meta: { page, limit, total },
+    data: reported,
+  };
+};
+const getReportedPostsService = async (options: IGetReportedUsersOptions = {}) => {
+  const { page, limit, skip, sortBy, sortOrder, } = paginationHelper.calculatePagination(options);
+
+
+  const search = options.search;
+  // 1️ Build search filter with proper Prisma types
+  let searchFilter: Prisma.ReportPostWhereInput = {};
+  if (search) {
+    searchFilter = {
+      OR: [
+        { description: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+        {
+          reporter: {
+            OR: [
+              { firstName: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+              { lastName: { contains: search, mode: "insensitive" as Prisma.QueryMode } },
+            ],
+          },
+        },
+      ],
+    };
+  }
+
+  // 2️ Fetch reported users with pagination
+  const reported = await prisma.reportPost.findMany({
+    skip,
+    take: limit,
+    orderBy: { [sortBy]: sortOrder },
+    where: searchFilter,
+    include: {
+      reporter: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          profileImage: true,
+        },
+      },
+    },
+  });
+
+  // 3️ Count total reports for meta
+  const total = await prisma.reportPost.count({ where: searchFilter });
+
+  return {
+    meta: { page, limit, total },
+    data: reported,
+  };
 };
 
 export const reportService = {
   createReportUserService,
   createReportPostService,
   deleteReportService,
-  getReportedUsersService
+  getReportedUsersService,
+  getReportedPostsService
 };

@@ -48,10 +48,20 @@ const getReportedUsers = catchAsync(async (req: any, res: Response) => {
     data: result,
   });
 });
+const getReportedPosts = catchAsync(async (req: any, res: Response) => {
+  const result = await reportService.getReportedPostsService();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Reported users retrieved successfully',
+    data: result,
+  });
+});
 
 export const reportController = {
   createReportUser,
   createReportPost,
   deleteReport,
-  getReportedUsers
+  getReportedUsers,
+  getReportedPosts
 };
