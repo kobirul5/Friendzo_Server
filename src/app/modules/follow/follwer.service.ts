@@ -4,8 +4,8 @@ import ApiError from "../../../errors/ApiErrors";
 import { ModeType, RequestStatus, UserStatus } from "@prisma/client";
 
 const createFollowerAndFollowingService = async (payload: {
-  userId: string;      
-  followerId: string;  
+  userId: string;
+  followerId: string;
   modeType: ModeType;
 }) => {
   const { userId, followerId, modeType } = payload;
@@ -33,7 +33,7 @@ const createFollowerAndFollowingService = async (payload: {
   // check already following
   const alreadyFollowing = await prisma.follow.findFirst({
     where: {
-      followerId: userId,      // ✅ যে follow করছে
+      followerId: userId, // ✅ যে follow করছে
       followingId: followerId, // ✅ যাকে follow করা হচ্ছে
       modeType,
     },
@@ -62,8 +62,8 @@ const createFollowerAndFollowingService = async (payload: {
   // নতুন follow তৈরি করা হচ্ছে
   const follow = await prisma.follow.create({
     data: {
-      followerId: userId,       // ✅ যে follow করছে
-      followingId: followerId,  // ✅ যাকে follow করা হচ্ছে
+      followerId: userId, // ✅ যে follow করছে
+      followingId: followerId, // ✅ যাকে follow করা হচ্ছে
       modeType,
       requestStatus: RequestStatus.PENDING, // default pending
     },
@@ -326,29 +326,25 @@ const getMyAllFollwerRequest = async ({
     modeType = ModeType.DATING;
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId } , select:{followers:{where:{requestStatus:RequestStatus.PENDING, modeType}}}});
-  // const
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      followers: {
+        where: { requestStatus: RequestStatus.PENDING, modeType },
+        include: { follower: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profileImage: true,
+            address: true,
+          },
+        } },
+      },
+    },
+  });
 
-  // const follwerRequests = await prisma.follow.findMany({
-  //   where: {
-  //     followingId: userId,
-  //     requestStatus: RequestStatus.PENDING,
-  //     modeType,
-  //   },
-  //   include: {
-  //     following: {
-  //       select: {
-  //         id: true,
-  //         firstName: true,
-  //         lastName: true,
-  //         profileImage: true,
-  //         address: true,
-  //       },
-  //     },
-  //   },
-  // });
-
-  return {follwerRequests: user?.followers || []};
+  return { follwerRequests: user?.followers || [] };
 };
 
 const getMyAllFollwingRequest = async ({
@@ -372,12 +368,28 @@ const getMyAllFollwingRequest = async ({
     modeType = ModeType.DATING;
   }
 
- 
-  const user = await prisma.user.findUnique({ where: { id: userId } , select:{following:{where:{requestStatus:RequestStatus.PENDING, modeType:modeType}}}});
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      following: {
+        where: { requestStatus: RequestStatus.PENDING, modeType: modeType },
+        include: {
+          following: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              profileImage: true,
+              address: true,
+            },
+          },
+        }
+      },
+    },
+  });
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
-
 
   // const follwingRequests = await prisma.follow.findMany({
   //   where: {
@@ -398,9 +410,8 @@ const getMyAllFollwingRequest = async ({
   //   },
   // });
 
-
   return {
-    follwingRequests : user.following
+    follwingRequests: user.following,
   };
 };
 
@@ -420,7 +431,6 @@ const getAllSuggestedUsers = async ({
     );
   }
 
-
   const modeType: ModeType =
     type === "social" ? ModeType.SOCIAL : ModeType.DATING;
 
@@ -434,28 +444,25 @@ const getAllSuggestedUsers = async ({
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-
   // 1️⃣ Get already followed userIds in this mode
-const alreadyFollowedIds = await prisma.follow.findMany({
-  where: {
-    followingId: userId,
-    // requestStatus: RequestStatus.ACCEPTED,
-    modeType: modeType,
-  },
-  select: { followerId: true },
-});
+  const alreadyFollowedIds = await prisma.follow.findMany({
+    where: {
+      followingId: userId,
+      // requestStatus: RequestStatus.ACCEPTED,
+      modeType: modeType,
+    },
+    select: { followerId: true },
+  });
 
+  const excludeIds = alreadyFollowedIds.map((f) => f.followerId);
 
-
-const excludeIds = alreadyFollowedIds.map(f => f.followerId);
-
-const whereId = excludeIds.length > 0 ? [currentUser.id, ...excludeIds] : [currentUser.id];
-
+  const whereId =
+    excludeIds.length > 0 ? [currentUser.id, ...excludeIds] : [currentUser.id];
 
   // 2️ Get all users except blocked & self
   const users = await prisma.user.findMany({
     where: {
-        id: { notIn: whereId },
+      id: { notIn: whereId },
       isDatingMode: type === "dating" ? true : undefined,
       blockedByUsers: { none: { blockerId: userId } },
       blockedUsers: { none: { blockerId: userId } },
@@ -487,34 +494,33 @@ const whereId = excludeIds.length > 0 ? [currentUser.id, ...excludeIds] : [curre
     return [];
   }
 
-
   const suggestedUsers = users
-  .map((user) => {
-    let score = 0;
+    .map((user) => {
+      let score = 0;
 
-    // Interest match score
-    const commonInterests = user.datingInterests.filter((i) =>
-      currentUser.datingInterests.includes(i)
-    );
-    score += commonInterests.length * 10;
-
-    // Proximity score
-    if (user.lat && user.lng && currentUser.lat && currentUser.lng) {
-      const distance = Math.sqrt(
-        (user.lat - currentUser.lat) ** 2 + (user.lng - currentUser.lng) ** 2
+      // Interest match score
+      const commonInterests = user.datingInterests.filter((i) =>
+        currentUser.datingInterests.includes(i)
       );
-      score += 1 / (distance + 0.01);
-    }
+      score += commonInterests.length * 10;
 
-    // New user boost
-    const isNew =
-      new Date().getTime() - new Date(user.createdAt).getTime() <
-      7 * 24 * 60 * 60 * 1000;
-    if (isNew) score += 5;
+      // Proximity score
+      if (user.lat && user.lng && currentUser.lat && currentUser.lng) {
+        const distance = Math.sqrt(
+          (user.lat - currentUser.lat) ** 2 + (user.lng - currentUser.lng) ** 2
+        );
+        score += 1 / (distance + 0.01);
+      }
 
-    return { ...user, score };
-  })
-  .sort((a, b) => b.score - a.score); 
+      // New user boost
+      const isNew =
+        new Date().getTime() - new Date(user.createdAt).getTime() <
+        7 * 24 * 60 * 60 * 1000;
+      if (isNew) score += 5;
+
+      return { ...user, score };
+    })
+    .sort((a, b) => b.score - a.score);
 
   return suggestedUsers.map((user) => ({
     id: user.id,
@@ -523,7 +529,6 @@ const whereId = excludeIds.length > 0 ? [currentUser.id, ...excludeIds] : [curre
     profileImage: user.profileImage,
     address: user.address,
     datingInterests: user.datingInterests,
-
   }));
 };
 
