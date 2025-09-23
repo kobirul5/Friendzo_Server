@@ -157,8 +157,24 @@ const getAllSuggestedUsers = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// unfriend
+const unfriendUser = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id; 
+  const type = req.params.type
+  const {friendId} = req.body;
 
-export const follwerController = {
+  const result = await follwerService.unfriendUser({userId, friendId, type});
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Unfriended successfully',
+    data: result,
+  });
+})
+
+
+export const followerController = {
   createFollwer,
   getMyFollowersAndFollowingCount,
   unfollowUser,
@@ -169,5 +185,6 @@ export const follwerController = {
   getMyAllFollwerRequest,
   getMyAllFollwingRequest,
   unfollowDatingUser,
-  getAllSuggestedUsers
+  getAllSuggestedUsers,
+  unfriendUser
 };

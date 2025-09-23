@@ -1,23 +1,24 @@
 import express from "express";
 import auth from "../../middlewares/auth";
 import validateRequest from "../../middlewares/validateRequest";
-import { follwerController } from "./follwer.controller";
+import { followerController } from "./follwer.controller";
 
 const router = express.Router();
 
-router.post("/", auth(), follwerController.createFollwer);
+router.post("/", auth(), followerController.createFollwer);
 
-router.get("/count", auth(), follwerController.getMyFollowersAndFollowingCount);
-router.get("/follower", auth(), follwerController.getMyAllFollwer);
-router.get("/following", auth(), follwerController.getMyAllFollowing);
-router.delete("/unfollow", auth(), follwerController.unfollowUser);
-router.delete("/unfollow-dating", auth(), follwerController.unfollowDatingUser);
+router.get("/count", auth(), followerController.getMyFollowersAndFollowingCount);
+router.get("/follower", auth(), followerController.getMyAllFollwer);
+router.get("/following", auth(), followerController.getMyAllFollowing);
+router.delete("/unfollow", auth(), followerController.unfollowUser);
+router.delete("/unfollow-dating", auth(), followerController.unfollowDatingUser);
 
 // 
-router.post("/accept-or-reject", auth(), follwerController.acceptOrRejectFollwershipRequest);
-router.get("/friends/:type", auth(), follwerController.getMyAllFriends);
-router.get("/follwer-request/:type", auth(), follwerController.getMyAllFollwerRequest);
-router.get("/follwing-request/:type", auth(), follwerController.getMyAllFollwingRequest);
-router.get("/suggested-user/:type", auth(), follwerController.getAllSuggestedUsers);
+router.post("/accept-or-reject", auth(), followerController.acceptOrRejectFollwershipRequest);
+router.get("/friends/:type", auth(), followerController.getMyAllFriends);
+router.get("/follwer-request/:type", auth(), followerController.getMyAllFollwerRequest);
+router.get("/follwing-request/:type", auth(), followerController.getMyAllFollwingRequest);
+router.get("/suggested-user/:type", auth(), followerController.getAllSuggestedUsers);
+router.put("/unfriend/:type", auth(), followerController.unfriendUser);
 
 export const follwerRoutes = router;

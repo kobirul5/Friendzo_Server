@@ -249,7 +249,7 @@ const getMyAllFriends = async (userId: string, type: string) => {
   if (type !== "social" && type !== "dating" && type !== "all") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Invalid type. type should be social, dating or all, type muste be social or dating"
+      "Invalid type. type should be social, dating or all, type must be social or dating"
     );
   }
 
@@ -298,11 +298,16 @@ const getMyAllFriends = async (userId: string, type: string) => {
     },
   });
 
-  return {
-    friends: friends.map((f) =>
-      f.followerId === userId ? f.following : f.follower
-    ),
-  };
+ const rawFriends = friends.map((f) =>
+    f.followerId === userId ? f.following : f.follower
+  );
+
+  // 3️ Remove duplicates by user.id
+  const uniqueFriends = Array.from(
+    new Map(rawFriends.map((friend) => [friend.id, friend])).values()
+  );
+
+  return { friends: uniqueFriends };
 };
 
 const getMyAllFollwerRequest = async ({
@@ -542,6 +547,41 @@ const excludeIds = alreadyFollowed?.following.map(f => f.followingId) || [];
   }));
 };
 
+// un friend
+const unfriendUser = async ({userId, friendId, type}: {userId: string, friendId: string, type: string}) => {
+  
+  if (type !== "dating" && type !== "social") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid type. Type must be 'dating'");
+  }
+
+  const modeType = type === "dating" ? ModeType.DATING : ModeType.SOCIAL;
+
+
+  const follow = await prisma.follow.findFirst({
+    where: {
+      OR: [
+        { followerId: userId, followingId: friendId, modeType },
+        { followerId: friendId, followingId: userId, modeType },
+      ],
+    },
+  });
+
+  if (!follow) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Friend relationship not found");
+  }
+  const result = await prisma.follow.update({
+    where: {
+      id: follow.id,
+    },
+    data: {
+      requestStatus: RequestStatus.CANCELED,
+    },
+  });
+
+  return result
+
+}
+
 export const follwerService = {
   createFollowerAndFollowingService,
   unfollowUserSocialService,
@@ -554,4 +594,5 @@ export const follwerService = {
   getMyAllFollwerRequest,
   getMyAllFollwingRequest,
   getAllSuggestedUsers,
+  unfriendUser
 };
