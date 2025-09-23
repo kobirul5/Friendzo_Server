@@ -56,7 +56,7 @@ async function deleteMultipleFileFromDigitalOcean(
 }
 
 
-export const deleteFile = {
+export const deleteImageAndFile = {
   deleteFileFromDigitalOcean,
   deleteMultipleFileFromDigitalOcean
 };

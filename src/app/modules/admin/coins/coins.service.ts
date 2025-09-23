@@ -3,7 +3,8 @@ import httpStatus from 'http-status';
 import prisma from '../../../../shared/prisma';
 import ApiError from '../../../../errors/ApiErrors';
 import { fileUploader } from '../../../../helpars/fileUploader';
-import { deleteFile } from '../../../../helpars/fileDelete';
+import { deleteImageAndFile } from '../../../../helpars/fileDelete';
+
 
 
 const coinsCreate = async ({ data, userId, imagesFile }: any) => { 
@@ -39,7 +40,7 @@ const coinsCreate = async ({ data, userId, imagesFile }: any) => {
   const created = await prisma.coins.create({ data: dataToSave });
   console.log("created", created);
   if (!created) {
-    await deleteFile.deleteFileFromDigitalOcean(uploaded.Location);
+    await deleteImageAndFile.deleteFileFromDigitalOcean(uploaded.Location);
     throw new ApiError(500, "Failed to create fashion.");
   }
 

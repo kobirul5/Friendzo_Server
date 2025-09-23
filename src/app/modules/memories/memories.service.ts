@@ -1,6 +1,7 @@
 import { PrismaClient, Memory } from "@prisma/client";
 import ApiError from "../../../errors/ApiErrors";
-import { deleteFile } from "../../../helpars/fileDelete";
+import { deleteImageAndFile } from "../../../helpars/fileDelete";
+
 const prisma = new PrismaClient();
 
 // Create Memory
@@ -59,7 +60,7 @@ const deleteMemory = async ({ id, userId }: { id: string; userId: string }) => {
 
   if (memory.image) {
     // Delete image from DigitalOcean Spaces
-    await deleteFile.deleteFileFromDigitalOcean(memory.image);
+    await deleteImageAndFile.deleteFileFromDigitalOcean(memory.image);
   }
 
   await prisma.memory.delete({

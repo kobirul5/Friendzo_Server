@@ -16,7 +16,8 @@ import emailSender from "../../../shared/emailSender";
 import { registrationOtpTemplate } from "./registrationOtpTemplate";
 import { getRefferId } from "../../../helpars/generateRefferId";
 import { Gender, User } from "@prisma/client";
-import { deleteFile } from "../../../helpars/fileDelete";
+import { deleteImageAndFile } from "../../../helpars/fileDelete";
+
 
 
 const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
@@ -202,7 +203,7 @@ const updateUserProfile = async (
   }
 
   if (file && existingUser?.profileImage) {
-    await deleteFile.deleteFileFromDigitalOcean(existingUser.profileImage);
+    await deleteImageAndFile.deleteFileFromDigitalOcean(existingUser.profileImage);
   }
 
   return updatedUser;
@@ -458,7 +459,7 @@ const updateDatingProfile = async (
 
 
   if (!updatedUser) {
-    await deleteFile.deleteFileFromDigitalOcean(mergedData.datingImage);
+    await deleteImageAndFile.deleteFileFromDigitalOcean(mergedData.datingImage);
     throw new ApiError(400, "Failed to update user profile");
   }
 

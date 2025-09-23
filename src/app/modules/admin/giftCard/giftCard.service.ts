@@ -2,9 +2,9 @@ import httpStatus from "http-status";
 import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
 import { fileUploader } from "../../../../helpars/fileUploader";
-import { deleteFile } from "../../../../helpars/fileDelete";
 import { Gender, GiftCategory } from "@prisma/client";
 import { IGetGiftCardList } from "./giftCard.interface";
+import { deleteImageAndFile } from "../../../../helpars/fileDelete";
 
 const createGiftCard = async ({ data, userId, imagesFile }: any) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -53,7 +53,7 @@ const createGiftCard = async ({ data, userId, imagesFile }: any) => {
 
   const created = await prisma.giftCard.create({ data: dataToSave });
   if (!created) {
-    await deleteFile.deleteFileFromDigitalOcean(uploaded.Location);
+    await deleteImageAndFile.deleteFileFromDigitalOcean(uploaded.Location);
     throw new ApiError(500, "Failed to create fashion.");
   }
 
