@@ -331,9 +331,11 @@ const getMyAllFollwerRequest = async ({
     modeType = ModeType.DATING;
   }
 
+  const user = await prisma.user.findUnique({ where: { id: userId } , select:{followers:true}});
+
   const follwerRequests = await prisma.follow.findMany({
     where: {
-      followerId: userId,
+      followingId: userId,
       requestStatus: RequestStatus.PENDING,
       modeType,
     },

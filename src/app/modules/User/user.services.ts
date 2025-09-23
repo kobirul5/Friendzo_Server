@@ -184,18 +184,18 @@ const updateUserProfile = async (
       ...updateData,
       updatedAt: new Date(),
     },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      phoneNumber: true,
-      profileImage: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-      interests: true,
-    },
+    // select: {
+    //   id: true,
+    //   firstName: true,
+    //   lastName: true,
+    //   email: true,
+    //   phoneNumber: true,
+    //   profileImage: true,
+    //   role: true,
+    //   createdAt: true,
+    //   updatedAt: true,
+    //   interests: true,
+    // },
   });
 
   if (!updatedUser) {
@@ -206,7 +206,7 @@ const updateUserProfile = async (
     await deleteImageAndFile.deleteFileFromDigitalOcean(existingUser.profileImage);
   }
 
-  return updatedUser;
+  return {...updatedUser, password: undefined};
 };    
 
 const getUserProfile = async (userId: string) => {
