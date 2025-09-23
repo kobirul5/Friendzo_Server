@@ -344,7 +344,7 @@ const getMyAllFollwerRequest = async ({
     },
   });
 
-  return { follwerRequests: user?.followers || [] };
+  return user?.followers
 };
 
 const getMyAllFollwingRequest = async ({
@@ -410,9 +410,7 @@ const getMyAllFollwingRequest = async ({
   //   },
   // });
 
-  return {
-    follwingRequests: user.following,
-  };
+  return user.following
 };
 
 //  getAllSuggestedUsers
