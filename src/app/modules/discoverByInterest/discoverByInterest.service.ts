@@ -252,8 +252,8 @@ const getTodaysBuzz = async (userId: string) => {
 };
 
 
-// const getPeopleBySharedInterests = async (userId: string) => {
-//   // Get current user's interests
+// const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, interest: string}) => {
+//   // 1️ Get current user's interests
 //   const currentUser = await prisma.user.findUnique({
 //     where: { id: userId },
 //     select: {
@@ -266,16 +266,53 @@ const getTodaysBuzz = async (userId: string) => {
 //     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
 //   }
 
-//   const currentUserInterests = currentUser.interests;
+//    const currentUserInterests = interest? [interest] :  currentUser.interests;
+
+//    if (currentUserInterests && currentUserInterests.length > 0) {
+//     // Validate interests against fixed array
+
+//     const interests = await prisma.interest.findMany({
+//       select: { name: true },
+//     });
+
+//     const CategoriesArray = interests.map((interest) => interest.name);
+
+//     const invalidNames = currentUserInterests.filter(
+//       (name) =>
+//         !CategoriesArray.includes(name as (typeof CategoriesArray)[number])
+//     );
+
+//     if (invalidNames.length > 0) {
+//       throw new ApiError(
+//         httpStatus.BAD_REQUEST,
+//         `Invalid interest names: ${invalidNames.join(", ")}. ` +
+//           `You must use one of the following names: ${CategoriesArray.join(
+//             ", "
+//           )}.`
+//       );
+//     }
+//   }
+
 
 //   if (!currentUserInterests || currentUserInterests.length === 0) {
 //     return []; // or throw an error if interests are required
 //   }
 
-//   // Get other users who share at least one interest
+//    const following = await prisma.follow.findMany({
+//     where: {
+//       followerId: userId,
+//     },
+//     select: { followingId: true },
+//   });
+
+//   const excludedIds = following.map(f => f.followingId);
+ 
+
+//   // 2️ Get other users who share at least one interest
 //   const matchedUsers = await prisma.user.findMany({
 //     where: {
-//       id: { not: userId },
+//       id: { not: { in: [userId, ...excludedIds] } },
+//       role: {not: UserRole.ADMIN},
 //       interests: {
 //         hasSome: currentUserInterests,
 //       },
@@ -286,23 +323,56 @@ const getTodaysBuzz = async (userId: string) => {
 //       lastName: true,
 //       profileImage: true,
 //       email: true,
+//       role: true,
 //       interests: true,
 //       gender: true,
 //       dob: true,
+//       address: true,
 //     },
 //   });
 
-//   return matchedUsers;
+//   // 3️ Calculate shared interests percentage
+//   const usersWithMatchPercentage = matchedUsers.map((user) => {
+//     const sharedCount = user.interests.filter((i) =>
+//       currentUserInterests.includes(i)
+//     ).length;
+
+//     const matchPercentage =
+//       currentUserInterests.length > 0
+//         ? Math.round((sharedCount / currentUserInterests.length) * 100)
+//         : 0;
+
+//     return {
+//       ...user,
+//       interestPercentage: matchPercentage,
+//     };
+//   });
+
+  
+
+//   // Optional: sort by highest match first
+//   usersWithMatchPercentage.sort(
+//     (a, b) => b.interestPercentage - a.interestPercentage
+//   );
+
+//   return usersWithMatchPercentage;
 // };
 
-
-const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, interest: string}) => {
-  // 1️ Get current user's interests
+const getPeopleBySharedInterests = async ({
+  userId,
+  interest,
+}: {
+  userId: string;
+  interest?: string;
+}) => {
+  // 1️⃣ Get current user's interests and location
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
       interests: true,
+      lat: true,
+      lng: true,
     },
   });
 
@@ -310,56 +380,40 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
-   const currentUserInterests = interest? [interest] :  currentUser.interests;
+  const currentUserInterests = interest ? [interest] : currentUser.interests;
 
-   if (currentUserInterests && currentUserInterests.length > 0) {
-    // Validate interests against fixed array
+  if (!currentUserInterests || currentUserInterests.length === 0) return [];
 
-    const interests = await prisma.interest.findMany({
-      select: { name: true },
-    });
+  // 2️⃣ Validate interests against fixed array
+  const interests = await prisma.interest.findMany({ select: { name: true } });
+  const CategoriesArray = interests.map((i) => i.name);
 
-    const CategoriesArray = interests.map((interest) => interest.name);
+  const invalidNames = currentUserInterests.filter(
+    (name) => !CategoriesArray.includes(name as (typeof CategoriesArray)[number])
+  );
 
-    const invalidNames = currentUserInterests.filter(
-      (name) =>
-        !CategoriesArray.includes(name as (typeof CategoriesArray)[number])
+  if (invalidNames.length > 0) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Invalid interest names: ${invalidNames.join(
+        ", "
+      )}. Use one of: ${CategoriesArray.join(", ")}`
     );
-
-    if (invalidNames.length > 0) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        `Invalid interest names: ${invalidNames.join(", ")}. ` +
-          `You must use one of the following names: ${CategoriesArray.join(
-            ", "
-          )}.`
-      );
-    }
   }
 
-
-  if (!currentUserInterests || currentUserInterests.length === 0) {
-    return []; // or throw an error if interests are required
-  }
-
-   const following = await prisma.follow.findMany({
-    where: {
-      followerId: userId,
-    },
+  // 3️⃣ Get already-followed users to exclude
+  const following = await prisma.follow.findMany({
+    where: { followerId: userId },
     select: { followingId: true },
   });
+  const excludedIds = following.map((f) => f.followingId);
 
-  const excludedIds = following.map(f => f.followingId);
- 
-
-  // 2️ Get other users who share at least one interest
+  // 4️⃣ Fetch matched users
   const matchedUsers = await prisma.user.findMany({
     where: {
       id: { not: { in: [userId, ...excludedIds] } },
-      role: {not: UserRole.ADMIN},
-      interests: {
-        hasSome: currentUserInterests,
-      },
+      role: { not: UserRole.ADMIN },
+      interests: { hasSome: currentUserInterests },
     },
     select: {
       id: true,
@@ -371,10 +425,13 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
       interests: true,
       gender: true,
       dob: true,
+      address: true,
+      lat: true,
+      lng: true,
     },
   });
 
-  // 3️ Calculate shared interests percentage
+  // 5️⃣ Calculate shared interests + distance
   const usersWithMatchPercentage = matchedUsers.map((user) => {
     const sharedCount = user.interests.filter((i) =>
       currentUserInterests.includes(i)
@@ -385,19 +442,36 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
         ? Math.round((sharedCount / currentUserInterests.length) * 100)
         : 0;
 
+    let distanceKm: number | null = null;
+    if (
+      currentUser.lat != null &&
+      currentUser.lng != null &&
+      user.lat != null &&
+      user.lng != null
+    ) {
+      distanceKm = Math.round(
+        haversine(
+          { lat: currentUser.lat, lng: currentUser.lng },
+          { lat: user.lat, lng: user.lng }
+        ) * 100
+      ) / 100;
+    }
+
     return {
       ...user,
       interestPercentage: matchPercentage,
+      distanceKm,
     };
   });
 
-  // Optional: sort by highest match first
+  // 6️⃣ Sort by highest match first
   usersWithMatchPercentage.sort(
     (a, b) => b.interestPercentage - a.interestPercentage
   );
 
   return usersWithMatchPercentage;
 };
+
 
 
 export const discoverByInterestService = {
