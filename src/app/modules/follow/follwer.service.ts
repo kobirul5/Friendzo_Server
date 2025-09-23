@@ -578,6 +578,21 @@ const unfriendUser = async ({userId, friendId, type}: {userId: string, friendId:
     },
   });
 
+  const myFollow = await prisma.follow.findFirst({
+    where: {
+      followerId: userId,
+      followingId: friendId,
+      modeType,
+    },
+  });
+
+   if (myFollow && myFollow.followerId === userId && myFollow.requestStatus === RequestStatus.PENDING) {
+    await prisma.follow.delete({
+      where: { id: follow.id },
+    });
+    return { message: "Follow request canceled (deleted)" };
+  }
+
   return result
 
 }
