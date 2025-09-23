@@ -4,12 +4,11 @@ import ApiError from "../../../errors/ApiErrors";
 import { ModeType, RequestStatus, UserStatus } from "@prisma/client";
 
 const createFollowerAndFollowingService = async (payload: {
-  userId: string;
-  followerId: string;
+  userId: string;      
+  followerId: string;  
   modeType: ModeType;
 }) => {
   const { userId, followerId, modeType } = payload;
-
 
   if (userId === followerId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "You cannot follow yourself");
@@ -22,39 +21,37 @@ const createFollowerAndFollowingService = async (payload: {
     );
   }
 
-  const following = await prisma.user.findUnique({
-    where: { id: followerId, },
+  // check target user exists
+  const targetUser = await prisma.user.findUnique({
+    where: { id: followerId },
   });
 
-  if (!following) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Following user not found");
+  if (!targetUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Target user not found");
   }
 
-  //  Application-level check for duplicates
+  // check already following
   const alreadyFollowing = await prisma.follow.findFirst({
     where: {
-      followerId,
-      followingId: userId,
+      followerId: userId,      // ✅ যে follow করছে
+      followingId: followerId, // ✅ যাকে follow করা হচ্ছে
       modeType,
     },
   });
 
-
-  if(alreadyFollowing && alreadyFollowing.requestStatus === RequestStatus.CANCELED){
-    
+  // যদি আগে follow cancel করা থাকে → আবার pending করা হবে
+  if (
+    alreadyFollowing &&
+    alreadyFollowing.requestStatus === RequestStatus.CANCELED
+  ) {
     const result = await prisma.follow.update({
-      where: {
-        id: alreadyFollowing.id,
-      },
-      data: {
-        requestStatus: RequestStatus.PENDING,
-      },
+      where: { id: alreadyFollowing.id },
+      data: { requestStatus: RequestStatus.PENDING },
     });
-    return result
-
+    return result;
   }
 
-
+  // যদি আগে থেকে follow করা থাকে
   if (alreadyFollowing) {
     throw new ApiError(
       httpStatus.CONFLICT,
@@ -62,15 +59,13 @@ const createFollowerAndFollowingService = async (payload: {
     );
   }
 
-  if (alreadyFollowing) {
-    throw new ApiError(httpStatus.CONFLICT, "Already following this user");
-  }
-
+  // নতুন follow তৈরি করা হচ্ছে
   const follow = await prisma.follow.create({
     data: {
-      followerId,
+      followerId: userId,       // ✅ যে follow করছে
+      followingId: followerId,  // ✅ যাকে follow করা হচ্ছে
       modeType,
-      followingId: userId,
+      requestStatus: RequestStatus.PENDING, // default pending
     },
   });
 
@@ -331,28 +326,29 @@ const getMyAllFollwerRequest = async ({
     modeType = ModeType.DATING;
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId } , select:{followers:true}});
+  const user = await prisma.user.findUnique({ where: { id: userId } , select:{followers:{where:{requestStatus:RequestStatus.PENDING, modeType}}}});
+  // const
 
-  const follwerRequests = await prisma.follow.findMany({
-    where: {
-      followingId: userId,
-      requestStatus: RequestStatus.PENDING,
-      modeType,
-    },
-    include: {
-      following: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          profileImage: true,
-          address: true,
-        },
-      },
-    },
-  });
+  // const follwerRequests = await prisma.follow.findMany({
+  //   where: {
+  //     followingId: userId,
+  //     requestStatus: RequestStatus.PENDING,
+  //     modeType,
+  //   },
+  //   include: {
+  //     following: {
+  //       select: {
+  //         id: true,
+  //         firstName: true,
+  //         lastName: true,
+  //         profileImage: true,
+  //         address: true,
+  //       },
+  //     },
+  //   },
+  // });
 
-  return follwerRequests;
+  return {follwerRequests: user?.followers || []};
 };
 
 const getMyAllFollwingRequest = async ({
@@ -377,28 +373,35 @@ const getMyAllFollwingRequest = async ({
   }
 
  
-
-  const follwingRequests = await prisma.follow.findMany({
-    where: {
-      followingId: userId,
-      requestStatus: RequestStatus.PENDING,
-      modeType,
-    },
-    include: {
-      follower: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          profileImage: true,
-          address: true,
-        },
-      },
-    },
-  });
+  const user = await prisma.user.findUnique({ where: { id: userId } , select:{following:{where:{requestStatus:RequestStatus.PENDING, modeType:modeType}}}});
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
 
 
-  return follwingRequests;
+  // const follwingRequests = await prisma.follow.findMany({
+  //   where: {
+  //     followingId: userId,
+  //     requestStatus: RequestStatus.PENDING,
+  //     modeType,
+  //   },
+  //   include: {
+  //     follower: {
+  //       select: {
+  //         id: true,
+  //         firstName: true,
+  //         lastName: true,
+  //         profileImage: true,
+  //         address: true,
+  //       },
+  //     },
+  //   },
+  // });
+
+
+  return {
+    follwingRequests : user.following
+  };
 };
 
 //  getAllSuggestedUsers
