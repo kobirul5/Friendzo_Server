@@ -40,6 +40,21 @@ const createFollowerAndFollowingService = async (payload: {
   });
 
 
+  if(alreadyFollowing && alreadyFollowing.requestStatus === RequestStatus.CANCELED){
+    
+    const result = await prisma.follow.update({
+      where: {
+        id: alreadyFollowing.id,
+      },
+      data: {
+        requestStatus: RequestStatus.PENDING,
+      },
+    });
+    return result
+
+  }
+
+
   if (alreadyFollowing) {
     throw new ApiError(
       httpStatus.CONFLICT,
@@ -400,33 +415,53 @@ const getAllSuggestedUsers = async ({
     );
   }
 
+
   const modeType: ModeType =
     type === "social" ? ModeType.SOCIAL : ModeType.DATING;
 
   // 1️ Get the current user
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { interests: true, lat: true, lng: true },
+    select: { id: true, datingInterests: true, lat: true, lng: true },
   });
 
   if (!currentUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
+
+  // 1️⃣ Get already followed userIds in this mode
+const alreadyFollowedIds = await prisma.follow.findMany({
+  where: {
+    followingId: userId,
+    // requestStatus: RequestStatus.ACCEPTED,
+    modeType: modeType,
+  },
+  select: { followerId: true },
+});
+
+
+
+const excludeIds = alreadyFollowedIds.map(f => f.followerId);
+
+const whereId = excludeIds.length > 0 ? [currentUser.id, ...excludeIds] : [currentUser.id];
+
+
   // 2️ Get all users except blocked & self
   const users = await prisma.user.findMany({
     where: {
-      id: { not: userId },
+        id: { notIn: whereId },
       isDatingMode: type === "dating" ? true : undefined,
       blockedByUsers: { none: { blockerId: userId } },
       blockedUsers: { none: { blockerId: userId } },
       status: UserStatus.ACTIVE,
-      followers: {
-        none: {
-          followerId: userId,
-          modeType: modeType, // <-- only remove already followed in this mode
-        },
-      },
+      // followers: {
+      //   none: {
+      //     followerId: userId,
+      //     requestStatus: RequestStatus.ACCEPTED,
+      //     modeType: modeType, // <-- only remove already followed in this mode
+      //   },
+      // },
     },
     select: {
       id: true,
@@ -434,41 +469,47 @@ const getAllSuggestedUsers = async ({
       lastName: true,
       profileImage: true,
       address: true,
-      interests: true,
+      isDatingMode: true,
+      datingInterests: true,
       createdAt: true,
       lat: true,
       lng: true,
+      followers: true,
     },
   });
 
-  // 3️ Sort users
+  if (users.length === 0) {
+    return [];
+  }
+
+
   const suggestedUsers = users
-    .map((user) => {
-      let score = 0;
+  .map((user) => {
+    let score = 0;
 
-      // Interest match score
-      const commonInterests = user.interests.filter((i) =>
-        currentUser.interests.includes(i)
+    // Interest match score
+    const commonInterests = user.datingInterests.filter((i) =>
+      currentUser.datingInterests.includes(i)
+    );
+    score += commonInterests.length * 10;
+
+    // Proximity score
+    if (user.lat && user.lng && currentUser.lat && currentUser.lng) {
+      const distance = Math.sqrt(
+        (user.lat - currentUser.lat) ** 2 + (user.lng - currentUser.lng) ** 2
       );
-      score += commonInterests.length * 10;
+      score += 1 / (distance + 0.01);
+    }
 
-      // Optional: proximity score (simple distance formula)
-      if (user.lat && user.lng && currentUser.lat && currentUser.lng) {
-        const distance = Math.sqrt(
-          (user.lat - currentUser.lat) ** 2 + (user.lng - currentUser.lng) ** 2
-        );
-        score += 1 / (distance + 0.01); // closer users get slightly higher score
-      }
+    // New user boost
+    const isNew =
+      new Date().getTime() - new Date(user.createdAt).getTime() <
+      7 * 24 * 60 * 60 * 1000;
+    if (isNew) score += 5;
 
-      // New user boost
-      const isNew =
-        new Date().getTime() - new Date(user.createdAt).getTime() <
-        7 * 24 * 60 * 60 * 1000; // 1 week
-      if (isNew) score += 5;
-
-      return { ...user, score };
-    })
-    .sort((a, b) => b.score - a.score); // descending
+    return { ...user, score };
+  })
+  .sort((a, b) => b.score - a.score); 
 
   return suggestedUsers.map((user) => ({
     id: user.id,
@@ -476,7 +517,8 @@ const getAllSuggestedUsers = async ({
     lastName: user.lastName,
     profileImage: user.profileImage,
     address: user.address,
-    interests: user.interests,
+    datingInterests: user.datingInterests,
+
   }));
 };
 

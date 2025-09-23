@@ -132,11 +132,11 @@ const updateUserProfile = async (
     throw new ApiError(400, "Password cannot be updated");
   }
 
-  if(updateData.gender !== Gender.EVERYONE && updateData.gender !== Gender.HIM && updateData.gender !== Gender.HER){
+  if(updateData.gender && updateData.gender !== Gender.EVERYONE && updateData.gender !== Gender.HIM && updateData.gender !== Gender.HER){
     throw new ApiError(400, "Invalid gender. gender must be one of: HIM, HER, EVERYONE");
   }
 
-  if(updateData.interestedGender !== Gender.EVERYONE && updateData.interestedGender !== Gender.HIM && updateData.interestedGender !== Gender.HER){
+  if(updateData.interestedGender && updateData.interestedGender !== Gender.EVERYONE && updateData.interestedGender !== Gender.HIM && updateData.interestedGender !== Gender.HER){
     throw new ApiError(400, "Invalid gender. gender must be one of: HIM, HER, EVERYONE");
   }
 
@@ -236,7 +236,8 @@ const getSingleUser = async (userId: string) => {
       age: true,
       memories: true,
       event: true,
-      interests: true, // string[]
+      interests: true,
+      datingInterests: true, // string[]
     },
   });
 
