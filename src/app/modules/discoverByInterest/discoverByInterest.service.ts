@@ -425,9 +425,9 @@ const getPeopleBySharedInterests = async ({
       interests: true,
       gender: true,
       dob: true,
-      address: true,
       lat: true,
       lng: true,
+      address: true,
     },
   });
 
