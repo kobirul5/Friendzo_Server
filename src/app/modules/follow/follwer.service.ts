@@ -9,6 +9,7 @@ const createFollowerAndFollowingService = async (payload: {
   modeType: ModeType;
 }) => {
   const { userId, followerId, modeType } = payload;
+  console.log(payload);
 
   if (userId === followerId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "You cannot follow yourself");
@@ -22,7 +23,7 @@ const createFollowerAndFollowingService = async (payload: {
   }
 
   const following = await prisma.user.findUnique({
-    where: { id: followerId , },
+    where: { id: followerId },
   });
 
   if (!following) {
@@ -125,7 +126,10 @@ const getMyFollowingService = async (userId: string) => {
   };
 };
 
-const unfollowUserSocialService = async (followerId: string, followingId: string) => {
+const unfollowUserSocialService = async (
+  followerId: string,
+  followingId: string
+) => {
   // Check if follow relation exists
   const follow = await prisma.follow.findFirst({
     where: {
@@ -149,21 +153,24 @@ const unfollowUserSocialService = async (followerId: string, followingId: string
   return { unfollowed: true };
 };
 
-const unfollowUserDatingService = async (followId: string , userId: string) => {
+const unfollowUserDatingService = async (followId: string, userId: string) => {
   // Check if follow relation exists
   const follow = await prisma.follow.findFirst({
     where: {
-     id:followId,
-    //  modeType: ModeType.DATING
+      id: followId,
+      //  modeType: ModeType.DATING
     },
   });
 
   if (!follow) {
-    throw new ApiError(httpStatus.NOT_FOUND,"Follow relationship not found");
+    throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
   }
 
   if (follow.followerId !== userId) {
-    throw new ApiError(httpStatus.BAD_REQUEST,"You are not authorized to unfollow this user");
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You are not authorized to unfollow this user"
+    );
   }
 
   // Delete the follow relation
@@ -184,10 +191,7 @@ const acceptOrRejectFollwershipRequestService = async (
 ) => {
   // Check if follow relation exists
 
-  if (
-    status !== RequestStatus.ACCEPTED &&
-    status !== RequestStatus.CANCELED
-  ) {
+  if (status !== RequestStatus.ACCEPTED && status !== RequestStatus.CANCELED) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       "Invalid status. status should be ACCEPTED or CANCELED"
@@ -201,7 +205,6 @@ const acceptOrRejectFollwershipRequestService = async (
       // modeType,
     },
   });
-
 
   if (!follow) {
     throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
@@ -221,9 +224,6 @@ const acceptOrRejectFollwershipRequestService = async (
     );
   }
 
-
-  
-
   if (!follow) {
     throw new Error("Follow relationship not found");
   }
@@ -238,21 +238,21 @@ const acceptOrRejectFollwershipRequestService = async (
     },
   });
 
-  return {massage: "Successfully updated"};
+  return { massage: "Successfully updated" };
 };
 
-
-
 const getMyAllFriends = async (userId: string, type: string) => {
-
-  if(type !== 'social' && type !== 'dating' && type !== 'all'){
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid type. type should be social, dating or all, type muste be social or dating");
+  if (type !== "social" && type !== "dating" && type !== "all") {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid type. type should be social, dating or all, type muste be social or dating"
+    );
   }
 
-  let modeType : ModeType | undefined = undefined;
-  if(type === 'social'){
+  let modeType: ModeType | undefined = undefined;
+  if (type === "social") {
     modeType = ModeType.SOCIAL;
-  }else if(type === 'dating'){
+  } else if (type === "dating") {
     modeType = ModeType.DATING;
   }
 
@@ -263,12 +263,12 @@ const getMyAllFriends = async (userId: string, type: string) => {
         {
           followerId: userId,
           requestStatus: RequestStatus.ACCEPTED,
-          modeType
-        },  
+          modeType,
+        },
         {
           followingId: userId,
           requestStatus: RequestStatus.ACCEPTED,
-          modeType
+          modeType,
         },
       ],
     },
@@ -279,7 +279,7 @@ const getMyAllFriends = async (userId: string, type: string) => {
           firstName: true,
           lastName: true,
           profileImage: true,
-          address: true
+          address: true,
         },
       },
       following: {
@@ -288,7 +288,7 @@ const getMyAllFriends = async (userId: string, type: string) => {
           firstName: true,
           lastName: true,
           profileImage: true,
-          address: true
+          address: true,
         },
       },
     },
@@ -301,17 +301,24 @@ const getMyAllFriends = async (userId: string, type: string) => {
   };
 };
 
-
-const getMyAllFollwerRequest = async ({userId, type}: {userId: string, type: string}) => {
-
-  if(type !== 'social' && type !== 'dating'){
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid type. type should be social, dating, type muste be social or dating");
+const getMyAllFollwerRequest = async ({
+  userId,
+  type,
+}: {
+  userId: string;
+  type: string;
+}) => {
+  if (type !== "social" && type !== "dating") {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid type. type should be social, dating, type muste be social or dating"
+    );
   }
 
-  let modeType : ModeType | undefined = undefined;
-  if(type === 'social'){
+  let modeType: ModeType | undefined = undefined;
+  if (type === "social") {
     modeType = ModeType.SOCIAL;
-  }else if(type === 'dating'){
+  } else if (type === "dating") {
     modeType = ModeType.DATING;
   }
 
@@ -319,7 +326,7 @@ const getMyAllFollwerRequest = async ({userId, type}: {userId: string, type: str
     where: {
       followerId: userId,
       requestStatus: RequestStatus.PENDING,
-      modeType
+      modeType,
     },
     include: {
       following: {
@@ -328,27 +335,33 @@ const getMyAllFollwerRequest = async ({userId, type}: {userId: string, type: str
           firstName: true,
           lastName: true,
           profileImage: true,
-          address: true
+          address: true,
         },
       },
     },
-  })
+  });
 
+  return follwerRequests;
+};
 
-  return follwerRequests
-}
-
-
-const getMyAllFollwingRequest = async ({userId, type}: {userId: string, type: string}) => {
-
-  if(type !== 'social' && type !== 'dating'){
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid type. type should be social, dating, type muste be social or dating");
+const getMyAllFollwingRequest = async ({
+  userId,
+  type,
+}: {
+  userId: string;
+  type: string;
+}) => {
+  if (type !== "social" && type !== "dating") {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid type. type should be social, dating, type muste be social or dating"
+    );
   }
 
-  let modeType : ModeType | undefined = undefined;
-  if(type === 'social'){
+  let modeType: ModeType | undefined = undefined;
+  if (type === "social") {
     modeType = ModeType.SOCIAL;
-  }else if(type === 'dating'){
+  } else if (type === "dating") {
     modeType = ModeType.DATING;
   }
 
@@ -356,7 +369,7 @@ const getMyAllFollwingRequest = async ({userId, type}: {userId: string, type: st
     where: {
       followingId: userId,
       requestStatus: RequestStatus.PENDING,
-      modeType
+      modeType,
     },
     include: {
       follower: {
@@ -365,16 +378,14 @@ const getMyAllFollwingRequest = async ({userId, type}: {userId: string, type: st
           firstName: true,
           lastName: true,
           profileImage: true,
-          address: true
+          address: true,
         },
       },
     },
-  })
+  });
 
-
-  return follwingRequests
-
-}
+  return follwingRequests;
+};
 
 //  getAllSuggestedUsers
 
@@ -385,14 +396,15 @@ const getAllSuggestedUsers = async ({
   userId: string;
   type: string;
 }) => {
-  if (type !== 'social' && type !== 'dating') {
+  if (type !== "social" && type !== "dating") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       'Invalid type. Type must be "social" or "dating"'
     );
   }
 
-  const modeType: ModeType = type === 'social' ? ModeType.SOCIAL : ModeType.DATING;
+  const modeType: ModeType =
+    type === "social" ? ModeType.SOCIAL : ModeType.DATING;
 
   // 1️ Get the current user
   const currentUser = await prisma.user.findUnique({
@@ -401,17 +413,18 @@ const getAllSuggestedUsers = async ({
   });
 
   if (!currentUser) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
   // 2️ Get all users except blocked & self
   const users = await prisma.user.findMany({
     where: {
       id: { not: userId },
-      isDatingMode: type === 'dating' ? true : undefined,
+      isDatingMode: type === "dating" ? true : undefined,
       blockedByUsers: { none: { blockerId: userId } }, // users who blocked me
-       blockedUsers: { none: { blockerId: userId } },   // users I blocked
+      blockedUsers: { none: { blockerId: userId } }, // users I blocked
       status: UserStatus.ACTIVE, // ignore inactive or blocked users
+      followers: { none: { followerId: userId } },
     },
     select: {
       id: true,
@@ -428,11 +441,13 @@ const getAllSuggestedUsers = async ({
 
   // 3️ Sort users
   const suggestedUsers = users
-    .map(user => {
+    .map((user) => {
       let score = 0;
 
       // Interest match score
-      const commonInterests = user.interests.filter(i => currentUser.interests.includes(i));
+      const commonInterests = user.interests.filter((i) =>
+        currentUser.interests.includes(i)
+      );
       score += commonInterests.length * 10;
 
       // Optional: proximity score (simple distance formula)
@@ -453,7 +468,7 @@ const getAllSuggestedUsers = async ({
     })
     .sort((a, b) => b.score - a.score); // descending
 
-  return suggestedUsers.map(user => ({
+  return suggestedUsers.map((user) => ({
     id: user.id,
     firstName: user.firstName,
     lastName: user.lastName,
@@ -462,7 +477,6 @@ const getAllSuggestedUsers = async ({
     interests: user.interests,
   }));
 };
-
 
 export const follwerService = {
   createFollowerAndFollowingService,
