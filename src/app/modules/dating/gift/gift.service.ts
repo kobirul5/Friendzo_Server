@@ -107,8 +107,59 @@ const getGiftCardList = async ({
 
 // get my purchases and received gifts
 
+// const getMyPurchasesAndReceivedGifts = async (userId: string) => {
+//   // 1. Purchases groupBy
+//   const purchases = await prisma.giftPurchase.groupBy({
+//     by: ["giftCardId"],
+//     where: { userId },
+//     _count: { giftCardId: true },
+//   });
+
+//   // Purchases giftCard details
+//   const purchaseGiftCards = await prisma.giftCard.findMany({
+//     where: { id: { in: purchases.map((p) => p.giftCardId) } },
+//   });
+
+//   const purchasesData = purchases.map((p) => {
+//     const giftCard = purchaseGiftCards.find((gc) => gc.id === p.giftCardId);
+//     return {
+//       giftCardId: p.giftCardId,
+//       count: p._count.giftCardId,
+//       giftCard,
+//     };
+//   });
+
+//   // 2. Received groupBy
+//   const received = await prisma.giftSend.groupBy({
+//     by: ["giftCardId"],
+//     where: { receiverId: userId },
+//     _count: { giftCardId: true },
+//   });
+
+//   // Received giftCard details
+//   const receivedGiftCards = await prisma.giftCard.findMany({
+//     where: { id: { in: received.map((r) => r.giftCardId) } },
+//   });
+
+//   const receivedData = received.map((r) => {
+//     const giftCard = receivedGiftCards.find((gc) => gc.id === r.giftCardId);
+//     return {
+//       giftCardId: r.giftCardId,
+//       count: r._count.giftCardId,
+//       giftCard,
+//     };
+//   });
+
+//   // 3. Final response
+//   return{
+//      purchases: purchasesData,
+//       received: receivedData,
+//   }
+// };
+
+
 const getMyPurchasesAndReceivedGifts = async (userId: string) => {
-  // 1. Purchases groupBy
+  // 1️⃣ Purchases groupBy
   const purchases = await prisma.giftPurchase.groupBy({
     by: ["giftCardId"],
     where: { userId },
@@ -123,20 +174,26 @@ const getMyPurchasesAndReceivedGifts = async (userId: string) => {
   const purchasesData = purchases.map((p) => {
     const giftCard = purchaseGiftCards.find((gc) => gc.id === p.giftCardId);
     return {
-      giftCardId: p.giftCardId,
+      ...giftCard,
       count: p._count.giftCardId,
-      giftCard,
     };
   });
 
-  // 2. Received groupBy
+  // Group by category
+  const purchasesByCategory = purchasesData.reduce((acc: any, item) => {
+    const category = item.category || "UNKNOWN";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(item);
+    return acc;
+  }, {});
+
+  // 2️⃣ Received gifts groupBy
   const received = await prisma.giftSend.groupBy({
     by: ["giftCardId"],
     where: { receiverId: userId },
     _count: { giftCardId: true },
   });
 
-  // Received giftCard details
   const receivedGiftCards = await prisma.giftCard.findMany({
     where: { id: { in: received.map((r) => r.giftCardId) } },
   });
@@ -144,18 +201,25 @@ const getMyPurchasesAndReceivedGifts = async (userId: string) => {
   const receivedData = received.map((r) => {
     const giftCard = receivedGiftCards.find((gc) => gc.id === r.giftCardId);
     return {
-      giftCardId: r.giftCardId,
+      ...giftCard,
       count: r._count.giftCardId,
-      giftCard,
     };
   });
 
-  // 3. Final response
-  return{
-     purchases: purchasesData,
-      received: receivedData,
-  }
+  const receivedByCategory = receivedData.reduce((acc: any, item) => {
+    const category = item.category || "UNKNOWN";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(item);
+    return acc;
+  }, {});
+
+  // 3️⃣ Final response
+  return {
+    purchases: purchasesByCategory,
+    received: receivedByCategory,
+  };
 };
+
 
 // Send gift for my friends 
 
