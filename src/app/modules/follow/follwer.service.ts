@@ -245,35 +245,89 @@ const acceptOrRejectFollwershipRequestService = async (
   };
 };
 
-const getMyAllFriends = async (userId: string, type: string) => {
-  if (type !== "social" && type !== "dating" && type !== "all") {
+// const getMyAllFriends = async (userId: string, type: string) => {
+//   if (type !== "social" && type !== "dating" && type !== "all") {
+//     throw new ApiError(
+//       httpStatus.BAD_REQUEST,
+//       "Invalid type. type should be social, dating or all, type must be social or dating"
+//     );
+//   }
+
+//   let modeType: ModeType | undefined = undefined;
+//   if (type === "social") {
+//     modeType = ModeType.SOCIAL;
+//   } else if (type === "dating") {
+//     modeType = ModeType.DATING;
+//   }
+
+//   // Friends are users who have accepted each other's follow requests
+//   const friends = await prisma.follow.findMany({
+//     where: {
+//       OR: [
+//         {
+//           followerId: userId,
+//           requestStatus: RequestStatus.ACCEPTED,
+//           modeType,
+//         },
+//         {
+//           followingId: userId,
+//           requestStatus: RequestStatus.ACCEPTED,
+//           modeType,
+//         },
+//       ],
+//     },
+//     include: {
+//       follower: {
+//         select: {
+//           id: true,
+//           firstName: true,
+//           lastName: true,
+//           profileImage: true,
+//           address: true,
+//         },
+//       },
+//       following: {
+//         select: {
+//           id: true,
+//           firstName: true,
+//           lastName: true,
+//           profileImage: true,
+//           address: true,
+//         },
+//       },
+//     },
+//   });
+
+//  const rawFriends = friends.map((f) =>
+//     f.followerId === userId ? f.following : f.follower
+//   );
+
+//   // 3️ Remove duplicates by user.id
+//   const uniqueFriends = Array.from(
+//     new Map(rawFriends.map((friend) => [friend.id, friend])).values()
+//   );
+
+//   return { friends: uniqueFriends };
+// };
+
+const getMyAllFriends = async (userId: string, type: string, search?: string) => {
+  
+  if (!["social", "dating", "all"].includes(type)) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Invalid type. type should be social, dating or all, type must be social or dating"
+      "Invalid type. type should be social, dating or all"
     );
   }
 
   let modeType: ModeType | undefined = undefined;
-  if (type === "social") {
-    modeType = ModeType.SOCIAL;
-  } else if (type === "dating") {
-    modeType = ModeType.DATING;
-  }
+  if (type === "social") modeType = ModeType.SOCIAL;
+  else if (type === "dating") modeType = ModeType.DATING;
 
-  // Friends are users who have accepted each other's follow requests
   const friends = await prisma.follow.findMany({
     where: {
       OR: [
-        {
-          followerId: userId,
-          requestStatus: RequestStatus.ACCEPTED,
-          modeType,
-        },
-        {
-          followingId: userId,
-          requestStatus: RequestStatus.ACCEPTED,
-          modeType,
-        },
+        { followerId: userId, requestStatus: RequestStatus.ACCEPTED, modeType },
+        { followingId: userId, requestStatus: RequestStatus.ACCEPTED, modeType },
       ],
     },
     include: {
@@ -284,6 +338,8 @@ const getMyAllFriends = async (userId: string, type: string) => {
           lastName: true,
           profileImage: true,
           address: true,
+          blockedUsers: { where: { blockedUserId: userId } },
+          blockedByUsers: { where: { blockerId: userId } },
         },
       },
       following: {
@@ -293,22 +349,39 @@ const getMyAllFriends = async (userId: string, type: string) => {
           lastName: true,
           profileImage: true,
           address: true,
+          blockedUsers: { where: { blockedUserId: userId } },
+          blockedByUsers: { where: { blockerId: userId } },
         },
       },
     },
   });
 
- const rawFriends = friends.map((f) =>
-    f.followerId === userId ? f.following : f.follower
-  );
+  let rawFriends = friends
+    .map((f) => (f.followerId === userId ? f.following : f.follower))
+    .filter(
+      (friend) =>
+        friend.blockedUsers.length === 0 && friend.blockedByUsers.length === 0
+    );
 
-  // 3️ Remove duplicates by user.id
+  // Apply search in JS (simpler & avoids TypeScript Prisma type issues)
+  if (search) {
+    const lowerSearch = search.toLowerCase();
+    rawFriends = rawFriends.filter(
+      (friend) =>
+        friend.firstName?.toLowerCase().includes(lowerSearch) ||
+        friend.lastName?.toLowerCase().includes(lowerSearch)
+    );
+  }
+
   const uniqueFriends = Array.from(
     new Map(rawFriends.map((friend) => [friend.id, friend])).values()
   );
 
   return { friends: uniqueFriends };
 };
+
+
+
 
 const getMyAllFollwerRequest = async ({
   userId,
