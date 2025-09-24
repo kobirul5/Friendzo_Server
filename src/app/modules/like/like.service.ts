@@ -100,10 +100,10 @@ const removeMemoryLikeService = async (userId: string, memoryId: string) => {
 };
 
 const getDailyMyLikeService = async (userId: string) => {
-
   const startOfToday = dayjs().startOf("day").toDate();
   const endOfToday = dayjs().endOf("day").toDate();
 
+  // Get today's likes with memory info
   const likes = await prisma.memoryLike.findMany({
     where: {
       userId,
@@ -112,32 +112,79 @@ const getDailyMyLikeService = async (userId: string) => {
         lte: endOfToday,
       },
     },
+    include: {
+      memory: {
+        select: {
+          id: true,
+          description: true,
+          image: true,
+          createdAt: true,
+        },
+      },
+    },
   });
 
-  return likes
+  // Extract memories (avoid duplicates if needed)
+  const likedMemories = likes.map((like) => like.memory);
 
-}
+  return {
+    totalLikes: likedMemories.length,
+    likesMemory: likedMemories,
+  };
+};
 
+
+// const getMyWeeklyService = async (userId: string) => {
+
+
+//  const now = new Date();
+//   const day = now.getDay(); 
+
+//   // Get ISO day index: Monday = 0, Sunday = 6
+//   const isoDay = (day + 6) % 7;
+
+//   // Start of ISO week (Monday)
+//   const startOfWeek = new Date(now);
+//   startOfWeek.setDate(now.getDate() - isoDay);
+//   startOfWeek.setHours(0, 0, 0, 0);
+
+//   // End of ISO week (Sunday, 23:59:59)
+//   const endOfWeek = new Date(startOfWeek);
+//   endOfWeek.setDate(startOfWeek.getDate() + 6);
+//   endOfWeek.setHours(23, 59, 59, 999);
+
+//   const likes = await prisma.memoryLike.findMany({
+//     where: {
+//       userId,
+//       createdAt: {
+//         gte: startOfWeek,
+//         lte: endOfWeek,
+//       },
+//     },
+//   });
+
+//   return likes;
+
+// }
 
 const getMyWeeklyService = async (userId: string) => {
+  const now = new Date();
+  const day = now.getDay();
 
-
- const now = new Date();
-  const day = now.getDay(); 
-
-  // Get ISO day index: Monday = 0, Sunday = 6
+  // Convert JS Sunday=0 to ISO Monday=0
   const isoDay = (day + 6) % 7;
 
-  // Start of ISO week (Monday)
+  // Start of week (Monday)
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - isoDay);
   startOfWeek.setHours(0, 0, 0, 0);
 
-  // End of ISO week (Sunday, 23:59:59)
+  // End of week (Sunday 23:59:59)
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(startOfWeek.getDate() + 6);
   endOfWeek.setHours(23, 59, 59, 999);
 
+  // Query all likes with memory details
   const likes = await prisma.memoryLike.findMany({
     where: {
       userId,
@@ -146,11 +193,29 @@ const getMyWeeklyService = async (userId: string) => {
         lte: endOfWeek,
       },
     },
+    include: {
+      memory: {
+        select: {
+          id: true,
+          // title: true,
+          description: true,
+          image: true,
+          createdAt: true,
+        },
+      },
+    },
   });
 
-  return likes;
+  // Extract memories
+  const likedMemories = likes.map((like) => like.memory);
 
-}
+  return {
+    totalLikes: likedMemories.length,
+    likesMemory: likedMemories,
+  };
+};
+
+
 
 export const likeService = {
   createEventLikeService,
