@@ -28,7 +28,7 @@ async function deleteFileFromDigitalOcean(imageUrl: string): Promise<boolean> {
 
     await s3.send(command);
 
-    console.log(` Deleted: ${key}`);
+    // console.log(` Deleted: ${key}`);
     return true;
   } catch (err: any) {
     console.error(" Delete failed:", err.message || err);

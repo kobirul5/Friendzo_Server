@@ -38,7 +38,7 @@ const deleteFiles = async (files:any) => {
 };
 
 const deleteFile = async (file:string) => {
-  console.log(file);
+  // console.log(file);
 
   const deleted = await deleteImageAndFile.deleteFileFromDigitalOcean(file);
 

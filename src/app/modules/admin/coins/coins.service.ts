@@ -38,7 +38,7 @@ const coinsCreate = async ({ data, userId, imagesFile }: any) => {
 
 
   const created = await prisma.coins.create({ data: dataToSave });
-  console.log("created", created);
+  // console.log("created", created);
   if (!created) {
     await deleteImageAndFile.deleteFileFromDigitalOcean(uploaded.Location);
     throw new ApiError(500, "Failed to create fashion.");

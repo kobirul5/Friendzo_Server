@@ -78,19 +78,25 @@ const createReportPostService = async (data: any, reporterId: string) => {
 };
 
 const deleteReportService = async (reportId: string) => {
+  // Try to find in Report (user reports)
   const report = await prisma.report.findUnique({
     where: { id: reportId },
   });
 
-  if (!report) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Report not found");
+  if (report) {
+    return await prisma.report.delete({ where: { id: reportId } });
   }
 
-  const result = await prisma.report.delete({
+  // Try to find in ReportPost (post/memory reports)
+  const reportPost = await prisma.reportPost.findUnique({
     where: { id: reportId },
   });
 
-  return result;
+  if (reportPost) {
+    return await prisma.reportPost.delete({ where: { id: reportId } });
+  }
+
+  throw new ApiError(httpStatus.NOT_FOUND, "Report not found");
 };
 
 

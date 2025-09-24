@@ -8,18 +8,18 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
     where: { id: userId },
     select: {
       id: true,
-      interests: true,
+      datingInterests: true,
       gender: true,
       interestedGender: true,
     },
   });
 
-  console.log(currentUser,"------------------")
+  // console.log(currentUser,"------------------")
   if (!currentUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
-   const currentUserInterests = interest? [interest] :  currentUser.interests;
+   const currentUserInterests = interest? [interest] :  currentUser.datingInterests;
 
    if (currentUserInterests && currentUserInterests.length > 0) {
     // Validate interests against fixed array
@@ -57,7 +57,7 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
       id: { not: userId },
       isDatingMode: true,
       gender: currentUser.interestedGender,
-      interests: {
+      datingInterests: {
         hasSome: currentUserInterests,
       },
     },
@@ -69,6 +69,7 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
       email: true,
       address: true,
       interests: true,
+      datingInterests: true,
       gender: true,
       dob: true,
     },
@@ -76,7 +77,7 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
 
   // 3️ Calculate shared interests percentage
   const usersWithMatchPercentage = matchedUsers.map((user) => {
-    const sharedCount = user.interests.filter((i) =>
+    const sharedCount = user.datingInterests.filter((i) =>
       currentUserInterests.includes(i)
     ).length;
 

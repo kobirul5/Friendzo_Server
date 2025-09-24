@@ -20,7 +20,7 @@ const uploadMultipleImage = catchAsync(async (req, res) => {
 const deleteMultipleImage = catchAsync(async (req, res) => {
 
   const files = req.body.files
-  console.log(files);
+  // console.log(files);
   const result = await fileUploadService.deleteFiles(files);
   sendResponse(res, {
       statusCode: httpStatus.OK,
