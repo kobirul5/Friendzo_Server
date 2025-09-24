@@ -88,12 +88,20 @@ const getMyNetworkCount = async (userId: string) => {
 };
 
 const getMyFollowerService = async (userId: string) => {
-  const tootalFollowers = await prisma.follow.count({
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+
+
+  const totalFollowers = await prisma.follow.count({
     where: { followingId: userId },
   });
 
   const followers = await prisma.follow.findMany({
-    where: { followingId: userId },
+    where: { followingId: userId, modeType: "SOCIAL" },
     include: {
       follower: {
         select: {
@@ -108,32 +116,59 @@ const getMyFollowerService = async (userId: string) => {
 
   return {
     followers: followers.map((f) => f.follower),
-    totalFollowers: tootalFollowers,
+    totalFollowers: totalFollowers,
   };
 };
 
 const getMyFollowingService = async (userId: string) => {
+
+const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  
   const totalFollowing = await prisma.follow.count({
     where: { followerId: userId },
   });
 
-  const following = await prisma.follow.findMany({
-    where: { followerId: userId },
+  const following = await prisma.user.findUnique({
+    where: { id: userId },
     include: {
       following: {
-        select: {
+        where: { modeType: "SOCIAL" },
+        select:{
           id: true,
-          firstName: true,
-          lastName: true,
-          profileImage: true,
-        },
+          requestStatus: true,
+          // followingId: true,
+          following: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              profileImage: true,
+            },
+          }
+        }
       },
     },
   });
 
+  if (!following) {
+    throw new ApiError(httpStatus.NOT_FOUND, "following not found");
+  }
+
+  const response = following.following.map((f) => ({
+    id: f.following.id,
+    firstName: f.following.firstName,
+    lastName: f.following.lastName,
+    profileImage: f.following.profileImage,
+    requestStatus: f.requestStatus // e.g., "accepted"
+  }));
+
   return {
-    following: following.map((f) => f.following),
-    totalFollowing: totalFollowing,
+    following: response,
+    totalFollowing,
   };
 };
 
@@ -381,8 +416,6 @@ const getMyAllFriends = async (userId: string, type: string, search?: string) =>
 };
 
 
-
-
 const getMyAllFollwerRequest = async ({
   userId,
   type,
@@ -393,7 +426,7 @@ const getMyAllFollwerRequest = async ({
   if (type !== "social" && type !== "dating") {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      "Invalid type. type should be social, dating, type muste be social or dating"
+      "Invalid type. type should be social, dating, type must be social or dating"
     );
   }
 
