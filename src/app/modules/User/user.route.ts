@@ -22,10 +22,13 @@ router.put(
   fileUploader.uploadMultipleImage,
   userController.updateDatingProfile
 );
+router.get("/referral-code", auth(), userController.getReferralCode);
 
 router.get("/profile", auth(), userController.getUserProfile);
 
 router.get("/:id", auth(), userController.getSingleUser);
+
+
 
 // router.delete("/:id", auth(), userController.deleteUser);
 

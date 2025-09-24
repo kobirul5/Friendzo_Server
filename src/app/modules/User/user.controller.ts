@@ -92,11 +92,23 @@ const updateDatingProfile = catchAsync(async (req: Request, res: Response) => {
 //   });
 // });
 
+const getReferralCode = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  console.log(userId);
+  const user = await userService.getReferralCode(userId);
+  res.status(200).json({
+    success: true,
+    message: "Referral code retrieved successfully!",
+    data: user,
+  });
+});
+
 export const userController = {
   createUser,
   updateProfile,
   getUserProfile,
   getSingleUser,
   updateDatingProfile,
+  getReferralCode
   // deleteUserDocumentImage,
 };

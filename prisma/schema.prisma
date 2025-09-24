@@ -85,17 +85,11 @@ model User {
   //  Notifications where this user is the sender
   notificationsSent Notification[] @relation("NotificationSender")
   ReportPost        ReportPost[]
-  ManagerRole       ManagerRole[]
+  managerRole  String[] @default([])
 
   @@map("users")
 }
 
-model ManagerRole {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  accessInput String[] @default([])
-  userId      String   @db.ObjectId @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
 model Interest {
   id       String           @id @default(auto()) @map("_id") @db.ObjectId

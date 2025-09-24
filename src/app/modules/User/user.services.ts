@@ -467,6 +467,19 @@ const updateDatingProfile = async (
   return updatedUser;
 };
 
+const getReferralCode = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { 
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      referralCode: true
+     },
+  });
+  return user;
+}
 
 
 export const userService = {
@@ -475,5 +488,6 @@ export const userService = {
   getUserProfile,
   getSingleUser,
   updateDatingProfile,
+  getReferralCode
   // deleteUserDocumentImage,
 };

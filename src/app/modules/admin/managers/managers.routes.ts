@@ -21,7 +21,13 @@ router.get(
 
 router.get("/:id", auth(), managersController.getManagersById);
 
-router.put("/:id", auth(), managersController.updateManagers);
+router.put(
+  "/:id",
+  auth(),
+  auth(UserRole.ADMIN, UserRole.MANAGER),
+  fileUploader.uploadSingle,
+  managersController.updateManagers
+);
 
 router.delete("/:id", auth(), managersController.deleteManagers);
 

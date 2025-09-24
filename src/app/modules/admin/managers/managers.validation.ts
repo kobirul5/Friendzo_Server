@@ -28,14 +28,8 @@ export const userValidation = {
       setAccess: z
         .array(z.enum(baseAccessList))
         .nonempty("At least one access must be selected"),
-      password: z.string().min(6, "Password must be at least 6 characters"),
-      confirmPassword: z.string().min(6, "Confirm password is required"),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
+      password: z.string().min(6, "Password must be at least 6 characters")
     }),
-
   updateSchema: z
     .object({
       firstName: z.string().optional(),
@@ -44,10 +38,6 @@ export const userValidation = {
       role: z.enum(["MANAGER"]).optional(),
       setAccess: z.array(z.enum(baseAccessList)).optional(),
       password: z.string().min(6, "Password must be at least 6 characters").optional(),
-      confirmPassword: z.string().optional(),
     })
-    .refine((data) => !data.password || data.password === data.confirmPassword, {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
-    }),
+    
 };

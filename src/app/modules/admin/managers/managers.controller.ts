@@ -41,7 +41,12 @@ const getManagersById = catchAsync(async (req, res) => {
 });
 
 const updateManagers = catchAsync(async (req, res) => {
-  const result = await managersService.updateIntoDb(req.params.id, req.body);
+   const targetUserId = req.params.id;
+   console.log(req.body.data)
+  const data = JSON.parse(req.body.data);
+  console.log(data);
+  const file = req.file;
+  const result = await managersService.updateUserService({targetUserId, data, file});
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
