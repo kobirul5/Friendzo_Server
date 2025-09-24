@@ -248,7 +248,11 @@ interface SendGiftInput {
       throw new ApiError(httpStatus.BAD_REQUEST,"No friends selected to send gift");
     }
 
-
+    receiverIds.forEach(async (id) => {
+      const user = await prisma.user.findUnique({ where: { id } });
+      console.log(user);
+      if (!user) throw new ApiError(httpStatus.NOT_FOUND, `receiver not found! with id: ${id}`);
+    });
 
     // 2. Pick gifts to delete
     const giftsToDelete = await tx.giftPurchase.findMany({
@@ -286,6 +290,7 @@ interface SendGiftInput {
 
   return result
 };
+
 
 
 

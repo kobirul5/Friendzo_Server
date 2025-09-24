@@ -4,7 +4,12 @@ import catchAsync from '../../../../shared/catchAsync';
 import sendResponse from '../../../../shared/sendResponse';
 
 const createManagers = catchAsync(async (req, res) => {
-  const result = await managersService.createIntoDb(req.body);
+
+  const userId = req.user.id;
+  const data = JSON.parse(req.body.data);
+  const file = req.file;
+
+  const result = await managersService.createUserService({userId, data, file});
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,

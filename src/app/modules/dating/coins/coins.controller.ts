@@ -59,9 +59,28 @@ const sendCoin  = catchAsync(async (req, res) => {
   });
 });
 
+const giftCoin  = catchAsync(async (req, res) => {
+ const { coinAmount,  recipients } = req.body;
+   const userId = req.user.id;
+ 
+   const result = await coinsService.createGiftCoin({
+     coinAmount,
+     recipients,
+     userId,
+   });
+   
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Coins buy successfully",
+    data: result,
+  });
+});
+
 
 export const coinsController = {
   getCoinList,
   buyCoin,
-  sendCoin
+  sendCoin,
+  giftCoin
 };

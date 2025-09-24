@@ -2,14 +2,14 @@ import express from "express";
 import { managersController } from "./managers.controller";
 import auth from "../../../middlewares/auth";
 import { UserRole } from "@prisma/client";
-import { fileUploadService } from "../../fileUpload/fileUpload.service";
+import { fileUploader } from "../../../../helpars/fileUploader";
 
 const router = express.Router();
 
 router.post(
   "/",
   auth(UserRole.ADMIN, UserRole.MANAGER),
-  fileUploadService.uploadImages,
+  fileUploader.uploadSingle,
   managersController.createManagers
 );
 

@@ -106,7 +106,7 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
     accessToken: token,
   };
 };
-
+// Update user
 const updateUserProfile = async (
   userId: string,
   updateData: Partial<User>,

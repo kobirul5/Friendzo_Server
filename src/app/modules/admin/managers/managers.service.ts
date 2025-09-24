@@ -4,14 +4,103 @@ import { IGetAllOptions } from "../userInfo/userInfo.service";
 import { paginationHelper } from "../../../../helpars/paginationHelper";
 import ApiError from "../../../../errors/ApiErrors";
 import { Prisma, UserRole, UserStatus } from "@prisma/client";
+import * as bcrypt from "bcrypt";
+import { userValidation } from "./managers.validation";
+import { fileUploader } from "../../../../helpars/fileUploader";
+import { getRefferId } from "../../../../helpars/generateRefferId";
+import { fileUploadService } from "../../fileUpload/fileUpload.service";
 
-const createIntoDb = async (data: any) => {
-  const transaction = await prisma.$transaction(async (prisma) => {
-    const result = await prisma.user.create({ data });
-    return result;
+interface CreateUserInput {
+  userId: string;
+  data: any;
+  file?: Express.Multer.File;
+}
+
+const createUserService = async ({ userId, data, file }: CreateUserInput) => {
+  const parsedData = data;
+
+  // Check if email already exists
+  const existingUser = await prisma.user.findUnique({
+    where: { email: parsedData.email },
+  });
+  if (existingUser) {
+    throw new ApiError(400, "Email already exists");
+  }
+
+  // Hash password
+  const hashedPassword = await bcrypt.hash(parsedData.password, 10);
+
+  // Optional profile image upload
+  let profileImageUrl: string | undefined;
+  if (file) {
+    const uploadedImage = await fileUploadService.uploadSingleImageService(
+      file
+    );
+    profileImageUrl = uploadedImage;
+  }
+
+  // Generate unique referral code
+  let newReferralCode = getRefferId();
+  while (
+    await prisma.user.findUnique({ where: { referralCode: newReferralCode } })
+  ) {
+    newReferralCode = getRefferId();
+  }
+
+  // Use transaction to create user and managerRole atomically
+  const newUser = await prisma.$transaction(async (tx) => {
+    // Create user
+    const createdUser = await tx.user.create({
+      data: {
+        firstName: parsedData.firstName,
+        email: parsedData.email,
+        phoneNumber: parsedData.phoneNumber,
+        role: UserRole.MANAGER,
+        password: hashedPassword,
+        profileImage: profileImageUrl,
+        referralCode: newReferralCode,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        profileImage: true,
+        ManagerRole: true,
+        createdAt: true,
+      },
+    });
+
+    // Create manager role linked to this user
+    await tx.managerRole.create({
+      data: {
+        accessInput: parsedData.accessInput as string[],
+        userId: createdUser.id,
+      },
+    });
+
+    return createdUser;
   });
 
-  return transaction;
+  const result = await prisma.user.findUnique({
+    where: { id: newUser.id },
+    select: {
+      id: true,
+      firstName: true,
+      email: true,
+      phoneNumber: true,
+      role: true,
+      profileImage: true,
+      ManagerRole: true,
+      createdAt: true,
+    },
+  });
+  if (!result) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  return {...result, ManagerRole: result.ManagerRole};
 };
 
 const getAllManagers = async (options: IGetAllOptions = {}, userId: string) => {
@@ -108,22 +197,22 @@ const getAllManagers = async (options: IGetAllOptions = {}, userId: string) => {
 
 const getByIdFromDb = async (id: string) => {
   const result = await prisma.user.findUnique({
-     where: { id },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        profileImage: true,
-        email: true,
-        phoneNumber: true,
-        gender: true,
-        about: true,
-        age: true,
-        memories: true,
-        event: true,
-        interests: true,
-      } 
-    });
+    where: { id },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      profileImage: true,
+      email: true,
+      phoneNumber: true,
+      gender: true,
+      about: true,
+      age: true,
+      memories: true,
+      event: true,
+      interests: true,
+    },
+  });
   if (!result) {
     throw new Error("Managers not found");
   }
@@ -155,7 +244,7 @@ const deleteItemFromDb = async (id: string) => {
   return transaction;
 };
 export const managersService = {
-  createIntoDb,
+  createUserService,
   getAllManagers,
   getByIdFromDb,
   updateIntoDb,
