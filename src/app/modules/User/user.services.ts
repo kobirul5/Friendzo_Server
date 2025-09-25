@@ -232,12 +232,16 @@ const getSingleUser = async (userId: string) => {
       totalCoins: true,
       phoneNumber: true,
       gender: true,
+      address: true,
       about: true,
       age: true,
       memories: true,
       event: true,
       interests: true,
-      datingInterests: true, // string[]
+      datingInterests: true,
+      datingAbout: true,
+      datingImage: true,
+      interestedGender: true, // string[]
     },
   });
 
@@ -252,7 +256,7 @@ const getSingleUser = async (userId: string) => {
     select: { id: true, name: true, image: true, category: true },
   });
 
-  const followrsCount = await prisma.follow.count({
+  const followersCount = await prisma.follow.count({
     where: { followingId: userId },
   });
   const followingsCount = await prisma.follow.count({
@@ -260,7 +264,17 @@ const getSingleUser = async (userId: string) => {
   });
   const gifts = await getGifts(userId);
 
-  return { ...user, interestsDetails, followrsCount, followingsCount, gifts};
+   const requiredFields = [
+    user.datingAbout,
+    user.datingInterests?.length > 0,
+    user.datingImage?.length > 0,
+    user.interestedGender,
+  ];
+   const profileComplete = requiredFields.every(Boolean);
+   console.log("Profile complete:", profileComplete);
+
+
+  return { ...user, interestsDetails, followersCount, followingsCount, gifts, isProfileComplete: profileComplete };
 };
 
 // get gifts

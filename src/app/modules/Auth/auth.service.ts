@@ -63,6 +63,7 @@ const loginUser = async (payload: { email: string; password: string; fcmToken?: 
   const userData = await prisma.user.findFirst({
     where: {
       email: payload.email,
+      
     },
   });
 
@@ -103,7 +104,19 @@ const loginUser = async (payload: { email: string; password: string; fcmToken?: 
     config.jwt.expires_in as string
   );
 
-  return { token: accessToken, role: userData.role, id: userData.id };
+   const requiredFields = [
+    userData.firstName,
+    userData.lastName,
+    userData.phoneNumber,
+    userData.gender,
+    userData.about,
+    userData.interests?.length > 0,
+    userData.profileImage
+  ];
+  console.log(requiredFields);
+   const profileComplete = requiredFields.every(Boolean);
+
+  return { token: accessToken, role: userData.role, id: userData.id, isProfileComplete: profileComplete };
 };
 
 
