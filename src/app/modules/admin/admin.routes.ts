@@ -15,5 +15,8 @@ router.get('/total-report-daily', auth(UserRole.ADMIN, UserRole.MANAGER), adminC
 router.post('/interest', auth(UserRole.ADMIN, UserRole.MANAGER), adminController.createInterest);
 router.get('/interest', adminController.getInterests);
 
+// 
+router.get('/conversation', auth(UserRole.ADMIN, UserRole.MANAGER), adminController.getConversation);
+router.get('/conversation/:roomId', auth(UserRole.ADMIN, UserRole.MANAGER), adminController.getSingleConversationService);
 
 export const adminRoutes = router;

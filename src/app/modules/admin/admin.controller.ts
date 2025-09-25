@@ -92,6 +92,27 @@ const getInterests = catchAsync(async (req, res) => {
 });
 
 
+const getConversation = catchAsync(async (req, res) => {
+  const result = await adminService.getConversationService(); 
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Conversation retrieved successfully',
+    data: result,
+  });
+});
+
+
+const getSingleConversationService = catchAsync(async (req, res) => {
+  const result = await adminService.getSingleConversationService(req.params.roomId); 
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Conversation retrieved successfully',
+    data: result,
+  });
+});
+
 export const adminController = {
   getTotalUsers,
   deleteUser,
@@ -100,5 +121,7 @@ export const adminController = {
   getweeklyReport,
   getDailyReport,
   createInterest,
-  getInterests
+  getInterests,
+  getConversation,
+  getSingleConversationService
 };

@@ -231,6 +231,75 @@ const getAllInterestsService = async () => {
   return interests;
 };
 
+const getConversationService = async () => {
+  const rooms = await prisma.room.findMany({
+      include: {
+        chats: {
+          orderBy: { createdAt: "desc" },
+          take: 1, // latest message per room
+        },
+        sender: { select: { id: true, firstName: true, lastName: true } },
+        receiver: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
+
+    // Map rooms to readable format
+    const conversations = rooms.map((room) => ({
+      roomId: room.id,
+      participants: {
+        sender: room.sender,
+        receiver: room.receiver,
+      },
+      lastMessage: room.chats[0] || null,
+      unreadCount: room.chats.reduce(
+        (acc, chat) => (chat.isRead ? acc : acc + 1),
+        0
+      ),
+    }));
+
+    return conversations;
+}
+
+// single conversation 
+const getSingleConversationService = async (roomId: string) => {
+  // Fetch room with all chats/messages
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    include: {
+      chats: {
+        orderBy: { createdAt: "asc" }, // chronological order
+      },
+      sender: { select: { id: true, firstName: true, lastName: true } },
+      receiver: { select: { id: true, firstName: true, lastName: true } },
+    },
+  });
+
+  if (!room) return null;
+
+  // Map messages to a clean format
+  const messages = room.chats.map((chat) => ({
+    id: chat.id,
+    senderId: chat.senderId,
+    text: chat.message,
+    images: chat.images,
+    isRead: chat.isRead,
+    createdAt: chat.createdAt,
+  }));
+
+  // Return conversation in a structured format
+  return {
+    roomId: room.id,
+    totalMessages: messages.length,
+    unreadCount: messages.reduce((acc, msg) => (msg.isRead ? acc : acc + 1), 0),
+    participants: {
+      sender: room.sender,
+      receiver: room.receiver,
+    },
+    messages,
+  };
+};
+
+
 
 
 export const adminService = {
@@ -242,4 +311,6 @@ export const adminService = {
   getDailyReportService,
   createInterestService,
   getAllInterestsService,
+  getConversationService,
+  getSingleConversationService
 };
