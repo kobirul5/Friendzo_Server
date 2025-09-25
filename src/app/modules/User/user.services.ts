@@ -15,7 +15,7 @@ import { jwtHelpers } from "../../../helpars/jwtHelpers";
 import emailSender from "../../../shared/emailSender";
 import { registrationOtpTemplate } from "./registrationOtpTemplate";
 import { getRefferId } from "../../../helpars/generateRefferId";
-import { Gender, User } from "@prisma/client";
+import { Gender, ModeType, User } from "@prisma/client";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
 
 
@@ -70,6 +70,23 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
 
   if (!newUser)
     throw new ApiError(httpStatus.BAD_REQUEST, "Failed to create user");
+
+  if(referredId){
+
+    await prisma.user.update({
+      where: { id:  referredByUserId},
+      data: {
+        totalCoins: { increment: 20 },
+      },
+    });
+
+    await prisma.user.update({
+      where: { id: newUser.id },
+      data: {
+        totalCoins: { increment: 20 },
+      },
+    });
+  }
 
   // Generate OTP
   const otp = Number(crypto.randomInt(1000, 9999));
@@ -219,7 +236,7 @@ const getUserProfile = async (userId: string) => {
   return user;
 };
 
-const getSingleUser = async (userId: string) => {
+const getSingleUser = async (userId: string, currentUserId?: string) => {
   // 1️⃣ fetch user
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -273,11 +290,51 @@ const getSingleUser = async (userId: string) => {
    const profileComplete = requiredFields.every(Boolean);
    console.log("Profile complete:", profileComplete);
 
+   if(currentUserId) {
+    const isFriend = await isFriendOrFollow(currentUserId, userId);
+    return { ...user, interestsDetails, followersCount, followingsCount, gifts, isProfileComplete: profileComplete, isFriend };
+  }
 
   return { ...user, interestsDetails, followersCount, followingsCount, gifts, isProfileComplete: profileComplete };
 };
 
-// get gifts
+
+
+const isFriendOrFollow = async (userId: string, friendId: string) => {
+  // Fetch user mode
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { isDatingMode: true },
+  });
+  if (!user) return false; // user nai
+
+  if (user.isDatingMode === true) {
+    // Dating mode: mutual follow required
+    const follows = await prisma.follow.findMany({
+      where: {
+        OR: [
+          { followerId: userId, modeType: "DATING",requestStatus: "ACCEPTED",  followingId: friendId },
+          { followerId: friendId, modeType: "DATING", requestStatus: "ACCEPTED",  followingId: userId },
+        ],
+      },
+    });
+    return follows.length >0;
+  } else {
+    // Social mode: any direction follow counts
+    const follows = await prisma.follow.findMany({
+      where: {
+        OR: [
+          { followerId: userId, modeType: "SOCIAL", requestStatus: "ACCEPTED", followingId: friendId },
+          { followerId: friendId, modeType: "SOCIAL", requestStatus: "ACCEPTED",  followingId: userId },
+        ],
+      },
+    });
+    return follows.length > 0;
+  }
+};
+
+
+
 // export const getGifts = async (userId: string) => {
 //   // 1. Purchases groupBy
 //   const purchases = await prisma.giftPurchase.groupBy({
@@ -327,7 +384,7 @@ const getSingleUser = async (userId: string) => {
 //       received: receivedData,
 //   }
 // };
-
+// get gift
 export const getGifts = async (userId: string) => {
   // 1. Purchases groupBy
   const purchases = await prisma.giftPurchase.groupBy({

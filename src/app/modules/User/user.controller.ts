@@ -41,7 +41,8 @@ const getUserProfile = catchAsync(async (req: Request, res: Response) => {
 
 const getSingleUser = catchAsync(async (req: Request, res: Response) => {
   const userId = req.params.id;
-  const user = await userService.getSingleUser(userId);
+  const currentUserId = req.user.id;
+  const user = await userService.getSingleUser(userId, currentUserId);
   res.status(200).json({
     success: true,
     message: "User profile retrieved successfully!",

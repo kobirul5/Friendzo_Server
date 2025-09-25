@@ -86,7 +86,7 @@ const loginUser = async (payload: { email: string; password: string; fcmToken?: 
     throw new ApiError(httpStatus.BAD_REQUEST, "Password incorrect!");
   }
 
-  // ✅ FCM token save logic
+  //  FCM token save logic
   if (payload.fcmToken) {
     await prisma.user.update({
       where: { id: userData.id },
@@ -113,7 +113,7 @@ const loginUser = async (payload: { email: string; password: string; fcmToken?: 
     userData.interests?.length > 0,
     userData.profileImage
   ];
-  console.log(requiredFields);
+
    const profileComplete = requiredFields.every(Boolean);
 
   return { token: accessToken, role: userData.role, id: userData.id, isProfileComplete: profileComplete };
