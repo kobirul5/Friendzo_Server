@@ -308,7 +308,8 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       followingsCount,
       gifts,
       isProfileComplete: profileComplete,
-      isFriend,
+      isFriend: isFriend.isFriend,
+      followStatus: isFriend.requestStatus,
     };
   }
 
@@ -322,58 +323,138 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
   };
 };
 
-const isFriendOrFollow = async (userId: string, friendId: string) => {
+// const isFriendOrFollow = async (userId: string, friendId: string) => {
+//   // Fetch user mode
+//   const user = await prisma.user.findUnique({
+//     where: { id: userId },
+//     select: { isDatingMode: true },
+//   });
+//   if (!user) return false; // user nai
+
+//   if (user.isDatingMode === true) {
+//     // Dating mode: mutual follow required
+//     const follows = await prisma.follow.findMany({
+//       where: {
+//         OR: [
+//           {
+//             followerId: userId,
+//             modeType: "DATING",
+//             requestStatus: "ACCEPTED",
+//             followingId: friendId,
+//           },
+//           {
+//             followerId: friendId,
+//             modeType: "DATING",
+//             requestStatus: "ACCEPTED",
+//             followingId: userId,
+//           },
+//         ],
+//       },
+//     });
+//     return follows.length > 0;
+//   } else {
+//     // Social mode: any direction follow counts
+//     const follows = await prisma.follow.findMany({
+//       where: {
+//         OR: [
+//           {
+//             followerId: userId,
+//             modeType: "SOCIAL",
+//             requestStatus: "ACCEPTED",
+//             followingId: friendId,
+//           },
+//           {
+//             followerId: friendId,
+//             modeType: "SOCIAL",
+//             requestStatus: "ACCEPTED",
+//             followingId: userId,
+//           },
+//         ],
+//       },
+//     });
+//     return follows.length > 0;
+//   }
+// };
+
+
+const isFriendOrFollow = async (
+  userId: string,
+  friendId: string
+): Promise<{ isFriend: boolean; requestStatus: string }> => {
   // Fetch user mode
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { isDatingMode: true },
   });
-  if (!user) return false; // user nai
 
-  if (user.isDatingMode === true) {
-    // Dating mode: mutual follow required
-    const follows = await prisma.follow.findMany({
-      where: {
-        OR: [
-          {
-            followerId: userId,
-            modeType: "DATING",
-            requestStatus: "ACCEPTED",
-            followingId: friendId,
-          },
-          {
-            followerId: friendId,
-            modeType: "DATING",
-            requestStatus: "ACCEPTED",
-            followingId: userId,
-          },
-        ],
-      },
-    });
-    return follows.length > 0;
+  if (!user) return { isFriend: false, requestStatus: "NOTFOLLOW" };
+
+  const modeType = user.isDatingMode ? "DATING" : "SOCIAL";
+
+  // Check follows in both directions
+  const follows = await prisma.follow.findMany({
+    where: {
+      OR: [
+        {
+          followerId: userId,
+          followingId: friendId,
+          modeType,
+        },
+        {
+          followerId: friendId,
+          followingId: userId,
+          modeType,
+        },
+      ],
+    },
+    select: {
+      requestStatus: true,
+      followerId: true,
+      followingId: true,
+    },
+  });
+
+  if (follows.length === 0) {
+    return { isFriend: false, requestStatus: "NOTFOLLOW" };
+  }
+
+  if (modeType === "DATING") {
+    // For dating mode: must be mutual ACCEPTED
+    const userFollow = follows.find(
+      (f) => f.followerId === userId && f.followingId === friendId
+    );
+    const friendFollow = follows.find(
+      (f) => f.followerId === friendId && f.followingId === userId
+    );
+
+    if (
+      userFollow?.requestStatus === "ACCEPTED" &&
+      friendFollow?.requestStatus === "ACCEPTED"
+    ) {
+      return { isFriend: true, requestStatus: "ACCEPTED" };
+    }
+
+    // Not mutual yet
+    return {
+      isFriend: false,
+      requestStatus:
+        userFollow?.requestStatus ||
+        friendFollow?.requestStatus ||
+        "NOTFOLLOW",
+    };
   } else {
-    // Social mode: any direction follow counts
-    const follows = await prisma.follow.findMany({
-      where: {
-        OR: [
-          {
-            followerId: userId,
-            modeType: "SOCIAL",
-            requestStatus: "ACCEPTED",
-            followingId: friendId,
-          },
-          {
-            followerId: friendId,
-            modeType: "SOCIAL",
-            requestStatus: "ACCEPTED",
-            followingId: userId,
-          },
-        ],
-      },
-    });
-    return follows.length > 0;
+    // Social mode: one ACCEPTED follow is enough
+    const accepted = follows.find((f) => f.requestStatus === "ACCEPTED");
+    if (accepted) {
+      return { isFriend: true, requestStatus: "ACCEPTED" };
+    }
+    return {
+      isFriend: false,
+      requestStatus: follows[0]?.requestStatus || "NOTFOLLOW",
+    };
   }
 };
+
 
 // export const getGifts = async (userId: string) => {
 //   // 1. Purchases groupBy
