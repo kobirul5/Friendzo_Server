@@ -282,6 +282,17 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
     select: { id: true, name: true, image: true, category: true },
   });
 
+  const datingInterestsDetails = await prisma.interest.findMany({
+    where: {
+      OR: user.datingInterests.map((name) => ({
+        name: { equals: name, mode: "insensitive" },
+      })),
+    },
+    select: { id: true, name: true, image: true, category: true },
+  })
+
+  console.log("datingInterestsDetails", datingInterestsDetails);
+
   const followersCount = await prisma.follow.count({
     where: { followingId: userId },
   });
@@ -297,13 +308,14 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
     user.interestedGender,
   ];
   const profileComplete = requiredFields.every(Boolean);
-  console.log("Profile complete:", profileComplete);
+
 
   if (currentUserId) {
     const isFriend = await isFriendOrFollow(currentUserId, userId);
     return {
       ...user,
       interestsDetails,
+      datingInterestsDetails,
       followersCount,
       followingsCount,
       gifts,
@@ -316,6 +328,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
   return {
     ...user,
     interestsDetails,
+    datingInterestsDetails,
     followersCount,
     followingsCount,
     gifts,
@@ -323,58 +336,6 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
   };
 };
 
-// const isFriendOrFollow = async (userId: string, friendId: string) => {
-//   // Fetch user mode
-//   const user = await prisma.user.findUnique({
-//     where: { id: userId },
-//     select: { isDatingMode: true },
-//   });
-//   if (!user) return false; // user nai
-
-//   if (user.isDatingMode === true) {
-//     // Dating mode: mutual follow required
-//     const follows = await prisma.follow.findMany({
-//       where: {
-//         OR: [
-//           {
-//             followerId: userId,
-//             modeType: "DATING",
-//             requestStatus: "ACCEPTED",
-//             followingId: friendId,
-//           },
-//           {
-//             followerId: friendId,
-//             modeType: "DATING",
-//             requestStatus: "ACCEPTED",
-//             followingId: userId,
-//           },
-//         ],
-//       },
-//     });
-//     return follows.length > 0;
-//   } else {
-//     // Social mode: any direction follow counts
-//     const follows = await prisma.follow.findMany({
-//       where: {
-//         OR: [
-//           {
-//             followerId: userId,
-//             modeType: "SOCIAL",
-//             requestStatus: "ACCEPTED",
-//             followingId: friendId,
-//           },
-//           {
-//             followerId: friendId,
-//             modeType: "SOCIAL",
-//             requestStatus: "ACCEPTED",
-//             followingId: userId,
-//           },
-//         ],
-//       },
-//     });
-//     return follows.length > 0;
-//   }
-// };
 
 
 const isFriendOrFollow = async (
@@ -456,56 +417,7 @@ const isFriendOrFollow = async (
 };
 
 
-// export const getGifts = async (userId: string) => {
-//   // 1. Purchases groupBy
-//   const purchases = await prisma.giftPurchase.groupBy({
-//     by: ["giftCardId"],
-//     where: { userId },
-//     _count: { giftCardId: true },
-//   });
 
-//   // Purchases giftCard details
-//   const purchaseGiftCards = await prisma.giftCard.findMany({
-//     where: { id: { in: purchases.map((p) => p.giftCardId) } },
-//   });
-
-//   const purchasesData = purchases.map((p) => {
-//     const giftCard = purchaseGiftCards.find((gc) => gc.id === p.giftCardId);
-//     return {
-//       giftCardId: p.giftCardId,
-//       count: p._count.giftCardId,
-//       giftCard,
-//     };
-//   });
-
-//   // 2. Received groupBy
-//   const received = await prisma.giftSend.groupBy({
-//     by: ["giftCardId"],
-//     where: { receiverId: userId },
-//     _count: { giftCardId: true },
-//   });
-
-//   // Received giftCard details
-//   const receivedGiftCards = await prisma.giftCard.findMany({
-//     where: { id: { in: received.map((r) => r.giftCardId) } },
-//   });
-
-//   const receivedData = received.map((r) => {
-//     const giftCard = receivedGiftCards.find((gc) => gc.id === r.giftCardId);
-//     return {
-//       giftCardId: r.giftCardId,
-//       count: r._count.giftCardId,
-//       giftCard,
-//     };
-//   });
-
-//   // 3. Final response
-//   return{
-//      purchases: purchasesData,
-//       received: receivedData,
-//   }
-// };
-// get gift
 export const getGifts = async (userId: string) => {
   // 1. Purchases groupBy
   const purchases = await prisma.giftPurchase.groupBy({
@@ -566,14 +478,21 @@ export const getGifts = async (userId: string) => {
 };
 
 //  update dating profile
+
+
 const updateDatingProfile = async (
   userId: string,
   updateData: UpdateDatingProfileInput,
-  files?: Express.Multer.File[] // multiple files, optional
+  files?: Express.Multer.File[]
 ) => {
   // 1. Check if user exists
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    select: {
+      id: true,
+      datingImage: true,
+      datingInterests: true,
+    },
   });
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -582,9 +501,7 @@ const updateDatingProfile = async (
   // 2. Prepare merged data
   const mergedData: any = {};
 
-  // Overwrite string fields
   if (updateData.interestedGender) {
-    // Prisma expects array, wrap single string
     mergedData.interestedGender = updateData.interestedGender;
   }
 
@@ -612,30 +529,23 @@ const updateDatingProfile = async (
       );
     }
 
-    // Merge array
-    mergedData.datingInterests = [
-      ...new Set([
-        ...(user.datingInterests || []),
-        ...updateData.datingInterests,
-      ]),
-    ];
+    mergedData.datingInterests = updateData.datingInterests;
   }
 
-  if (!files) {
-    throw new ApiError(400, "No files uploaded");
-  }
-
-  // Handle multiple file uploads if files are provided
+  // Image upload logic
   if (files && files.length > 0) {
+    // 1. Delete old images from DigitalOcean (if exist)
+    
+
+    // 2. Upload new images
     const uploadedUrls: string[] = [];
     for (const file of files) {
       const uploaded = await fileUploader.uploadToDigitalOcean(file);
       uploadedUrls.push(uploaded.Location);
     }
 
-    mergedData.datingImage = [
-      ...new Set([...(user.datingImage || []), ...uploadedUrls]),
-    ];
+    // Replace with only new images
+    mergedData.datingImage = uploadedUrls;
   }
 
   // 3. Update user profile
@@ -656,12 +566,21 @@ const updateDatingProfile = async (
   });
 
   if (!updatedUser) {
-    await deleteImageAndFile.deleteFileFromDigitalOcean(mergedData.datingImage);
+    // rollback if update fails
+    if (mergedData.datingImage && mergedData.datingImage.length > 0) {
+      await deleteImageAndFile.deleteFileFromDigitalOcean(mergedData.datingImage);
+    }
     throw new ApiError(400, "Failed to update user profile");
   }
 
+  if (user.datingImage && user.datingImage.length > 0) {
+    await deleteImageAndFile.deleteMultipleFileFromDigitalOcean(user.datingImage);
+  }
+
+
   return updatedUser;
 };
+
 
 const getReferralCode = async (userId: string) => {
   const user = await prisma.user.findUnique({
