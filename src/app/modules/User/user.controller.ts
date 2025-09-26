@@ -104,12 +104,35 @@ const getReferralCode = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// change dating mode
+const changeDatingMode = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const user = await userService.changeDatingMode({userId});
+  res.status(200).json({
+    success: true,
+    message: "Dating mode changed successfully!",
+    data: user,
+  });
+})
+
+const seeMode = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const user = await userService.seeMode({userId});
+  res.status(200).json({
+    success: true,
+    message: "Dating mode changed successfully!",
+    data: user,
+  });
+})
+
 export const userController = {
   createUser,
   updateProfile,
   getUserProfile,
   getSingleUser,
   updateDatingProfile,
-  getReferralCode
+  getReferralCode,
+  changeDatingMode,
+  seeMode
   // deleteUserDocumentImage,
 };

@@ -220,18 +220,6 @@ const updateUserProfile = async (
       datingImage: datingImageUrl,
       updatedAt: new Date(),
     },
-    // select: {
-    //   id: true,
-    //   firstName: true,
-    //   lastName: true,
-    //   email: true,
-    //   phoneNumber: true,
-    //   profileImage: true,
-    //   role: true,
-    //   createdAt: true,
-    //   updatedAt: true,
-    //   interests: true,
-    // },
   });
 
   if (!updatedUser) {
@@ -608,6 +596,49 @@ const getReferralCode = async (userId: string) => {
   return user;
 };
 
+const changeDatingMode = async ({ userId }: { userId: string }) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      isDatingMode: true,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const userUpdate = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      isDatingMode: !user.isDatingMode,
+    },
+    select: {
+      id: true,
+      isDatingMode: true,
+    }
+  });
+  return {isDatingMode : userUpdate.isDatingMode};
+};
+
+const seeMode = async ({ userId }: { userId: string }) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      isDatingMode: true,
+    },
+  });
+
+  if(!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+
+  return {isDatingMode : user.isDatingMode};
+}
+
 export const userService = {
   createUserIntoDb,
   updateUserProfile,
@@ -615,5 +646,7 @@ export const userService = {
   getSingleUser,
   updateDatingProfile,
   getReferralCode,
+  changeDatingMode,
+  seeMode
   // deleteUserDocumentImage,
 };

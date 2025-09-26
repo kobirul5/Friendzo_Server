@@ -1,233 +1,220 @@
-// import ApiError from "../../../errors/ApiErrors";
-// import prisma from "../../../shared/prisma";
-// import admin from "./firebaseAdmin";
+import { NotificationType, RequestStatus } from "@prisma/client";
+import ApiError from "../../../errors/ApiErrors";
+import prisma from "../../../shared/prisma";
+import admin from "./firebaseService";
 
-// // 🔔 Send a notification to a single user
-// const sendSingleNotification = async (req: any) => {
-//   try {
-//     const { userId } = req.params;
-//     const { title, body } = req.body;
 
-//     if (!title || !body) {
-//       throw new ApiError(400, "Title and body are required");
-//     }
+// 🔔 Send a notification to a single user
+interface INotificationPayload {
+  title: string;                        // Notification title
+  message?: string;                     // Optional message/body
+  type: NotificationType;               // Enum (must match model)
+  followStatus?: RequestStatus;         // Default: REJECTED
 
-//     const user = await prisma.user.findUnique({
-//       where: { id: userId },
-//     });
+  receiverId: string;                   // Required (who gets the notification)
+  senderId?: string;                    // Optional (who triggered it)
 
-//     if (!user || !user.fcmToken) {
-//       return;
-//     }
+  targetType?: string;                  // e.g., "event", "memory", "comment"
+  targetId?: string;                    // The ID of the target item
 
-//     const message = {
-//       notification: { title, body },
-//       token: user.fcmToken,
-//     };
+  fcmToken?: string;                    // Optional push notification token
+}
 
-//     await prisma.notification.create({
-//       data: {
-//         recipientId: userId,
-//         senderId: req.user.id,
-//         title,
-//         message: body,
-//         isRead: false,
-//         type: "MESSAGE", // Optional: adjust based on your needs
-//       },
-//     });
+const sendNotification = async (
+  deviceToken: string,
+  payload: INotificationPayload,
+  userId: string
+) => {
+  // Ensure that deviceToken is a single string and not an array
+  if (!deviceToken || typeof deviceToken !== "string") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid device token");
+  }
 
-//     const response = await admin.messaging().send(message);
-//     return response;
-//   } catch (error: any) {
-//     console.error("Error sending notification:", error);
+  // Create the message object for FCM
+  const message = {
+    notification: {
+      title: payload.title,
+      body: payload.message || "", // use message instead of body
+    },
+    data: {
+      type: payload.type,
+      targetId: payload.targetId || "",
+      targetType: payload.targetType || "",
+      senderId: payload.senderId || "",
+      receiverId: userId,
+    },
+    token: deviceToken,
+  };
 
-//     if (error.code === "messaging/invalid-registration-token") {
-//       throw new ApiError(400, "Invalid FCM registration token");
-//     } else if (error.code === "messaging/registration-token-not-registered") {
-//       throw new ApiError(404, "FCM token is no longer registered");
-//     } else {
-//       throw new ApiError(500, error.message || "Failed to send notification");
-//     }
-//   }
-// };
+  try {
+    console.log(
+      "📲 Sending notification:",
+      JSON.stringify(message, null, 2)
+    );
 
-// // 🔔 Send notifications to all users with valid FCM tokens
-// const sendNotifications = async (req: any) => {
-//   try {
-//     const { title, body } = req.body;
+    // Send notification using Firebase Admin SDK
+    const response = await admin.messaging().send(message);
 
-//     if (!title || !body) {
-//       throw new ApiError(400, "Title and body are required");
-//     }
+    console.log(" Notification sent successfully:", response);
 
-//     const users = await prisma.user.findMany({
-//       where: { fcmToken: { not: null } },
-//       select: { id: true, fcmToken: true },
-//     });
+    return response;
+  } catch (error) {
+    console.error(" Firebase send error:", error);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to send notification"
+    );
+  }
+};
 
-//     if (!users.length) return;
+// save notification to db
+const saveNotification = async (
+  payload: INotificationPayload,
+  userId: string // receiverId
+) => {
+  try {
+    await prisma.notification.create({
+      data: {
+        title: payload.title,
+        message: payload.message,
+        type: payload.type,
+        followStatus: payload.followStatus ?? "REJECTED", // default if not passed
 
-//     const fcmTokens = users.map((user) => user.fcmToken!);
+        receiverId: userId,                // from function param
+        senderId: payload.senderId ?? null, // optional
 
-//     const message = {
-//       notification: { title, body },
-//       tokens: fcmTokens,
-//     };
+        targetType: payload.targetType ?? null,
+        targetId: payload.targetId ?? null,
+      },
+    });
 
-//     const response = await admin.messaging().sendEachForMulticast(message as any);
+    console.log(" Notification saved successfully");
+  } catch (error) {
+    console.error(" Error saving notification:", error);
+  }
+};
 
-//     const successIndices = response.responses
-//       .map((res: any, idx: number) => (res.success ? idx : null))
-//       .filter((idx:number): idx is number => idx !== null);
+//  Get all notifications for current user
+const getNotificationsFromDB = async (req: any) => {
+  try {
+    const userId = req.user.id;
+    if (!userId) {
+      throw new ApiError(400, "User ID is required");
+    }
 
-//     const successfulUsers = successIndices.map((idx:number) => users[idx]);
+    const notifications = await prisma.notification.findMany({
+      where: { receiverId: userId },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            profileImage: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-//     const notificationData = successfulUsers.map((user:any) => ({
-//       recipientId: user.id,
-//       senderId: req.user.id,
-//       title,
-//       message: body,
-//       isRead: false,
-//       type: "MESSAGE", // Optional: change if sending specific types
-//     }));
+    return notifications.map((n) => ({
+      id: n.id,
+      title: n.title,
+      body: n.message,
+      isRead: n.isRead,
+      createdAt: n.createdAt,
+      sender: n.sender
+        ? {
+            id: n.sender.id,
+            email: n.sender.email,
+            name: n.sender.firstName + " " + n.sender.lastName,
+            images: n.sender.profileImage || null,
+          }
+        : null,
+    }));
+  } catch (error: any) {
+    throw new ApiError(500, error.message || "Failed to fetch notifications");
+  }
+};
 
-//     await prisma.notification.createMany({ data: notificationData });
+//  Get a single notification and mark as read
+const getSingleNotificationFromDB = async (req: any, notificationId: string) => {
+  try {
+    const userId = req.user.id;
 
-//     const failedTokens = response.responses
-//       .map((res: any, idx: number) => (!res.success ? fcmTokens[idx] : null))
-//       .filter((token:string): token is string => token !== null);
+    if (!userId) {
+      throw new ApiError(400, "User ID is required");
+    }
 
-//     return {
-//       successCount: response.successCount,
-//       failureCount: response.failureCount,
-//       failedTokens,
-//     };
-//   } catch (error: any) {
-//     throw new ApiError(500, error.message || "Failed to send notifications");
-//   }
-// };
+    if (!notificationId) {
+      throw new ApiError(400, "Notification ID is required");
+    }
 
-// // 📥 Get all notifications for current user
-// const getNotificationsFromDB = async (req: any) => {
-//   try {
-//     const userId = req.user.id;
-//     if (!userId) {
-//       throw new ApiError(400, "User ID is required");
-//     }
+    const notification = await prisma.notification.findFirst({
+      where: {
+        id: notificationId,
+        receiverId: userId,
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            profileImage: true,
+          },
+        },
+      },
+    });
 
-//     const notifications = await prisma.notification.findMany({
-//       where: { recipientId: userId },
-//       include: {
-//         sender: {
-//           select: {
-//             id: true,
-//             email: true,
-//             firstName: true,
-//             lastName: true,
-//             profileImage: true,
-//           },
-//         },
-//       },
-//       orderBy: {
-//         createdAt: "desc",
-//       },
-//     });
+    if (!notification) {
+      throw new ApiError(404, "Notification not found");
+    }
 
-//     return notifications.map((n) => ({
-//       id: n.id,
-//       title: n.title,
-//       body: n.message,
-//       isRead: n.isRead,
-//       createdAt: n.createdAt,
-//       sender: n.sender
-//         ? {
-//             id: n.sender.id,
-//             email: n.sender.email,
-//             name: n.sender.firstName + " " + n.sender.lastName,
-//             images: n.sender.profileImage || null,
-//           }
-//         : null,
-//     }));
-//   } catch (error: any) {
-//     throw new ApiError(500, error.message || "Failed to fetch notifications");
-//   }
-// };
+    const updated = await prisma.notification.update({
+      where: { id: notificationId },
+      data: { isRead: true },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            profileImage: true,
+          },
+        },
+      },
+    });
 
-// // 📥 Get a single notification and mark as read
-// const getSingleNotificationFromDB = async (req: any, notificationId: string) => {
-//   try {
-//     const userId = req.user.id;
+    return {
+      id: updated.id,
+      title: updated.title,
+      body: updated.message,
+      isRead: updated.isRead,
+      createdAt: updated.createdAt,
+      sender: updated.sender
+        ? {
+            id: updated.sender.id,
+            email: updated.sender.email,
+            name: updated.sender.firstName + " " + updated.sender.lastName,
+            images: updated.sender.profileImage || null,
+          }
+        : null,
+    };
+  } catch (error: any) {
+    throw new ApiError(500, error.message || "Failed to fetch notification");
+  }
+};
 
-//     if (!userId) {
-//       throw new ApiError(400, "User ID is required");
-//     }
-
-//     if (!notificationId) {
-//       throw new ApiError(400, "Notification ID is required");
-//     }
-
-//     const notification = await prisma.notification.findFirst({
-//       where: {
-//         id: notificationId,
-//         recipientId: userId,
-//       },
-//       include: {
-//         sender: {
-//           select: {
-//             id: true,
-//             email: true,
-//             firstName: true,
-//             lastName: true,
-//             profileImage: true,
-//           },
-//         },
-//       },
-//     });
-
-//     if (!notification) {
-//       throw new ApiError(404, "Notification not found");
-//     }
-
-//     const updated = await prisma.notification.update({
-//       where: { id: notificationId },
-//       data: { isRead: true },
-//       include: {
-//         sender: {
-//           select: {
-//             id: true,
-//             email: true,
-//             firstName: true,
-//             lastName: true,
-//             profileImage: true,
-//           },
-//         },
-//       },
-//     });
-
-//     return {
-//       id: updated.id,
-//       title: updated.title,
-//       body: updated.message,
-//       isRead: updated.isRead,
-//       createdAt: updated.createdAt,
-//       sender: updated.sender
-//         ? {
-//             id: updated.sender.id,
-//             email: updated.sender.email,
-//             name: updated.sender.firstName + " " + updated.sender.lastName,
-//             images: updated.sender.profileImage || null,
-//           }
-//         : null,
-//     };
-//   } catch (error: any) {
-//     throw new ApiError(500, error.message || "Failed to fetch notification");
-//   }
-// };
-
-// // 🚀 Export services
-// export const notificationServices = {
-//   sendSingleNotification,
-//   sendNotifications,
-//   getNotificationsFromDB,
-//   getSingleNotificationFromDB,
-// };
+//  Export services
+export const notificationServices = {
+  sendNotification,
+  saveNotification,
+  getNotificationsFromDB,
+  getSingleNotificationFromDB,
+};

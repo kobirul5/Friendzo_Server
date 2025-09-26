@@ -80,16 +80,15 @@ model User {
   payments      Payment[]
 
   //  Notifications where this user is the recipient
-  notificationsReceived Notification[] @relation("Notification_recipientId")
+  notificationsReceived Notification[] @relation("Notification_receiverId")
 
   //  Notifications where this user is the sender
   notificationsSent Notification[] @relation("NotificationSender")
   ReportPost        ReportPost[]
-  managerRole  String[] @default([])
+  managerRole       String[]       @default([])
 
   @@map("users")
 }
-
 
 model Interest {
   id       String           @id @default(auto()) @map("_id") @db.ObjectId
@@ -288,16 +287,17 @@ model Block {
 }
 
 model Notification {
-  id          String           @id @default(auto()) @map("_id") @db.ObjectId
-  type        NotificationType
-  title       String
-  message     String?
-  isRead      Boolean          @default(false)
-  recipientId String           @db.ObjectId
-  recipient   User             @relation("Notification_recipientId", fields: [recipientId], references: [id], onDelete: Cascade)
+  id           String           @id @default(auto()) @map("_id") @db.ObjectId
+  type         NotificationType
+  title        String
+  message      String?
+  isRead       Boolean          @default(false)
+  followStatus RequestStatus    @default(REJECTED)
 
-  senderId String? @db.ObjectId
-  sender   User?   @relation("NotificationSender", fields: [senderId], references: [id])
+  receiverId String  @db.ObjectId
+  receiver   User    @relation("Notification_receiverId", fields: [receiverId], references: [id], onDelete: Cascade)
+  senderId   String? @db.ObjectId
+  sender     User?   @relation("NotificationSender", fields: [senderId], references: [id])
 
   targetType String? // e.g., "event", "memory", "comment", etc.
   targetId   String? // ID of the item the notification is about
@@ -306,6 +306,18 @@ model Notification {
   updatedAt DateTime @updatedAt
 
   @@map("notifications")
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  MENTION
+  MESSAGE
+  EVENT_INVITE
+  MEMORY_SHARE
+  REPORT
+  BLOCK
 }
 
 // Dating and Social modes
@@ -382,18 +394,6 @@ enum GiftCategory {
   ESSENTIAL
   EXCLUSIVE
   MAJESTIC
-}
-
-enum NotificationType {
-  LIKE
-  COMMENT
-  FOLLOW
-  MENTION
-  MESSAGE
-  EVENT_INVITE
-  MEMORY_SHARE
-  REPORT
-  BLOCK
 }
 
 model Payment {
