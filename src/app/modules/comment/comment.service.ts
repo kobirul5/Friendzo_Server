@@ -43,10 +43,10 @@ const createCommentService = async (
     followStatus: 'REJECTED',
   };
 
-  // DB-তে save হবে
+  // notification save db
   await notificationServices.saveNotification(notifPayload, memory.userId);
 
-  // FCM token থাকলে push notification পাঠানো হবে
+  //  push notification 
   if (memory.user.fcmToken) {
     await notificationServices.sendNotification(
       memory.user.fcmToken,

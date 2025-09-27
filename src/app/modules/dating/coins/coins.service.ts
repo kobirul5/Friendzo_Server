@@ -2,6 +2,8 @@
 import httpStatus from 'http-status';
 import ApiError from '../../../../errors/ApiErrors';
 import prisma from '../../../../shared/prisma';
+import { INotificationPayload, notificationServices } from '../../notification/notification.service';
+import { RequestStatus } from '@prisma/client';
 
 const getCoinList = async ({userId}: any) => { 
 
@@ -38,6 +40,7 @@ const createGiftCoin = async ({
   // Verify all recipients exist
   const recipientRecords = await prisma.user.findMany({
     where: { id: { in: recipients } },
+    select: { id: true, firstName: true, lastName: true, fcmToken: true },
   });
 
   if (recipientRecords.length !== recipients.length) {
@@ -57,20 +60,45 @@ const createGiftCoin = async ({
       data: { totalCoins: { decrement: totalCost } },
     });
 
-    // Increment coins for each recipient and log gift
-    for (const recipientId of recipients) {
+    // Increment coins for each recipient, log gift, and send notification
+    for (const recipient of recipientRecords) {
       await tx.user.update({
-        where: { id: recipientId },
+        where: { id: recipient.id },
         data: { totalCoins: { increment: coinAmount } },
       });
 
       await tx.coinGiftSend.create({
         data: {
           senderId: userId,
-          receiverId: recipientId,
+          receiverId: recipient.id,
           totalCoin: coinAmount,
         },
       });
+
+      // -----------------------------
+      // Notification
+      // -----------------------------
+      const notifPayload: INotificationPayload = {
+        title: "You received  coins!",
+        message: `${sender.firstName || "Someone"} gifted you ${coinAmount} coins`,
+        type: 'MESSAGE',
+        senderId: userId,
+        receiverId: recipient.id,
+        // targetType: RequestStatus.REJECTED,
+        followStatus: RequestStatus.ACCEPTED,
+      };
+
+      // Save to DB
+      await notificationServices.saveNotification(notifPayload, recipient.id);
+
+      // Push notification if token exists
+      if (recipient.fcmToken) {
+        await notificationServices.sendNotification(
+          recipient.fcmToken,
+          notifPayload,
+          recipient.id
+        );
+      }
     }
 
     return { success: true, totalCoinsDeducted: totalCost };

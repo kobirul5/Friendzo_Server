@@ -312,6 +312,8 @@ enum NotificationType {
   LIKE
   COMMENT
   FOLLOW
+  PURCHASE
+  GIFT
   MENTION
   MESSAGE
   EVENT_INVITE

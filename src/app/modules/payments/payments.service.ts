@@ -4,6 +4,7 @@ import ApiError from "../../../errors/ApiErrors";
 import { getTransactionId } from "../../../helpars/getTransactionId";
 import stripe from "../../../shared/stripe";
 import { PaymentStatus, Prisma, User } from "@prisma/client";
+import { INotificationPayload, notificationServices } from "../notification/notification.service";
 
 const createCoinPurchase = async ({
   paymentMethod,
@@ -75,7 +76,7 @@ const createCoinPurchase = async ({
       });
 
       // Update user coin balance
-      await tx.user.update({
+     const updatedUser = await tx.user.update({
         where: { id: userId },
         data: {
           totalCoins: {
@@ -83,6 +84,30 @@ const createCoinPurchase = async ({
           },
         },
       });
+
+      const notifPayload: INotificationPayload = {
+        title: "Coin Purchase Successful",
+        message: `You have successfully purchased ${coinPackage.coinAmount} coins!`,
+        type: "MESSAGE",
+        senderId: userId,
+        receiverId: userId, // Self notification
+        targetId: transactionId,
+        targetType: "COINS",
+        followStatus: "REJECTED",
+      };
+
+      // Save notification to DB
+      await notificationServices.saveNotification(notifPayload, userId);
+
+      // Push notification if token exists
+      if (updatedUser.fcmToken) {
+        await notificationServices.sendNotification(
+          updatedUser.fcmToken,
+          notifPayload,
+          userId
+        );
+      }
+
 
       return payment;
     });

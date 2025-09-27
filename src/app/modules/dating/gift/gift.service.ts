@@ -2,6 +2,7 @@ import httpStatus from "http-status";
 import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
 import { Gender, GiftCategory } from "@prisma/client";
+import { INotificationPayload, notificationServices } from "../../notification/notification.service";
 
 const buyGiftCard = async ({ data, userId }: any) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -33,7 +34,7 @@ const buyGiftCard = async ({ data, userId }: any) => {
       "You don't have enough coins to buy this gift card!"
     );
 
-  await prisma.user.update({
+const updatedUser =  await prisma.user.update({
     where: { id: user.id },
     data: {
       totalCoins: user.totalCoins - giftCard.price,
@@ -50,6 +51,35 @@ const buyGiftCard = async ({ data, userId }: any) => {
       giftCard: true,
     },
   });
+
+
+   // -----------------------------
+  // Notification
+  // -----------------------------
+  const notifPayload: INotificationPayload = {
+    title: "Gift Card Purchased!",
+    message: `You successfully purchased a ${giftCard.category} gift card!`,
+    type: "PURCHASE",
+    senderId: userId,
+    receiverId: userId, // self notification
+    targetId: result.giftCard.id,
+    targetType: "GIFT_CARD",
+    followStatus: "REJECTED",
+  };
+
+  // Save notification to DB
+  await notificationServices.saveNotification(notifPayload, userId);
+
+  // Push notification if token exists
+  if (updatedUser.fcmToken) {
+    await notificationServices.sendNotification(
+      updatedUser.fcmToken,
+      notifPayload,
+      userId
+    );
+  }
+
+
 
   return result;
 };
@@ -229,32 +259,111 @@ interface SendGiftInput {
   giftCardId: string;
 }
 
- const sendGiftToFriends = async ({
+//  const sendGiftToFriends = async ({
+//   senderId,
+//   receiverIds,
+//   giftCardId,
+// }: SendGiftInput) => {
+//  const result = await prisma.$transaction(async (tx) => {
+//     // 1. Check if sender has enough gifts
+//     const purchasedCount = await tx.giftPurchase.count({
+//       where: { userId: senderId, giftCardId },
+//     });
+
+//     if (purchasedCount < receiverIds.length) {
+//       throw new ApiError(httpStatus.BAD_REQUEST, "Not enough gifts purchased to send");
+//     }
+
+//     if(receiverIds.length === 0){
+//       throw new ApiError(httpStatus.BAD_REQUEST,"No friends selected to send gift");
+//     }
+
+//     receiverIds.forEach(async (id) => {
+//       const user = await prisma.user.findUnique({ where: { id } });
+//       console.log(user);
+//       if (!user) throw new ApiError(httpStatus.NOT_FOUND, `receiver not found! with id: ${id}`);
+//     });
+
+//     // 2. Pick gifts to delete
+//     const giftsToDelete = await tx.giftPurchase.findMany({
+//       where: { userId: senderId, giftCardId },
+//       take: receiverIds.length,
+//       select: { id: true, giftCategory: true },
+//     });
+
+//     if (giftsToDelete.length < receiverIds.length) {
+//       throw new ApiError(httpStatus.BAD_REQUEST,"Not enough gifts available to send.");
+//     }
+
+//     // 3. Delete from purchases
+//     await tx.giftPurchase.deleteMany({
+//       where: { id: { in: giftsToDelete.map((g) => g.id) } },
+//     });
+
+//     // 4. Create GiftSend records for each receiver
+//     const giftSends = receiverIds.map((receiverId, i) =>
+//       tx.giftSend.create({
+//         data: {
+//           senderId,
+//           receiverId,
+//           giftCardId,
+//           giftCategory: giftsToDelete[i].giftCategory, // same category
+//         },
+//       })
+//     );
+
+//     await Promise.all(giftSends);
+
+//     return { message: "Gifts sent successfully!" };
+//   });
+
+
+//   return result
+// };
+
+
+
+const sendGiftToFriends = async ({
   senderId,
   receiverIds,
   giftCardId,
 }: SendGiftInput) => {
- const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // 1. Check if sender has enough gifts
     const purchasedCount = await tx.giftPurchase.count({
       where: { userId: senderId, giftCardId },
     });
 
     if (purchasedCount < receiverIds.length) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Not enough gifts purchased to send");
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Not enough gifts purchased to send"
+      );
     }
 
-    if(receiverIds.length === 0){
-      throw new ApiError(httpStatus.BAD_REQUEST,"No friends selected to send gift");
+    if (receiverIds.length === 0) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "No friends selected to send gift"
+      );
     }
 
-    receiverIds.forEach(async (id) => {
-      const user = await prisma.user.findUnique({ where: { id } });
-      console.log(user);
-      if (!user) throw new ApiError(httpStatus.NOT_FOUND, `receiver not found! with id: ${id}`);
+    // 2. Verify all receivers exist
+    const receiverUsers = await prisma.user.findMany({
+      where: { id: { in: receiverIds } },
+      select: { id: true, firstName: true, lastName: true, fcmToken: true },
     });
 
-    // 2. Pick gifts to delete
+    if (receiverUsers.length !== receiverIds.length) {
+      const foundIds = receiverUsers.map((u) => u.id);
+      const missing = receiverIds.filter((id) => !foundIds.includes(id));
+      throw new ApiError(
+        httpStatus.NOT_FOUND,
+        `Receiver(s) not found: ${missing.join(", ")}`
+      );
+    }
+
+    // 3. Pick gifts to delete
     const giftsToDelete = await tx.giftPurchase.findMany({
       where: { userId: senderId, giftCardId },
       take: receiverIds.length,
@@ -262,35 +371,62 @@ interface SendGiftInput {
     });
 
     if (giftsToDelete.length < receiverIds.length) {
-      throw new ApiError(httpStatus.BAD_REQUEST,"Not enough gifts available to send.");
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Not enough gifts available to send."
+      );
     }
 
-    // 3. Delete from purchases
+    // 4. Delete from purchases
     await tx.giftPurchase.deleteMany({
       where: { id: { in: giftsToDelete.map((g) => g.id) } },
     });
 
-    // 4. Create GiftSend records for each receiver
-    const giftSends = receiverIds.map((receiverId, i) =>
-      tx.giftSend.create({
+    // 5. Create GiftSend records & notifications for each receiver
+    for (let i = 0; i < receiverUsers.length; i++) {
+      const receiver = receiverUsers[i];
+      const giftCategory = giftsToDelete[i].giftCategory;
+
+      // Create GiftSend record
+      await tx.giftSend.create({
         data: {
           senderId,
-          receiverId,
+          receiverId: receiver.id,
           giftCardId,
-          giftCategory: giftsToDelete[i].giftCategory, // same category
+          giftCategory,
         },
-      })
-    );
+      });
 
-    await Promise.all(giftSends);
+      // -----------------------------
+      // Notification
+      // -----------------------------
+      const notifPayload: INotificationPayload = {
+        title: "You received a gift!",
+        message: `${receiver.firstName || "Someone"} received a ${giftCategory} gift from a friend!`,
+        type: "GIFT",
+        senderId,
+        receiverId: receiver.id,
+        followStatus: "REJECTED",
+      };
+
+      // Save to DB
+      await notificationServices.saveNotification(notifPayload, receiver.id);
+
+      // Push notification if token exists
+      if (receiver.fcmToken) {
+        await notificationServices.sendNotification(
+          receiver.fcmToken,
+          notifPayload,
+          receiver.id
+        );
+      }
+    }
 
     return { message: "Gifts sent successfully!" };
   });
 
-
-  return result
+  return result;
 };
-
 
 
 
