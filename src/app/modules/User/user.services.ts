@@ -214,7 +214,6 @@ const updateUserProfile = async (
 
     updateData.dob = dateOfBirthObject;
 
-    delete updateData.age; 
 }
 
   // If file exists, upload and set profileImage url

@@ -4,8 +4,8 @@ import prisma from "../../../shared/prisma";
 import admin from "./firebaseService";
 
 
-// 🔔 Send a notification to a single user
-interface INotificationPayload {
+//  Send a notification to a single user
+export interface INotificationPayload {
   title: string;                        // Notification title
   message?: string;                     // Optional message/body
   type: NotificationType;               // Enum (must match model)

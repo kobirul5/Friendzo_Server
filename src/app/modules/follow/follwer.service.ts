@@ -48,6 +48,10 @@ const createFollowerAndFollowingService = async (payload: {
       where: { id: alreadyFollowing.id },
       data: { requestStatus: RequestStatus.PENDING },
     });
+
+    
+
+
     return result;
   }
 
@@ -88,13 +92,10 @@ const getMyNetworkCount = async (userId: string) => {
 };
 
 const getMyFollowerService = async (userId: string) => {
-
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
-
-
 
   const totalFollowers = await prisma.follow.count({
     where: { followingId: userId },
@@ -121,13 +122,11 @@ const getMyFollowerService = async (userId: string) => {
 };
 
 const getMyFollowingService = async (userId: string) => {
-
-const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  
   const totalFollowing = await prisma.follow.count({
     where: { followerId: userId },
   });
@@ -137,7 +136,7 @@ const user = await prisma.user.findUnique({ where: { id: userId } });
     include: {
       following: {
         where: { modeType: "SOCIAL" },
-        select:{
+        select: {
           id: true,
           requestStatus: true,
           // followingId: true,
@@ -148,8 +147,8 @@ const user = await prisma.user.findUnique({ where: { id: userId } });
               lastName: true,
               profileImage: true,
             },
-          }
-        }
+          },
+        },
       },
     },
   });
@@ -163,7 +162,7 @@ const user = await prisma.user.findUnique({ where: { id: userId } });
     firstName: f.following.firstName,
     lastName: f.following.lastName,
     profileImage: f.following.profileImage,
-    requestStatus: f.requestStatus // e.g., "accepted"
+    requestStatus: f.requestStatus, // e.g., "accepted"
   }));
 
   return {
@@ -345,8 +344,11 @@ const acceptOrRejectFollwershipRequestService = async (
 //   return { friends: uniqueFriends };
 // };
 
-const getMyAllFriends = async (userId: string, type: string, search?: string) => {
-  
+const getMyAllFriends = async (
+  userId: string,
+  type: string,
+  search?: string
+) => {
   if (!["social", "dating", "all"].includes(type)) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -362,7 +364,11 @@ const getMyAllFriends = async (userId: string, type: string, search?: string) =>
     where: {
       OR: [
         { followerId: userId, requestStatus: RequestStatus.ACCEPTED, modeType },
-        { followingId: userId, requestStatus: RequestStatus.ACCEPTED, modeType },
+        {
+          followingId: userId,
+          requestStatus: RequestStatus.ACCEPTED,
+          modeType,
+        },
       ],
     },
     include: {
@@ -415,7 +421,6 @@ const getMyAllFriends = async (userId: string, type: string, search?: string) =>
   return { friends: uniqueFriends };
 };
 
-
 const getMyAllFollwerRequest = async ({
   userId,
   type,
@@ -442,20 +447,22 @@ const getMyAllFollwerRequest = async ({
     select: {
       followers: {
         where: { requestStatus: RequestStatus.PENDING, modeType },
-        include: { follower: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            profileImage: true,
-            address: true,
+        include: {
+          follower: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              profileImage: true,
+              address: true,
+            },
           },
-        } },
+        },
       },
     },
   });
 
-  return user?.followers
+  return user?.followers;
 };
 
 const getMyAllFollwingRequest = async ({
@@ -494,7 +501,7 @@ const getMyAllFollwingRequest = async ({
               address: true,
             },
           },
-        }
+        },
       },
     },
   });
@@ -521,7 +528,7 @@ const getMyAllFollwingRequest = async ({
   //   },
   // });
 
-  return user.following
+  return user.following;
 };
 
 //  getAllSuggestedUsers
@@ -562,20 +569,20 @@ const getAllSuggestedUsers = async ({
   //   },
   //   select: { followerId: true },
   // });
-const alreadyFollowed = await prisma.user.findUnique({
-  where: { id: userId },
-  select: {
-    following: {
-      where: {
-        requestStatus: RequestStatus.PENDING,
-        modeType: modeType,
+  const alreadyFollowed = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      following: {
+        where: {
+          requestStatus: RequestStatus.PENDING,
+          modeType: modeType,
+        },
+        select: { followingId: true }, // ✅
       },
-      select: { followingId: true }, // ✅ 
     },
-  },
-});
+  });
 
-const excludeIds = alreadyFollowed?.following.map(f => f.followingId) || [];
+  const excludeIds = alreadyFollowed?.following.map((f) => f.followingId) || [];
 
   const whereId =
     excludeIds.length > 0 ? [currentUser.id, ...excludeIds] : [currentUser.id];
@@ -654,14 +661,23 @@ const excludeIds = alreadyFollowed?.following.map(f => f.followingId) || [];
 };
 
 // un friend
-const unfriendUser = async ({userId, friendId, type}: {userId: string, friendId: string, type: string}) => {
-  
+const unfriendUser = async ({
+  userId,
+  friendId,
+  type,
+}: {
+  userId: string;
+  friendId: string;
+  type: string;
+}) => {
   if (type !== "dating" && type !== "social") {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid type. Type must be 'dating'");
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid type. Type must be 'dating'"
+    );
   }
 
   const modeType = type === "dating" ? ModeType.DATING : ModeType.SOCIAL;
-
 
   const follow = await prisma.follow.findFirst({
     where: {
@@ -692,16 +708,19 @@ const unfriendUser = async ({userId, friendId, type}: {userId: string, friendId:
     },
   });
 
-   if (myFollow && myFollow.followerId === userId && myFollow.requestStatus === RequestStatus.PENDING) {
+  if (
+    myFollow &&
+    myFollow.followerId === userId &&
+    myFollow.requestStatus === RequestStatus.PENDING
+  ) {
     await prisma.follow.delete({
       where: { id: follow.id },
     });
     return { message: "Follow request canceled (deleted)" };
   }
 
-  return result
-
-}
+  return result;
+};
 
 export const follwerService = {
   createFollowerAndFollowingService,
@@ -715,5 +734,5 @@ export const follwerService = {
   getMyAllFollwerRequest,
   getMyAllFollwingRequest,
   getAllSuggestedUsers,
-  unfriendUser
+  unfriendUser,
 };
