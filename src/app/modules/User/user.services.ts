@@ -201,6 +201,22 @@ const updateUserProfile = async (
     where: { id: userId },
   });
 
+  if (updateData.age !== undefined && typeof updateData.age === 'number') {
+    const age = updateData.age;
+
+    const currentDate = new Date();
+    
+
+    const birthYear = currentDate.getFullYear() - age;
+
+  const dateOfBirthObject = new Date(Date.UTC(birthYear, 0, 1, 0, 0, 0))
+
+
+    updateData.dob = dateOfBirthObject;
+
+    delete updateData.age; 
+}
+
   // If file exists, upload and set profileImage url
   if (file) {
     const uploadedImageUrl = await fileUploader.uploadToDigitalOcean(file);
