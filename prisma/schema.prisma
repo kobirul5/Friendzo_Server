@@ -299,8 +299,8 @@ model Notification {
   senderId   String? @db.ObjectId
   sender     User?   @relation("NotificationSender", fields: [senderId], references: [id])
 
-  targetType String? // e.g., "event", "memory", "comment", etc.
-  targetId   String? // ID of the item the notification is about
+  targetType String? @default("") // e.g., "event", "memory", "comment", etc.
+  targetId   String? @default("")// ID of the item the notification is about
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -175,6 +175,21 @@ const unfriendUser = catchAsync(async (req: Request, res: Response) => {
   });
 })
 
+// accept follower request notification
+const acceptFollowerRequestNotification = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id; 
+  const {followId} = req.body;
+
+  const result = await follwerService.acceptFollowerRequestNotification({userId, followId});
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Request accepted successfully',
+    data: result,
+  });
+})
+
 
 export const followerController = {
   createFollwer,
@@ -188,5 +203,6 @@ export const followerController = {
   getMyAllFollwingRequest,
   unfollowDatingUser,
   getAllSuggestedUsers,
-  unfriendUser
+  unfriendUser,
+  acceptFollowerRequestNotification
 };

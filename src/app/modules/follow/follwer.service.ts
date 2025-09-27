@@ -767,6 +767,52 @@ const unfriendUser = async ({
   return result;
 };
 
+
+
+// accept notification
+const acceptFollowerRequestNotification = async ({userId, followId}: {userId: string, followId: string}) => {
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const follow = await prisma.follow.findUnique({
+    where: {
+      id: followId,
+    },
+  });
+
+  if (!follow) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Follow not found");
+  }
+  
+  const result = await prisma.follow.update({
+    where: {
+      id: followId,
+    },
+    data: {
+      requestStatus: RequestStatus.ACCEPTED,
+    },
+  });
+
+  await prisma.notification.update({
+    where: {
+      id: followId,
+    },
+    data: {
+      followStatus: RequestStatus.ACCEPTED
+    },  
+  })
+
+
+};
+
 export const follwerService = {
   createFollowerAndFollowingService,
   unfollowUserSocialService,
@@ -780,4 +826,5 @@ export const follwerService = {
   getMyAllFollwingRequest,
   getAllSuggestedUsers,
   unfriendUser,
+  acceptFollowerRequestNotification,
 };
