@@ -1,9 +1,9 @@
-// import express from "express";
-// import auth from "../../middlewares/auth";
-// import { notificationController } from "./notification.controller";
+import express from "express";
+import auth from "../../middlewares/auth";
+import { notificationController } from "./notification.controller";
 
 
-// const router = express.Router();
+const router = express.Router();
 
 // router.post(
 //   "/send-notification/:userId",
@@ -17,11 +17,12 @@
 //   notificationController.sendNotifications
 // );
 
-// router.get("/", auth(), notificationController.getNotifications);
-// router.get(
-//   "/:notificationId",
-//   auth(),
-//   notificationController.getSingleNotificationById
-// );
+router.get("/", auth(), notificationController.getMyNotifications);
 
-// export const notificationsRoute = router;
+router.get(
+  "/:notificationId",
+  auth(),
+  notificationController.getSingleNotificationById
+);
+
+export const notificationsRoute = router;

@@ -22,6 +22,8 @@ import { userInfoRoutes } from "../modules/admin/userInfo/userInfo.routes";
 import { postsRoutes } from "../modules/admin/posts/posts.routes";
 import { fileUploadRoutes } from "../modules/fileUpload/fileUpload.routes";
 import { managersRoutes } from "../modules/admin/managers/managers.routes";
+import path from "path";
+import { notificationsRoute } from "../modules/notification/notification.routes";
 
 
 
@@ -121,6 +123,10 @@ const moduleRoutes = [
   {
     path: "/managers",
     route: managersRoutes
+  },
+  {
+    path:"/notification",
+    route: notificationsRoute
   }
 
 

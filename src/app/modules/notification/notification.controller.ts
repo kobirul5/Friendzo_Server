@@ -1,7 +1,7 @@
 
-// import catchAsync from "../../../shared/catchAsync";
-// import sendResponse from "../../../shared/sendResponse";
-// import { notificationServices } from "./notification.service";
+import catchAsync from "../../../shared/catchAsync";
+import sendResponse from "../../../shared/sendResponse";
+import { notificationServices } from "./notification.service";
 
 
 
@@ -27,35 +27,35 @@
 //   });
 // });
 
-// const getNotifications = catchAsync(async (req: any, res: any) => {
-//   const notifications = await notificationServices.getNotificationsFromDB(req);
+const getMyNotifications = catchAsync(async (req: any, res: any) => {
+  const notifications = await notificationServices.getMyNotifications(req);
 
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: "Notifications retrieved successfully",
-//     data: notifications,
-//   });
-// });
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Notifications retrieved successfully",
+    data: notifications,
+  });
+});
 
-// const getSingleNotificationById = catchAsync(async (req: any, res: any) => {
-//   const notificationId = req.params.notificationId;
-//   const notification = await notificationServices.getSingleNotificationFromDB(
-//     req,
-//     notificationId
-//   );
+const getSingleNotificationById = catchAsync(async (req: any, res: any) => {
+  const notificationId = req.params.notificationId;
+  const notification = await notificationServices.getSingleNotificationFromDB(
+    req,
+    notificationId
+  );
 
-//   sendResponse(res, {
-//     success: true,
-//     statusCode: 200,
-//     message: "Notification retrieved successfully",
-//     data: notification,
-//   });
-// });
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "Notification retrieved successfully",
+    data: notification,
+  });
+});
 
-// export const notificationController = {
+export const notificationController = {
 //   sendNotification,
 //   sendNotifications,
-//   getNotifications,
-//   getSingleNotificationById,
-// };
+  getMyNotifications,
+  getSingleNotificationById,
+};

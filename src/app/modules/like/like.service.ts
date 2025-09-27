@@ -1,8 +1,24 @@
 import dayjs from "dayjs";
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
+import { INotificationPayload, notificationServices } from "../notification/notification.service";
+import { NotificationType } from "@prisma/client";
 
 const createEventLikeService = async (userId: string, eventId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+  });
+  if (!event) {
+    throw new ApiError(404, "Event not found");
+  }
+
   // Check if like already exists
   const existingLike = await prisma.eventLike.findFirst({
     where: {
@@ -25,8 +41,21 @@ const createEventLikeService = async (userId: string, eventId: string) => {
   return like;
 };
 
-
 const createMemoryLikeService = async (userId: string, memoryId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const memory = await prisma.memory.findUnique({
+    where: { id: memoryId }, include: { user: true },
+  });
+  if (!memory) {
+    throw new ApiError(404, "Memory not found");
+  }
+
   const existingLike = await prisma.memoryLike.findFirst({
     where: {
       userId,
@@ -45,9 +74,40 @@ const createMemoryLikeService = async (userId: string, memoryId: string) => {
     },
   });
 
+  //notification
+
+  if (memory) {
+    const notifPayload: INotificationPayload = {
+      title: "New Memory Like",
+      message: "Someone liked your memory",
+      type: NotificationType.LIKE,
+      senderId: userId,
+      receiverId: memory.userId,
+      targetId: memoryId,
+      targetType: "MEMORY",
+      followStatus:"REJECTED", // not needed for memory like
+    };
+
+    // notification save 
+    await notificationServices.saveNotification(notifPayload, memory.userId);
+
+    // fcm token  push , try-catch safe 
+    if (memory?.user?.fcmToken) {
+     
+        await notificationServices.sendNotification(
+          memory.user.fcmToken,
+          notifPayload,
+          memory.userId
+        );
+    }
+  }
+
+
+
+
+
   return like;
 };
-
 
 const getMemoryLikeCountService = async (memoryId: string) => {
   const count = await prisma.memoryLike.count({
@@ -68,7 +128,6 @@ const getMemoryLikedUsersService = async (memoryId: string) => {
           firstName: true,
           lastName: true,
           email: true,
-
         },
       },
     },
@@ -76,7 +135,6 @@ const getMemoryLikedUsersService = async (memoryId: string) => {
 
   return likes.map((like) => like.user);
 };
-
 
 const removeMemoryLikeService = async (userId: string, memoryId: string) => {
   const existingLike = await prisma.memoryLike.findFirst({
@@ -133,12 +191,10 @@ const getDailyMyLikeService = async (userId: string) => {
   };
 };
 
-
 // const getMyWeeklyService = async (userId: string) => {
 
-
 //  const now = new Date();
-//   const day = now.getDay(); 
+//   const day = now.getDay();
 
 //   // Get ISO day index: Monday = 0, Sunday = 6
 //   const isoDay = (day + 6) % 7;
@@ -215,8 +271,6 @@ const getMyWeeklyService = async (userId: string) => {
   };
 };
 
-
-
 export const likeService = {
   createEventLikeService,
   createMemoryLikeService,
@@ -224,5 +278,5 @@ export const likeService = {
   getMemoryLikedUsersService,
   removeMemoryLikeService,
   getDailyMyLikeService,
-  getMyWeeklyService
+  getMyWeeklyService,
 };

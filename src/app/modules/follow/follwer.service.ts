@@ -2,6 +2,10 @@ import httpStatus from "http-status";
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import { ModeType, RequestStatus, UserStatus } from "@prisma/client";
+import {
+  INotificationPayload,
+  notificationServices,
+} from "../notification/notification.service";
 
 const createFollowerAndFollowingService = async (payload: {
   userId: string;
@@ -49,12 +53,31 @@ const createFollowerAndFollowingService = async (payload: {
       data: { requestStatus: RequestStatus.PENDING },
     });
 
-    
+    const notifPayload: INotificationPayload = {
+      title: "New Follow Request",
+      message: "Someone sent you a follow request",
+      type: "FOLLOW",
+      senderId: userId,
+      receiverId: followerId,
+      targetId: alreadyFollowing?.id,
+      followStatus: RequestStatus.PENDING,
+    };
 
+
+    await notificationServices.saveNotification(notifPayload, followerId);
+
+
+    if (targetUser?.fcmToken) {
+      await notificationServices?.sendNotification(
+        targetUser?.fcmToken,
+        notifPayload,
+        followerId
+      );
+    }
 
     return result;
   }
-
+console.log(alreadyFollowing);
   // যদি আগে থেকে follow করা থাকে
   if (alreadyFollowing) {
     throw new ApiError(
@@ -72,6 +95,28 @@ const createFollowerAndFollowingService = async (payload: {
       requestStatus: RequestStatus.PENDING, // default pending
     },
   });
+
+  const notifPayload: INotificationPayload = {
+      title: "New Follow Request",
+      message: "Someone sent you a follow request",
+      type: "FOLLOW",
+      senderId: userId,
+      receiverId: followerId,
+      targetId: follow?.id,
+      followStatus: RequestStatus.PENDING,
+    };
+
+    // ✅ সবসময় save হবে
+    await notificationServices.saveNotification(notifPayload, followerId);
+
+    // ✅ শুধু token থাকলে push যাবে
+    if (targetUser?.fcmToken) {
+      await notificationServices?.sendNotification(
+        targetUser?.fcmToken,
+        notifPayload,
+        followerId
+      );
+    }
 
   return follow;
 };

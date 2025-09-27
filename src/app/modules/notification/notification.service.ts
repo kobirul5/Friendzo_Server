@@ -60,15 +60,15 @@ const sendNotification = async (
     return response;
   } catch (error) {
     console.error(" Firebase send error:", error);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to send notification"
-    );
+    // throw new ApiError(
+    //   httpStatus.INTERNAL_SERVER_ERROR, //not need to throw err , if fcm token not valid than server will crash
+    //   "Failed to send notification"
+    // );
   }
 };
 
 // save notification to db
-const saveNotification = async (
+export const saveNotification = async (
   payload: INotificationPayload,
   userId: string // receiverId
 ) => {
@@ -95,12 +95,13 @@ const saveNotification = async (
 };
 
 //  Get all notifications for current user
-const getNotificationsFromDB = async (req: any) => {
+const getMyNotifications = async (req: any) => {
   try {
     const userId = req.user.id;
     if (!userId) {
       throw new ApiError(400, "User ID is required");
     }
+    console.log(userId);
 
     const notifications = await prisma.notification.findMany({
       where: { receiverId: userId },
@@ -136,7 +137,7 @@ const getNotificationsFromDB = async (req: any) => {
         : null,
     }));
   } catch (error: any) {
-    throw new ApiError(500, error.message || "Failed to fetch notifications");
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message || "Failed to fetch notifications");
   }
 };
 
@@ -215,6 +216,6 @@ const getSingleNotificationFromDB = async (req: any, notificationId: string) => 
 export const notificationServices = {
   sendNotification,
   saveNotification,
-  getNotificationsFromDB,
+  getMyNotifications,
   getSingleNotificationFromDB,
 };

@@ -2,6 +2,7 @@
 import httpStatus from 'http-status';
 import prisma from '../../../shared/prisma';
 import ApiError from '../../../errors/ApiErrors';
+import { INotificationPayload, notificationServices } from '../notification/notification.service';
 
 
 const createCommentService = async (
@@ -10,7 +11,13 @@ const createCommentService = async (
   memoryId: string
 ) => {
 
-  const memory = await prisma.memory.findUnique({ where: { id: memoryId } });
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found.');
+  }
+
+  const memory = await prisma.memory.findUnique({ where: { id: memoryId }, include: { user: true } });
 
   if (!memory) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Memory not found.');
@@ -23,6 +30,30 @@ const createCommentService = async (
       memoryId,
     },
   });
+
+
+  const notifPayload: INotificationPayload = {
+    title: "New Comment",
+    message: `${user?.firstName + " " + user?.lastName || "Someone"} commented on your memory`,
+    type: 'COMMENT',
+    senderId: userId,
+    receiverId: memory.userId,
+    targetId: memoryId,
+    targetType: "MEMORY",
+    followStatus: 'REJECTED',
+  };
+
+  // DB-তে save হবে
+  await notificationServices.saveNotification(notifPayload, memory.userId);
+
+  // FCM token থাকলে push notification পাঠানো হবে
+  if (memory.user.fcmToken) {
+    await notificationServices.sendNotification(
+      memory.user.fcmToken,
+      notifPayload,
+      memory.userId
+    );
+  }
 
   return comment;
 };
