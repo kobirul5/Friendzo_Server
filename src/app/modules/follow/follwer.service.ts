@@ -770,7 +770,7 @@ const unfriendUser = async ({
 
 
 // accept notification
-const acceptFollowerRequestNotification = async ({userId, followId}: {userId: string, followId: string}) => {
+const acceptFollowerRequestNotification = async ({userId, followId, notificationId}: {userId: string, followId: string, notificationId: string}) => {
 
   const user = await prisma.user.findUnique({
     where: {
@@ -791,6 +791,23 @@ const acceptFollowerRequestNotification = async ({userId, followId}: {userId: st
   if (!follow) {
     throw new ApiError(httpStatus.NOT_FOUND, "Follow not found");
   }
+
+  if(follow.followingId !== userId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "You are not authorized to accept this request");
+  }
+  const notification = await prisma.notification.findUnique({
+    where: {
+      id: notificationId,
+    },
+  });
+
+  if (!notification) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Notification not found");
+  }
+
+  if(notification.receiverId !== userId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "You are not authorized to accept this request");
+  }
   
   const result = await prisma.follow.update({
     where: {
@@ -803,13 +820,14 @@ const acceptFollowerRequestNotification = async ({userId, followId}: {userId: st
 
   await prisma.notification.update({
     where: {
-      id: followId,
+      id: notificationId,
     },
     data: {
       followStatus: RequestStatus.ACCEPTED
     },  
   })
 
+  return result
 
 };
 

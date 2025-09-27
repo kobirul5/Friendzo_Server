@@ -178,9 +178,9 @@ const unfriendUser = catchAsync(async (req: Request, res: Response) => {
 // accept follower request notification
 const acceptFollowerRequestNotification = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id; 
-  const {followId} = req.body;
+  const {targetId: followId, notificationId} = req.body;
 
-  const result = await follwerService.acceptFollowerRequestNotification({userId, followId});
+  const result = await follwerService.acceptFollowerRequestNotification({userId, followId, notificationId});
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

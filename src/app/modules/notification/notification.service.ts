@@ -121,21 +121,12 @@ const getMyNotifications = async (req: any) => {
       },
     });
 
-    return notifications.map((n) => ({
-      id: n.id,
-      title: n.title,
-      body: n.message,
-      isRead: n.isRead,
-      createdAt: n.createdAt,
-      sender: n.sender
-        ? {
-            id: n.sender.id,
-            email: n.sender.email,
-            name: n.sender.firstName + " " + n.sender.lastName,
-            images: n.sender.profileImage || null,
-          }
-        : null,
-    }));
+    await prisma.notification.updateMany({
+      where: { receiverId: userId },
+      data: { isRead: true },
+    });
+
+    return notifications;
   } catch (error: any) {
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message || "Failed to fetch notifications");
   }
