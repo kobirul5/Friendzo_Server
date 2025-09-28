@@ -8,7 +8,7 @@ import { RequestStatus } from '@prisma/client';
 const getCoinList = async ({userId}: any) => { 
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "Unsuthorized!, User not found!");
+  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "Unauthorized!, User not found!");
 
 
   const result = await prisma.coins.findMany();
@@ -81,7 +81,7 @@ const createGiftCoin = async ({
       const notifPayload: INotificationPayload = {
         title: "You received  coins!",
         message: `${sender.firstName || "Someone"} gifted you ${coinAmount} coins`,
-        type: 'MESSAGE',
+        type: 'GIFT',
         senderId: userId,
         receiverId: recipient.id,
         // targetType: RequestStatus.REJECTED,

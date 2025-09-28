@@ -88,7 +88,7 @@ const createCoinPurchase = async ({
       const notifPayload: INotificationPayload = {
         title: "Coin Purchase Successful",
         message: `You have successfully purchased ${coinPackage.coinAmount} coins!`,
-        type: "MESSAGE",
+        type: "PURCHASE",
         senderId: userId,
         receiverId: userId, // Self notification
         targetId: transactionId,

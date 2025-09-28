@@ -63,9 +63,7 @@ const createFollowerAndFollowingService = async (payload: {
       followStatus: RequestStatus.PENDING,
     };
 
-
     await notificationServices.saveNotification(notifPayload, followerId);
-
 
     if (targetUser?.fcmToken) {
       await notificationServices?.sendNotification(
@@ -77,7 +75,7 @@ const createFollowerAndFollowingService = async (payload: {
 
     return result;
   }
-console.log(alreadyFollowing);
+  console.log(alreadyFollowing);
   // যদি আগে থেকে follow করা থাকে
   if (alreadyFollowing) {
     throw new ApiError(
@@ -97,26 +95,26 @@ console.log(alreadyFollowing);
   });
 
   const notifPayload: INotificationPayload = {
-      title: "New Follow Request",
-      message: "Someone sent you a follow request",
-      type: "FOLLOW",
-      senderId: userId,
-      receiverId: followerId,
-      targetId: follow?.id,
-      followStatus: RequestStatus.PENDING,
-    };
+    title: "New Follow Request",
+    message: "Someone sent you a follow request",
+    type: "FOLLOW",
+    senderId: userId,
+    receiverId: followerId,
+    targetId: follow?.id,
+    followStatus: RequestStatus.PENDING,
+  };
 
-    // ✅ সবসময় save হবে
-    await notificationServices.saveNotification(notifPayload, followerId);
+  // ✅ সবসময় save হবে
+  await notificationServices.saveNotification(notifPayload, followerId);
 
-    // ✅ শুধু token থাকলে push যাবে
-    if (targetUser?.fcmToken) {
-      await notificationServices?.sendNotification(
-        targetUser?.fcmToken,
-        notifPayload,
-        followerId
-      );
-    }
+  // ✅ শুধু token থাকলে push যাবে
+  if (targetUser?.fcmToken) {
+    await notificationServices?.sendNotification(
+      targetUser?.fcmToken,
+      notifPayload,
+      followerId
+    );
+  }
 
   return follow;
 };
@@ -317,6 +315,32 @@ const acceptOrRejectFollwershipRequestService = async (
     where: { id: followId },
     data: { requestStatus: status },
   });
+
+  if (status === RequestStatus.ACCEPTED) {
+    let room = await prisma.room.findFirst({
+      where: {
+        OR: [
+          { senderId: userId, receiverId: follow.followerId },
+          { senderId: follow.followerId, receiverId: userId },
+        ],
+      },
+    });
+
+    if (!room) {
+      room = await prisma.room.create({
+        data: { senderId: userId, receiverId: follow.followerId },
+      });
+    }
+
+    const autoMessage = await prisma.chat.create({
+      data: {
+        senderId: userId,
+        receiverId: follow.followerId,
+        roomId: room.id,
+        message: `Hi , Thanks for following! Your request has been accepted.`,
+      },
+    });
+  }
 
   return {
     message: `Follow request ${status.toLowerCase()} successfully`,
@@ -767,11 +791,16 @@ const unfriendUser = async ({
   return result;
 };
 
-
-
 // accept notification
-const  acceptFollowerRequestNotification = async ({userId, followId, notificationId}: {userId: string, followId: string, notificationId: string}) => {
-
+const acceptFollowerRequestNotification = async ({
+  userId,
+  followId,
+  notificationId,
+}: {
+  userId: string;
+  followId: string;
+  notificationId: string;
+}) => {
   const user = await prisma.user.findUnique({
     where: {
       id: userId,
@@ -792,8 +821,11 @@ const  acceptFollowerRequestNotification = async ({userId, followId, notificatio
     throw new ApiError(httpStatus.NOT_FOUND, "Follow not found");
   }
 
-  if(follow.followingId !== userId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "You are not authorized to accept this request");
+  if (follow.followingId !== userId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You are not authorized to accept this request"
+    );
   }
   const notification = await prisma.notification.findUnique({
     where: {
@@ -805,10 +837,13 @@ const  acceptFollowerRequestNotification = async ({userId, followId, notificatio
     throw new ApiError(httpStatus.NOT_FOUND, "Notification not found");
   }
 
-  if(notification.receiverId !== userId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "You are not authorized to accept this request");
+  if (notification.receiverId !== userId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You are not authorized to accept this request"
+    );
   }
-  
+
   const result = await prisma.follow.update({
     where: {
       id: followId,
@@ -823,12 +858,36 @@ const  acceptFollowerRequestNotification = async ({userId, followId, notificatio
       id: notificationId,
     },
     data: {
-      followStatus: RequestStatus.ACCEPTED
-    },  
-  })
+      followStatus: RequestStatus.ACCEPTED,
+    },
+  });
 
-  return result
+  // ✅ Auto Message send
+  let room = await prisma.room.findFirst({
+    where: {
+      OR: [
+        { senderId: userId, receiverId: follow.followerId },
+        { senderId: follow.followerId, receiverId: userId },
+      ],
+    },
+  });
 
+  if (!room) {
+    room = await prisma.room.create({
+      data: { senderId: userId, receiverId: follow.followerId },
+    });
+  }
+
+  const autoMessage = await prisma.chat.create({
+    data: {
+      senderId: userId,
+      receiverId: follow.followerId,
+      roomId: room.id,
+      message: `Hi , Thanks for following! Your request has been accepted.`,
+    },
+  });
+
+  return result;
 };
 
 export const follwerService = {
