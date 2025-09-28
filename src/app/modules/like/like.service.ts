@@ -82,6 +82,7 @@ const createMemoryLikeService = async (userId: string, memoryId: string) => {
       message: "Someone liked your memory",
       type: NotificationType.LIKE,
       senderId: userId,
+      image: memory.image,
       receiverId: memory.userId,
       targetId: memoryId,
       targetType: "MEMORY",

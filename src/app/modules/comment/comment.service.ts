@@ -37,6 +37,7 @@ const createCommentService = async (
     message: `${user?.firstName + " " + user?.lastName || "Someone"} commented on your memory`,
     type: 'COMMENT',
     senderId: userId,
+    image: memory.image || '',
     receiverId: memory.userId,
     targetId: memoryId,
     targetType: "MEMORY",

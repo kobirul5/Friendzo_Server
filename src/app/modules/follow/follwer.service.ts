@@ -770,7 +770,7 @@ const unfriendUser = async ({
 
 
 // accept notification
-const acceptFollowerRequestNotification = async ({userId, followId, notificationId}: {userId: string, followId: string, notificationId: string}) => {
+const  acceptFollowerRequestNotification = async ({userId, followId, notificationId}: {userId: string, followId: string, notificationId: string}) => {
 
   const user = await prisma.user.findUnique({
     where: {

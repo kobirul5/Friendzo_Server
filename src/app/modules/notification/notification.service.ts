@@ -9,7 +9,8 @@ export interface INotificationPayload {
   title: string;                        // Notification title
   message?: string;                     // Optional message/body
   type: NotificationType;               // Enum (must match model)
-  followStatus?: RequestStatus;         // Default: REJECTED
+  followStatus?: RequestStatus;
+  image?: string;                       // Default: REJECTED
 
   receiverId: string;                   // Required (who gets the notification)
   senderId?: string;                    // Optional (who triggered it)
@@ -79,6 +80,7 @@ export const saveNotification = async (
         message: payload.message,
         type: payload.type,
         followStatus: payload.followStatus ?? "REJECTED", // default if not passed
+        image: payload.image || "",
 
         receiverId: userId,                // from function param
         senderId: payload.senderId ?? null, // optional

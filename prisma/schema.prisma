@@ -293,6 +293,7 @@ model Notification {
   message      String?
   isRead       Boolean          @default(false)
   followStatus RequestStatus    @default(REJECTED)
+  image String? @default("")
 
   receiverId String  @db.ObjectId
   receiver   User    @relation("Notification_receiverId", fields: [receiverId], references: [id], onDelete: Cascade)
