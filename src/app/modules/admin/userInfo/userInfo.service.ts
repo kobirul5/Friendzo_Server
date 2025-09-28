@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
 import { paginationHelper } from "../../../../helpars/paginationHelper";
-import { Prisma, UserStatus } from "@prisma/client";
+import { Prisma, UserRole, UserStatus } from "@prisma/client";
 import { getGifts } from "../../User/user.services";
 
 export interface IGetAllOptions {
@@ -200,7 +200,7 @@ const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
 
   // Fetch paginated users
   const users = await prisma.user.findMany({
-    where: searchFilter,
+    where: { ...searchFilter, id: { not: userId } , role: { not: UserRole.ADMIN }},
     skip,
     take: limit,
     orderBy: sortBy ? { [sortBy]: sortOrder } : { createdAt: "desc" },
@@ -209,7 +209,9 @@ const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
       firstName: true,
       lastName: true,
       email: true,
+      role: true,
       profileImage: true,
+      isDatingMode: true,
       status: true, // include status in the response
       createdAt: true,
     },
@@ -221,7 +223,7 @@ const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
 
   // Total count of users matching the filter
   const totalUsersCount = await prisma.user.count({
-    where: searchFilter,
+    where:  { ...searchFilter, id: { not: userId } , role: { not: UserRole.ADMIN }},
   });
 
   // Add serial number
