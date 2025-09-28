@@ -134,10 +134,25 @@ export function setupWebSocket(server: Server) {
               data: { isRead: true },
             });
 
+            const receiver = await prisma.user.findUnique({
+              where: { id: receiverId },
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                interests: true,
+                datingInterests: true,
+                about: true,
+                datingAbout: true,
+                gender: true,
+                interestedGender: true,
+              },
+            });
+
             ws.send(
               JSON.stringify({
                 event: "fetchChats",
-                data: chats,
+                data: { chats, receiver },
               })
             );
             break;
@@ -225,7 +240,8 @@ export function setupWebSocket(server: Server) {
 
                 return {
                   user: userInfo || null,
-                  lastMessage: room.chats && room.chats.length > 0 ? room.chats[0] : null,
+                  lastMessage:
+                    room.chats && room.chats.length > 0 ? room.chats[0] : null,
                 };
               });
 
@@ -284,17 +300,6 @@ function broadcastToAll(wss: WebSocketServer, message: object) {
   });
 }
 
-
-
-
-
-
-
-
-
-
-
-
 // // authenticate event
 
 // {
@@ -315,8 +320,6 @@ function broadcastToAll(wss: WebSocketServer, message: object) {
 // {
 //     "event": "project"
 // }
-
-
 
 // // fetchChats event
 
@@ -348,11 +351,9 @@ function broadcastToAll(wss: WebSocketServer, message: object) {
 //     "images": []
 // }
 
-
 // //fetchGroupMessages
 
 // {
 //     "event": "fetchGroupMessages",
 //     "groupId": "83459203859208"
 // }
-

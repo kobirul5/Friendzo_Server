@@ -126,9 +126,23 @@ const getMyNotifications = async (req: any) => {
       data: { isRead: true },
     });
 
+    // const targetDetails : any = [];
+
+    // for (const notification of notifications) {
+    //   if(notification.targetId && notification.type === "LIKE") {
+    //     const memories = await prisma.memory.findMany({
+    //       where: { id: notification.targetId }
+    //     })
+
+    //     if(memories) {
+    //      console.log(memories);
+    //     }
+    //   }
+    // }
+
     return notifications;
   } catch (error: any) {
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message || "Failed to fetch notifications");
+    throw new ApiError(500, error.message || "Failed to fetch notifications");
   }
 };
 

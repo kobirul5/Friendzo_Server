@@ -225,6 +225,7 @@ const updateUserProfile = async (
   let datingImageUrl = user.datingImage || [];
   if (updateData.datingImage && updateData.datingImage.length > 0) {
     datingImageUrl = updateData.datingImage;
+    updateData.profileImage = datingImageUrl[0];
   }
 
   // Update user profile with only provided fields
