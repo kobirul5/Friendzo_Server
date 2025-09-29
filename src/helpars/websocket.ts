@@ -246,11 +246,19 @@ export function setupWebSocket(server: Server) {
                 };
               });
 
+              
+              const profileImage = await prisma.user.findUnique({
+                where: { id: ws.userId },
+                select: {
+                  profileImage: true,
+                },
+              })
+
               // ✅ Send to client
               ws.send(
                 JSON.stringify({
                   event: "messageList",
-                  data: userWithLastMessages,
+                  data: {profileImage: profileImage?.profileImage, userWithLastMessages},
                 })
               );
             } catch (error) {
