@@ -2,6 +2,7 @@ import httpStatus from "http-status";
 import ApiError from "../../../errors/ApiErrors";
 import { fileUploader } from "../../../helpars/fileUploader";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
+import prisma from "../../../shared/prisma";
 
 
 
@@ -37,14 +38,35 @@ const deleteFiles = async (files:any) => {
   return 
 };
 
-const deleteFile = async (file:string) => {
+const deleteFile = async (file:string, userId:string) => {
   // console.log(file);
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
 
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+   if (!user.datingImage.includes(file)) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Image URL not found in user's dating images");
+  }
+
+
+  
   const deleted = await deleteImageAndFile.deleteFileFromDigitalOcean(file);
 
   if (!deleted) {
     throw new ApiError(httpStatus.NOT_FOUND, " Image delete failed!");
   }
+
+  const updatedImages = user.datingImage.filter((url) => url !== file);
+
+  // Update user record
+  await prisma.user.update({
+    where: { id: userId },
+    data: { datingImage: updatedImages},
+  });
 
   return  null
 };

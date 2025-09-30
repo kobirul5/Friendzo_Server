@@ -24,14 +24,14 @@ router.post(
 
 router.delete(
     '/multiple-delete',
-    auth(UserRole.ADMIN),
+    auth(),
     fileUploadController.deleteMultipleImage
 );
 
 
 router.delete(
     '/single-delete',
-    auth(UserRole.ADMIN),
+    auth(),
     fileUploadController.deleteSingleImage
 );
 

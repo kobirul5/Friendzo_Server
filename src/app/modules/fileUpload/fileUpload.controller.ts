@@ -32,8 +32,9 @@ const deleteMultipleImage = catchAsync(async (req, res) => {
 const deleteSingleImage = catchAsync(async (req, res) => {
 
   const file = req.body.file
+  const userId = req.user.id
 
-  const result = await fileUploadService.deleteFile(file);
+  const result = await fileUploadService.deleteFile(file, userId);
   sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
