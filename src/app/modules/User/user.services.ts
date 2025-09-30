@@ -251,6 +251,55 @@ const updateUserProfile = async (
   return { ...updatedUser, password: undefined };
 };
 
+// upload profile image
+const profileImageUpload = async (
+  userId: string,
+  file: Express.Multer.File
+) => {
+  // Check if user exists
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (!file) {
+    throw new ApiError(400, "Profile image file is required");
+  }
+
+  // Upload new image
+  const uploaded = await fileUploader.uploadToDigitalOcean(file);
+  console.log("Uploaded image URL:", uploaded);
+
+ 
+
+  // Update profile image
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      profileImage: uploaded.Location,
+      updatedAt: new Date(),
+    },
+  });
+
+  if (!updatedUser) {
+    // Rollback upload if update fails
+    await deleteImageAndFile.deleteFileFromDigitalOcean(uploaded.Location);
+    throw new ApiError(400, "Failed to update profile image");
+  }
+
+   // Delete old image if exists
+  if (user.profileImage) {
+    await deleteImageAndFile.deleteFileFromDigitalOcean(user.profileImage);
+  }
+
+  return { ...updatedUser, password: undefined };
+};
+
+
+
 const getUserProfile = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -657,6 +706,7 @@ const seeMode = async ({ userId }: { userId: string }) => {
 
 export const userService = {
   createUserIntoDb,
+  profileImageUpload,
   updateUserProfile,
   getUserProfile,
   getSingleUser,

@@ -9,11 +9,17 @@ router.post(
   "/register", // Multer middleware for handling multiple files
   userController.createUser
 );
-router.put(
+router.put( 
   "/update-profile",
   auth(),
   fileUploader.uploadSingle,
   userController.updateProfile
+);
+router.put(
+  "/update-profile-image",
+  auth(),
+  fileUploader.uploadSingle,
+  userController.profileImageUpload
 );
 
 router.put(

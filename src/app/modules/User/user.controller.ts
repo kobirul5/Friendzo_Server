@@ -28,6 +28,18 @@ const updateProfile = catchAsync(async (req: Request, res: Response) => {
     data: user,
   });
 });
+const profileImageUpload = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const file = req.file as Express.Multer.File;
+
+  const user = await userService.profileImageUpload(userId, file);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: " profile image updated successfully",
+    data: user,
+  });
+});
 
 const getUserProfile = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
@@ -128,6 +140,7 @@ const seeMode = catchAsync(async (req: Request, res: Response) => {
 export const userController = {
   createUser,
   updateProfile,
+  profileImageUpload,
   getUserProfile,
   getSingleUser,
   updateDatingProfile,
