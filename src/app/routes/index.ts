@@ -24,6 +24,7 @@ import { fileUploadRoutes } from "../modules/fileUpload/fileUpload.routes";
 import { managersRoutes } from "../modules/admin/managers/managers.routes";
 import path from "path";
 import { notificationsRoute } from "../modules/notification/notification.routes";
+import { subscriptionRoutes } from "../modules/admin/subscription/subscription.routes";
 
 
 
@@ -127,6 +128,10 @@ const moduleRoutes = [
   {
     path:"/notification",
     route: notificationsRoute
+  },
+  {
+    path: "/subscription",
+    route: subscriptionRoutes
   }
 
 
