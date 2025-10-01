@@ -28,15 +28,55 @@ const getSubscriptionPlanList = catchAsync(async (req, res) => {
   });
 });
 
+const deleteSubscriptionPlan = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const { id } = req.params;
+  const result = await subscriptionService.deleteSubscriptionPlan(id, userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Subscription plan deleted successfully',
+    data: null,
+  });
+});
+
 
 const updateSubscriptionPlan = catchAsync(async (req, res) => {
-  
+  const userId = req.user.id;
+  const data = req.body;
+  const result = await subscriptionService.updateSubscriptionPlan(data, userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Subscription plan updated successfully',
+    data: result,
+  });
   
 });
+
+// subscription controller
+
+const purchaseSubscription = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const data = req.body;
+  const result = await subscriptionService.purchaseSubscription(data, userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Subscription plan updated successfully',
+    data: result,
+  });
+  
+});
+
 
 export const subscriptionController = {
   getSubscriptionPlanList,
   createSubscriptionPlan,
-  updateSubscriptionPlan
+  updateSubscriptionPlan,
+  deleteSubscriptionPlan,
+  // subscription
+  purchaseSubscription,
 
-};
+
+}

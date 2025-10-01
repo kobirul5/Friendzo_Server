@@ -332,7 +332,8 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       datingInterests: true,
       datingAbout: true,
       datingImage: true,
-      interestedGender: true, // string[]
+      interestedGender: true,
+      aiMessage: true // string[]
     },
   });
 
@@ -704,6 +705,36 @@ const seeMode = async ({ userId }: { userId: string }) => {
   return {isDatingMode : user.isDatingMode};
 }
 
+
+const decreaseAiMessageCount = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      aiMessage: true,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  if (!user.aiMessage || user.aiMessage <= 0) {
+    throw new ApiError(400, "No AI messages left to decrease");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      aiMessage: { decrement: 1 }, // Remove the last message
+    },
+    select: {
+      id: true,
+      aiMessage: true,
+    }
+  })
+  return updatedUser;
+}
+
 export const userService = {
   createUserIntoDb,
   profileImageUpload,
@@ -713,6 +744,7 @@ export const userService = {
   updateDatingProfile,
   getReferralCode,
   changeDatingMode,
-  seeMode
+  seeMode,
+  decreaseAiMessageCount
   // deleteUserDocumentImage,
 };

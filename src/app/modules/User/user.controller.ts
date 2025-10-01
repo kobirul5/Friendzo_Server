@@ -137,6 +137,16 @@ const seeMode = catchAsync(async (req: Request, res: Response) => {
   });
 })
 
+const decreaseAiMessageCount = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const user = await userService.decreaseAiMessageCount(userId);
+  res.status(200).json({
+    success: true,
+    message: "Ai message count dicreased successfully!",
+    data: user,
+  });
+})
+
 export const userController = {
   createUser,
   updateProfile,
@@ -146,6 +156,7 @@ export const userController = {
   updateDatingProfile,
   getReferralCode,
   changeDatingMode,
-  seeMode
+  seeMode,
+  decreaseAiMessageCount,
   // deleteUserDocumentImage,
 };

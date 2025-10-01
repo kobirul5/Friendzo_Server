@@ -5,14 +5,20 @@ import { UserRole } from "@prisma/client";
 
 const router = express.Router();
 
+// subscription routes
+router.post("/", auth(), subscriptionController.purchaseSubscription);
+
+
 router.post(
-  "/",
+  "/plan",
   auth(),
 //   auth(UserRole.ADMIN, UserRole.MANAGER),
   subscriptionController.createSubscriptionPlan
 );
 
-router.get("/", auth(), subscriptionController.getSubscriptionPlanList);
-router.put("/", auth(), subscriptionController.updateSubscriptionPlan);
+router.get("/plan", auth(), subscriptionController.getSubscriptionPlanList);
+router.put("/plan", auth(), subscriptionController.updateSubscriptionPlan);
+router.delete("/plan/:id", auth(), subscriptionController.deleteSubscriptionPlan);
+
 
 export const subscriptionRoutes = router;

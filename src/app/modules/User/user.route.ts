@@ -38,6 +38,8 @@ router.put("/change-mode", auth(), userController.changeDatingMode);
 
 router.get("/:id", auth(), userController.getSingleUser);
 
+router.put("/decrease-ai-message-count", auth(), userController.decreaseAiMessageCount);
+
 // router.delete("/:id", auth(), userController.deleteUser);
 
 export const userRoutes = router;
