@@ -41,7 +41,7 @@ model User {
   datingInterests  String[]  @default([])
   datingAbout      String?   @default("")
   datingImage      String[]  @default([])
-  aiMessage       Int       @default(0)
+  aiMessage        Int       @default(0)
 
   dob              DateTime?
   lat              Float?
@@ -89,6 +89,7 @@ model User {
   managerRole       String[]       @default([])
 
   @@map("users")
+  Subscription Subscription[]
 }
 
 model Interest {
@@ -294,7 +295,7 @@ model Notification {
   message      String?
   isRead       Boolean          @default(false)
   followStatus RequestStatus    @default(REJECTED)
-  image String? @default("")
+  image        String?          @default("")
 
   receiverId String  @db.ObjectId
   receiver   User    @relation("Notification_receiverId", fields: [receiverId], references: [id], onDelete: Cascade)
@@ -302,7 +303,7 @@ model Notification {
   sender     User?   @relation("NotificationSender", fields: [senderId], references: [id])
 
   targetType String? @default("") // e.g., "event", "memory", "comment", etc.
-  targetId   String? @default("")// ID of the item the notification is about
+  targetId   String? @default("") // ID of the item the notification is about
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -418,37 +419,39 @@ model Payment {
 //subscription start
 
 model SubscriptionPlan {
-id String @id @map("_id") @default(auto()) @db.ObjectId
-name String @unique
-price Float
-currency String @default("USD")
-interval String // 'MONTH', 'YEAR', etc.
-trialDays Int?  @default(0)// optional trial days
-active Boolean @default(true)
-features Json? // array of objects [{ key: string, value: string }]
-createdAt DateTime @default(now())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  price     Float
+  currency  String   @default("USD")
+  interval  String // 'MONTH', 'YEAR', etc.
+  trialDays Int?     @default(0) // optional trial days
+  active    Boolean  @default(true)
+  features  Json? // array of objects [{ key: string, value: string }]
+  createdAt DateTime @default(now())
 
-
-@@map("subscriptionPlans")
+  @@map("subscriptionPlans")
+  Subscription Subscription[]
 }
 
 model Subscription {
-id String @id @map("_id") @default(auto()) @db.ObjectId
-userId String @db.ObjectId
-planId String @db.ObjectId
-amount Float 
-status subscriptionStatus @default(ACTIVE)// 'ACTIVE', 'CANCELLED', 'PAUSED', 'EXPIRED'
-startedAt DateTime @default(now())
-endedAt DateTime?
-nextBillingAt DateTime?
-trialEndsAt DateTime?
-metadata Json?
-createdAt DateTime @default(now())
+  id            String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String             @db.ObjectId
+  planId        String             @db.ObjectId
+  amount        Float
+  status        subscriptionStatus @default(ACTIVE) // 'ACTIVE', 'CANCELLED', 'PAUSED', 'EXPIRED'
+  startedAt     DateTime           @default(now())
+  endedAt       DateTime?
+  nextBillingAt DateTime?
+  trialEndsAt   DateTime?
+  metadata      Json?
+  createdAt     DateTime           @default(now())
+  plan          SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-
-@@index([userId])
-@@index([planId])
+  @@index([userId])
+  @@index([planId])
 }
+
 //subscription end
 
 enum subscriptionStatus {

@@ -7,6 +7,7 @@ import {
   notificationServices,
 } from "../../notification/notification.service";
 import stripe from "../../../../shared/stripe";
+import { ObjectId } from "mongodb";
 
 const createSubscriptionPlan = async (data: any, userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -298,6 +299,62 @@ const purchaseSubscription = async (data: any, userId: string) => {
   }
 };
 
+// const getUserSubscriptions = async (userId: string) => {
+//   // check user first
+//   const user = await prisma.user.findUnique({ where: { id: userId } });
+//   if (!user) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+//   }
+
+//   // Fetch directly from MongoDB to avoid Prisma type enforcement
+//   const raw = await prisma.$runCommandRaw({
+//     find: "Subscription",
+//     filter: { userId: new ObjectId(userId) },
+//     sort: { startedAt: -1 },
+//   });
+
+//   // Normalize amount field to always be a number
+//   let subscriptions: any[] = [];
+//   if (
+//     raw &&
+//     typeof raw === "object" &&
+//     raw.cursor &&
+//     typeof raw.cursor === "object" &&
+//     Array.isArray((raw.cursor as any).firstBatch)
+//   ) {
+//     subscriptions = (raw.cursor as any).firstBatch.map((sub: any) => ({
+//       ...sub,
+//       amount: sub.amount ?? 0, // replace null/undefined with 0
+//     }));
+//   }
+
+//   return subscriptions;
+// };
+
+const getUserSubscriptions = async (userId: string) => {
+  // check user first
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+  }
+
+  const subscriptions = await prisma.subscription.findMany({
+    where: { userId },
+    orderBy: { startedAt: "desc" },
+    select: {
+      id: true,
+      planId: true,
+      startedAt: true,
+      endedAt: true,
+      status: true,
+      amount: true,
+      plan: true,
+    },
+  });
+
+  return subscriptions;
+};
+
 export const subscriptionService = {
   getSubscriptionPlanList,
   createSubscriptionPlan,
@@ -305,4 +362,5 @@ export const subscriptionService = {
   deleteSubscriptionPlan,
   //subscription
   purchaseSubscription,
+  getUserSubscriptions,
 };

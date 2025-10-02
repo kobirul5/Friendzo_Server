@@ -1,7 +1,10 @@
 import dayjs from "dayjs";
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
-import { INotificationPayload, notificationServices } from "../notification/notification.service";
+import {
+  INotificationPayload,
+  notificationServices,
+} from "../notification/notification.service";
 import { NotificationType } from "@prisma/client";
 
 const createEventLikeService = async (userId: string, eventId: string) => {
@@ -50,7 +53,8 @@ const createMemoryLikeService = async (userId: string, memoryId: string) => {
   }
 
   const memory = await prisma.memory.findUnique({
-    where: { id: memoryId }, include: { user: true },
+    where: { id: memoryId },
+    include: { user: true },
   });
   if (!memory) {
     throw new ApiError(404, "Memory not found");
@@ -86,26 +90,21 @@ const createMemoryLikeService = async (userId: string, memoryId: string) => {
       receiverId: memory.userId,
       targetId: memoryId,
       targetType: "MEMORY",
-      followStatus:"REJECTED", // not needed for memory like
+      followStatus: "REJECTED", // not needed for memory like
     };
 
-    // notification save 
+    // notification save
     await notificationServices.saveNotification(notifPayload, memory.userId);
 
-    // fcm token  push , try-catch safe 
+    // fcm token  push , try-catch safe
     if (memory?.user?.fcmToken) {
-     
-        await notificationServices.sendNotification(
-          memory.user.fcmToken,
-          notifPayload,
-          memory.userId
-        );
+      await notificationServices.sendNotification(
+        memory.user.fcmToken,
+        notifPayload,
+        memory.userId
+      );
     }
   }
-
-
-
-
 
   return like;
 };
@@ -178,6 +177,14 @@ const getDailyMyLikeService = async (userId: string) => {
           description: true,
           image: true,
           createdAt: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              profileImage: true,
+            },
+          },
         },
       },
     },
@@ -258,6 +265,14 @@ const getMyWeeklyService = async (userId: string) => {
           description: true,
           image: true,
           createdAt: true,
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              profileImage: true,
+            },
+          },
         },
       },
     },

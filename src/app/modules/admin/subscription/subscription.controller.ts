@@ -69,6 +69,19 @@ const purchaseSubscription = catchAsync(async (req, res) => {
   
 });
 
+const getUserSubscriptions = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const result = await subscriptionService.getUserSubscriptions(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User subscriptions retrieved successfully",
+    data: result,
+  });
+});
+
+
 
 export const subscriptionController = {
   getSubscriptionPlanList,
@@ -77,6 +90,6 @@ export const subscriptionController = {
   deleteSubscriptionPlan,
   // subscription
   purchaseSubscription,
-
+getUserSubscriptions
 
 }
