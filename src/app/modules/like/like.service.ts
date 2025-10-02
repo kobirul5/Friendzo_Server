@@ -177,6 +177,8 @@ const getDailyMyLikeService = async (userId: string) => {
           description: true,
           image: true,
           createdAt: true,
+          MemoryLike: true,
+          Comment: true,
           user: {
             select: {
               id: true,
@@ -265,6 +267,8 @@ const getMyWeeklyService = async (userId: string) => {
           description: true,
           image: true,
           createdAt: true,
+          MemoryLike: true,
+          Comment: true,
           user: {
             select: {
               id: true,
