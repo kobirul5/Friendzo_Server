@@ -133,7 +133,7 @@ const updateSubscriptionPlan = async (data: any, userId: string) => {
 
   const updatedPlan = await prisma.subscriptionPlan.update({
     where: { id },
-    data: { name, price, currency, interval, trialDays, features },
+    data: { name, price, currency, interval, trialDays, features, subtitle, discount },
   });
 
   return updatedPlan;
