@@ -35,6 +35,8 @@ const createSubscriptionPlan = async (data: any, userId: string) => {
 
   const {
     name,
+    subtitle,
+    discount,
     price,
     currency = "USD",
     interval = "MONTH",
@@ -50,7 +52,16 @@ const createSubscriptionPlan = async (data: any, userId: string) => {
   }
 
   const plan = await prisma.subscriptionPlan.create({
-    data: { name, price, currency, interval, trialDays, features },
+    data: {
+      name,
+      price,
+      currency,
+      interval,
+      trialDays,
+      features,
+      subtitle,
+      discount,
+    },
   });
 
   return plan;
@@ -73,7 +84,17 @@ const updateSubscriptionPlan = async (data: any, userId: string) => {
   //   throw new ApiError(httpStatus.FORBIDDEN, "You don't have permission to update a subscription plan");
   // }
 
-  const { id, name, price, currency, interval, trialDays, features } = data;
+  const {
+    id,
+    name,
+    price,
+    currency,
+    interval,
+    trialDays,
+    features,
+    subtitle,
+    discount,
+  } = data;
 
   const existingPlan = await prisma.subscriptionPlan.findUnique({
     where: { id },

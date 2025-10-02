@@ -424,6 +424,8 @@ model SubscriptionPlan {
   price     Float
   currency  String   @default("USD")
   interval  String // 'MONTH', 'YEAR', etc.
+  subtitle  String? @default("")
+  discount  String? @default("")
   trialDays Int?     @default(0) // optional trial days
   active    Boolean  @default(true)
   features  Json? // array of objects [{ key: string, value: string }]

@@ -201,20 +201,17 @@ const updateUserProfile = async (
     where: { id: userId },
   });
 
-  if (updateData.age !== undefined && typeof updateData.age === 'number') {
+  if (updateData.age !== undefined && typeof updateData.age === "number") {
     const age = updateData.age;
 
     const currentDate = new Date();
-    
 
     const birthYear = currentDate.getFullYear() - age;
 
-  const dateOfBirthObject = new Date(Date.UTC(birthYear, 0, 1, 0, 0, 0))
-
+    const dateOfBirthObject = new Date(Date.UTC(birthYear, 0, 1, 0, 0, 0));
 
     updateData.dob = dateOfBirthObject;
-
-}
+  }
 
   // If file exists, upload and set profileImage url
   if (file) {
@@ -224,7 +221,7 @@ const updateUserProfile = async (
 
   let datingImageUrl = user.datingImage || [];
   if (updateData.datingImage && updateData.datingImage.length > 0) {
-    datingImageUrl = [ ...datingImageUrl, ...updateData.datingImage];
+    datingImageUrl = [...datingImageUrl, ...updateData.datingImage];
     updateData.profileImage = datingImageUrl[0];
   }
 
@@ -273,8 +270,6 @@ const profileImageUpload = async (
   const uploaded = await fileUploader.uploadToDigitalOcean(file);
   console.log("Uploaded image URL:", uploaded);
 
- 
-
   // Update profile image
   const updatedUser = await prisma.user.update({
     where: { id: userId },
@@ -290,15 +285,13 @@ const profileImageUpload = async (
     throw new ApiError(400, "Failed to update profile image");
   }
 
-   // Delete old image if exists
+  // Delete old image if exists
   if (user.profileImage) {
     await deleteImageAndFile.deleteFileFromDigitalOcean(user.profileImage);
   }
 
   return { ...updatedUser, password: undefined };
 };
-
-
 
 const getUserProfile = async (userId: string) => {
   const user = await prisma.user.findUnique({
@@ -333,7 +326,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       datingAbout: true,
       datingImage: true,
       interestedGender: true,
-      aiMessage: true // string[]
+      aiMessage: true, // string[]
     },
   });
 
@@ -355,7 +348,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       })),
     },
     select: { id: true, name: true, image: true, category: true },
-  })
+  });
 
   console.log("datingInterestsDetails", datingInterestsDetails);
 
@@ -375,6 +368,22 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
   ];
   const profileComplete = requiredFields.every(Boolean);
 
+  // 6️⃣ Subscription check
+  const activeSubscription = await prisma.subscription.findFirst({
+    where: {
+      userId,
+      status: "ACTIVE",
+      AND: [
+        {
+          OR: [
+            { endedAt: null }, // কোনো end date নাই মানে চলছে
+            { endedAt: { gte: new Date() } }, // end date আজ বা ভবিষ্যতে
+          ],
+        },
+      ],
+    },
+  });
+  const isSubscribed = !!activeSubscription;
 
   if (currentUserId) {
     const isFriend = await isFriendOrFollow(currentUserId, userId);
@@ -399,10 +408,9 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
     followingsCount,
     gifts,
     isProfileComplete: profileComplete,
+    isSubscribed,
   };
 };
-
-
 
 const isFriendOrFollow = async (
   userId: string,
@@ -465,9 +473,7 @@ const isFriendOrFollow = async (
     return {
       isFriend: false,
       requestStatus:
-        userFollow?.requestStatus ||
-        friendFollow?.requestStatus ||
-        "NOTFOLLOW",
+        userFollow?.requestStatus || friendFollow?.requestStatus || "NOTFOLLOW",
     };
   } else {
     // Social mode: one ACCEPTED follow is enough
@@ -481,8 +487,6 @@ const isFriendOrFollow = async (
     };
   }
 };
-
-
 
 export const getGifts = async (userId: string) => {
   // 1. Purchases groupBy
@@ -545,7 +549,6 @@ export const getGifts = async (userId: string) => {
 
 //  update dating profile
 
-
 const updateDatingProfile = async (
   userId: string,
   updateData: UpdateDatingProfileInput,
@@ -601,7 +604,6 @@ const updateDatingProfile = async (
   // Image upload logic
   if (files && files.length > 0) {
     // 1. Delete old images from DigitalOcean (if exist)
-    
 
     // 2. Upload new images
     const uploadedUrls: string[] = [];
@@ -634,19 +636,21 @@ const updateDatingProfile = async (
   if (!updatedUser) {
     // rollback if update fails
     if (mergedData.datingImage && mergedData.datingImage.length > 0) {
-      await deleteImageAndFile.deleteFileFromDigitalOcean(mergedData.datingImage);
+      await deleteImageAndFile.deleteFileFromDigitalOcean(
+        mergedData.datingImage
+      );
     }
     throw new ApiError(400, "Failed to update user profile");
   }
 
   if (user.datingImage && user.datingImage.length > 0) {
-    await deleteImageAndFile.deleteMultipleFileFromDigitalOcean(user.datingImage);
+    await deleteImageAndFile.deleteMultipleFileFromDigitalOcean(
+      user.datingImage
+    );
   }
-
 
   return updatedUser;
 };
-
 
 const getReferralCode = async (userId: string) => {
   const user = await prisma.user.findUnique({
@@ -683,9 +687,9 @@ const changeDatingMode = async ({ userId }: { userId: string }) => {
     select: {
       id: true,
       isDatingMode: true,
-    }
+    },
   });
-  return {isDatingMode : userUpdate.isDatingMode};
+  return { isDatingMode: userUpdate.isDatingMode };
 };
 
 const seeMode = async ({ userId }: { userId: string }) => {
@@ -697,14 +701,12 @@ const seeMode = async ({ userId }: { userId: string }) => {
     },
   });
 
-  if(!user) {
+  if (!user) {
     throw new ApiError(404, "User not found");
   }
 
-
-  return {isDatingMode : user.isDatingMode};
-}
-
+  return { isDatingMode: user.isDatingMode };
+};
 
 const decreaseAiMessageCount = async (userId: string) => {
   const user = await prisma.user.findUnique({
@@ -730,10 +732,10 @@ const decreaseAiMessageCount = async (userId: string) => {
     select: {
       id: true,
       aiMessage: true,
-    }
-  })
+    },
+  });
   return updatedUser;
-}
+};
 
 export const userService = {
   createUserIntoDb,
@@ -745,6 +747,6 @@ export const userService = {
   getReferralCode,
   changeDatingMode,
   seeMode,
-  decreaseAiMessageCount
+  decreaseAiMessageCount,
   // deleteUserDocumentImage,
 };
