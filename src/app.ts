@@ -6,13 +6,15 @@ import cookieParser from "cookie-parser";
 import GlobalErrorHandler from "./app/middlewares/globalErrorHandler";
 import router from "./app/routes";
 
-
-
-
-
 const app: Application = express();
 export const corsOptions = {
-  origin: ["http://localhost:3001", "http://localhost:3000", "http://localhost:3002"],
+  origin: [
+    "http://localhost:3001",
+    "http://localhost:3000",
+    "http://localhost:3002",
+    "https://digital-animal3-dashboard.vercel.app",
+    "https://digital-animal3-dashboard-44nouw4zn.vercel.app",
+  ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -28,7 +30,7 @@ app.use(express.static("public"));
 // Route handler for root endpoint
 app.get("/", (req: Request, res: Response) => {
   res.send({
-    success:true,
+    success: true,
     statusCode: httpStatus.OK,
     message: "The server is running!",
   });
