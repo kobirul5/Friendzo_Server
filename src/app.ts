@@ -10,8 +10,11 @@ const app: Application = express();
 export const corsOptions = {
   origin: [
     "http://localhost:3001",
+    "http://72.60.70.222:3001",
     "http://localhost:3000",
+    "http://72.60.70.222:3000",
     "http://localhost:3002",
+    "http://72.60.70.222:3002",
     "https://digital-animal3-dashboard.vercel.app",
     "https://digital-animal3-dashboard-44nouw4zn.vercel.app",
   ],
