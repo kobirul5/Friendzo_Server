@@ -239,11 +239,11 @@ const updateUserProfile = async (
     throw new ApiError(400, "Failed to update user profile");
   }
 
-  if (file && existingUser?.profileImage) {
-    await deleteImageAndFile.deleteFileFromDigitalOcean(
-      existingUser.profileImage
-    );
-  }
+  // if (file && existingUser?.profileImage && ) {
+  //   await deleteImageAndFile.deleteFileFromDigitalOcean(
+  //     existingUser.profileImage
+  //   );
+  // }
 
   return { ...updatedUser, password: undefined };
 };
