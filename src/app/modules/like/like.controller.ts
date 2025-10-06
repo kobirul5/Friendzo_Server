@@ -130,7 +130,20 @@ const createUserLikeService = catchAsync(async (req:any, res:Response) => {
     data: result,
   });
 
+})
 
+const removeUserLike = catchAsync(async (req:any, res:Response) => {
+  const { likedUserId } = req.body;
+  const userId = req.user.id
+
+  const result = await likeService.removeUserLikeService(userId, likedUserId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User Like removed successfully',
+    data: result,
+  });
 })
 
 export const likeController = {
@@ -140,5 +153,6 @@ export const likeController = {
   removeMemoryLike,
   getDayliMyLike,
   getWeeklyMyLike ,
-  createUserLikeService
+  createUserLikeService,
+  removeUserLike
 };

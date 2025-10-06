@@ -324,10 +324,40 @@ const getMyWeeklyService = async (userId: string) => {
   };
 };
 
+const removeUserLikeService = async (userId: string, likedUserId: string) => {
+
+
+
+  const existingLike = await prisma.userLike.findFirst({
+    where: {
+      userId,
+      likedUserId,
+    },
+  });
+
+  if (!existingLike) {
+    throw new ApiError(404, "Like does not exist for this user.");
+  }
+
+  if(userId === existingLike.userId){
+    throw new ApiError(400, "You can not remove this like.");
+  }
+
+  await prisma.userLike.delete({
+    where: {
+      id: existingLike.id,
+    },
+  });
+
+  return null;
+};
+
+
 export const likeService = {
   createUserLikeService,
   createEventLikeService,
   createMemoryLikeService,
+  removeUserLikeService,
   getMemoryLikeCountService,
   getMemoryLikedUsersService,
   removeMemoryLikeService,
