@@ -1,8 +1,13 @@
 import ApiError from "../../../../errors/ApiErrors";
 import prisma from "../../../../shared/prisma";
 
-
-const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, interest: string}) => {
+const getPeopleBySharedInterests = async ({
+  userId,
+  interest,
+}: {
+  userId: string;
+  interest: string;
+}) => {
   // 1️ Get current user's interests
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -19,9 +24,11 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
-   const currentUserInterests = interest? [interest] :  currentUser.datingInterests;
+  const currentUserInterests = interest
+    ? [interest]
+    : currentUser.datingInterests;
 
-   if (currentUserInterests && currentUserInterests.length > 0) {
+  if (currentUserInterests && currentUserInterests.length > 0) {
     // Validate interests against fixed array
 
     const interests = await prisma.interest.findMany({
@@ -45,7 +52,6 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
       );
     }
   }
-
 
   if (!currentUserInterests || currentUserInterests.length === 0) {
     return []; // or throw an error if interests are required
@@ -72,6 +78,7 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
       datingInterests: true,
       gender: true,
       dob: true,
+      likesReceived: true,
     },
   });
 
@@ -87,8 +94,20 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
         : 0;
 
     return {
-      ...user,
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      profileImage: user.profileImage,
+      email: user.email,
+      address: user.address,
+      interests: user.interests,
+      datingInterests: user.datingInterests,
+      gender: user.gender,
+      dob: user.dob,
+      // New fields
       interestPercentage: matchPercentage,
+      totalLikesReceived: user.likesReceived.length,
+      likedByCurrentUser: user.likesReceived.length > 0,
     };
   });
 
@@ -97,10 +116,13 @@ const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, i
     (a, b) => b.interestPercentage - a.interestPercentage
   );
 
+  const totalLikes = matchedUsers
+    .map((user) => user.likesReceived.length)
+    .reduce((a, b) => a + b, 0);
+
   return usersWithMatchPercentage;
 };
 
-
 export const findByInterestService = {
-  getPeopleBySharedInterests
+  getPeopleBySharedInterests,
 };

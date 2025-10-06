@@ -59,6 +59,10 @@ model User {
   // Relationships
   EventLike     EventLike[]
   MemoryLike    MemoryLike[]
+  // Likes that this user has given to other users
+  likesGiven UserLike[] @relation("UserLikesGiven")
+  // Likes that this user has received from other users
+  likesReceived UserLike[] @relation("UserLikesReceived")
   Comment       Comment[]
   followers     Follow[]     @relation("Followers") // amy jare follw kortase,
   following     Follow[]     @relation("Following") // ami jare follw kortasi
@@ -87,6 +91,7 @@ model User {
   notificationsSent Notification[] @relation("NotificationSender")
   ReportPost        ReportPost[]
   managerRole       String[]       @default([])
+
 
   @@map("users")
   Subscription Subscription[]
@@ -187,6 +192,26 @@ model MemoryLike {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model UserLike {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Je user like dicche
+  user   User   @relation("UserLikesGiven", fields: [userId], references: [id], onDelete: Cascade)
+  userId String @db.ObjectId
+
+  // Je user ke like kora hocche
+  likedUser   User @relation("UserLikesReceived", fields: [likedUserId], references: [id], onDelete: Cascade)
+  likedUserId String @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, likedUserId]) // prevent duplicate likes
+}
+
+
+
 
 model Comment {
   id      String @id @default(auto()) @map("_id") @db.ObjectId

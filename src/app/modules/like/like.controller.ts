@@ -117,6 +117,21 @@ const getWeeklyMyLike = catchAsync(async (req:any, res:Response) => {
   });
 })
 
+const createUserLikeService = catchAsync(async (req:any, res:Response) => {
+  const { likedUserId } = req.body;
+  const userId = req.user.id
+
+  const result = await likeService.createUserLikeService(userId, likedUserId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: 'User Like created successfully',
+    data: result,
+  });
+
+
+})
 
 export const likeController = {
   createEventLike,
@@ -124,5 +139,6 @@ export const likeController = {
   getMemoryLikeStats,
   removeMemoryLike,
   getDayliMyLike,
-  getWeeklyMyLike 
+  getWeeklyMyLike ,
+  createUserLikeService
 };

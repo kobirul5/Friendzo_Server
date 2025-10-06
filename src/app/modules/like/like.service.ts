@@ -109,6 +109,71 @@ const createMemoryLikeService = async (userId: string, memoryId: string) => {
   return like;
 };
 
+const createUserLikeService = async (userId: string, likedUserId: string) => {
+  // Check if the user giving the like exists
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Check if the user being liked exists
+  const likedUser = await prisma.user.findUnique({
+    where: { id: likedUserId },
+  });
+  if (!likedUser) {
+    throw new ApiError(404, "Target user not found");
+  }
+
+  // Check if like already exists
+  const existingLike = await prisma.userLike.findFirst({
+    where: {
+      userId,
+      likedUserId,
+    },
+  });
+
+  if (existingLike) {
+    throw new ApiError(400, "You have already liked this user.");
+  }
+
+  // Create the like
+  const like = await prisma.userLike.create({
+    data: {
+      userId,
+      likedUserId,
+    },
+  });
+
+  // // Notification payload
+  // const notifPayload: INotificationPayload = {
+  //   title: "New User Like",
+  //   message: "Someone liked you",
+  //   type: NotificationType.LIKE,
+  //   senderId: userId,
+  //   receiverId: likedUserId,
+  //   targetId: likedUserId,
+  //   targetType: "USER",
+  //   followStatus: "REJECTED", // not needed for user like
+  // };
+
+  // // Save notification
+  // await notificationServices.saveNotification(notifPayload, likedUserId);
+
+  // // FCM push notification (if token exists)
+  // if (likedUser.fcmToken) {
+  //   await notificationServices.sendNotification(
+  //     likedUser.fcmToken,
+  //     notifPayload,
+  //     likedUserId
+  //   );
+  // }
+
+  return like;
+};
+
+
 const getMemoryLikeCountService = async (memoryId: string) => {
   const count = await prisma.memoryLike.count({
     where: { memoryId },
@@ -201,38 +266,6 @@ const getDailyMyLikeService = async (userId: string) => {
   };
 };
 
-// const getMyWeeklyService = async (userId: string) => {
-
-//  const now = new Date();
-//   const day = now.getDay();
-
-//   // Get ISO day index: Monday = 0, Sunday = 6
-//   const isoDay = (day + 6) % 7;
-
-//   // Start of ISO week (Monday)
-//   const startOfWeek = new Date(now);
-//   startOfWeek.setDate(now.getDate() - isoDay);
-//   startOfWeek.setHours(0, 0, 0, 0);
-
-//   // End of ISO week (Sunday, 23:59:59)
-//   const endOfWeek = new Date(startOfWeek);
-//   endOfWeek.setDate(startOfWeek.getDate() + 6);
-//   endOfWeek.setHours(23, 59, 59, 999);
-
-//   const likes = await prisma.memoryLike.findMany({
-//     where: {
-//       userId,
-//       createdAt: {
-//         gte: startOfWeek,
-//         lte: endOfWeek,
-//       },
-//     },
-//   });
-
-//   return likes;
-
-// }
-
 const getMyWeeklyService = async (userId: string) => {
   const now = new Date();
   const day = now.getDay();
@@ -292,6 +325,7 @@ const getMyWeeklyService = async (userId: string) => {
 };
 
 export const likeService = {
+  createUserLikeService,
   createEventLikeService,
   createMemoryLikeService,
   getMemoryLikeCountService,

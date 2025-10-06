@@ -14,7 +14,12 @@ router.post(
 '/memories',
 auth(),
 likeController.createMemoryLike,
-likeController.createMemoryLike,
+);
+
+router.post(
+'/user',
+auth(),
+likeController.createUserLikeService,
 );
 
 router.get('/memories/:id', auth(), likeController.getMemoryLikeStats);
