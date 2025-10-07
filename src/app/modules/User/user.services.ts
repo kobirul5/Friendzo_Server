@@ -672,12 +672,16 @@ const changeDatingMode = async ({ userId }: { userId: string }) => {
     select: {
       id: true,
       isDatingMode: true,
+      firstName: true,
+
     },
   });
 
   if (!user) {
     throw new ApiError(404, "User not found");
   }
+
+  console.log("Current mode: ", user.firstName, user.isDatingMode, userId);
 
   const userUpdate = await prisma.user.update({
     where: { id: userId },
@@ -689,6 +693,7 @@ const changeDatingMode = async ({ userId }: { userId: string }) => {
       isDatingMode: true,
     },
   });
+  console.log("Updated mode:", userUpdate.isDatingMode);
   return { isDatingMode: userUpdate.isDatingMode };
 };
 
