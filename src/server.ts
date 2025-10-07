@@ -82,10 +82,10 @@ async function startServer() {
     // ✅ WebSocket setup
     setupWebSocket(server);
 
-    // ✅ Initialize super admin asynchronously (non-blocking)
-    initiateSuperAdmin()
-      .then(() => console.log("👑 Super admin initialized"))
-      .catch((err) => console.error("Super admin init failed:", err));
+    // // ✅ Initialize super admin asynchronously (non-blocking)
+    // initiateSuperAdmin()
+    //   .then(() => console.log("👑 Super admin initialized"))
+    //   .catch((err) => console.error("Super admin init failed:", err));
 
     // ✅ Graceful shutdown handling
     const gracefulShutdown = async () => {
