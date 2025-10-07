@@ -1,6 +1,5 @@
 import ApiError from "../../../../errors/ApiErrors";
 import prisma from "../../../../shared/prisma";
-import httpStatus from "http-status";
 
 const getPeopleBySharedInterests = async ({
   userId,
@@ -27,17 +26,16 @@ const getPeopleBySharedInterests = async ({
 
   const currentUserInterests = interest
     ? [interest]
-    : currentUser.datingInterests.length > 0
-    ? currentUser.datingInterests
-    : ["Movies", "Music", "Travel"]; // Default interests if none are set
+    : currentUser.datingInterests;
 
-  if (interest && currentUserInterests.length > 0) {
+  if (currentUserInterests && currentUserInterests.length > 0) {
     // Validate interests against fixed array
+
     const interests = await prisma.interest.findMany({
       select: { name: true },
     });
 
-    const CategoriesArray = interests.map((i) => i.name);
+    const CategoriesArray = interests.map((interest) => interest.name);
 
     const invalidNames = currentUserInterests.filter(
       (name) =>
@@ -64,7 +62,7 @@ const getPeopleBySharedInterests = async ({
     where: {
       id: { not: userId },
       isDatingMode: true,
-      gender: currentUser.interestedGender,
+      // gender: currentUser.interestedGender,
       datingInterests: {
         hasSome: currentUserInterests,
       },
@@ -80,7 +78,7 @@ const getPeopleBySharedInterests = async ({
       datingInterests: true,
       gender: true,
       dob: true,
-      // likesReceived: true,
+      likesReceived: true,
     },
   });
 
@@ -108,8 +106,8 @@ const getPeopleBySharedInterests = async ({
       dob: user.dob,
       // New fields
       interestPercentage: matchPercentage,
-      // totalLikesReceived: user.likesReceived.length,
-      // likedByCurrentUser: user.likesReceived.length > 0,
+      totalLikesReceived: user.likesReceived.length,
+      likedByCurrentUser: user.likesReceived.length > 0,
     };
   });
 
@@ -118,9 +116,9 @@ const getPeopleBySharedInterests = async ({
     (a, b) => b.interestPercentage - a.interestPercentage
   );
 
-  // const totalLikes = matchedUsers
-  //   .map((user) => user.likesReceived.length)
-  //   .reduce((a, b) => a + b, 0);
+  const totalLikes = matchedUsers
+    .map((user) => user.likesReceived.length)
+    .reduce((a, b) => a + b, 0);
 
   return usersWithMatchPercentage;
 };

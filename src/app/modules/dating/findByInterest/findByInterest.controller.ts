@@ -9,6 +9,7 @@ const getPeopleBySharedInterestsController = catchAsync(
   async (req: Request, res: Response) => {
     const userId = req.user?.id;
     const interest = req.query.interest as string;
+
     const result = await findByInterestService.getPeopleBySharedInterests({
       userId,
       interest,
