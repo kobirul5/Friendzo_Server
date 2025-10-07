@@ -190,6 +190,19 @@ const acceptFollowerRequestNotification = catchAsync(async (req: Request, res: R
   });
 })
 
+const acceptOrDeclineFollwerRequestByUserId = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id; 
+  const {id: followerId, modeType, status} = req.body;
+
+  const result = await follwerService.acceptOrDeclineFollwerRequestByUserId({userId, followerId, modeType, status});
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Request accepted successfully',
+    data: result,
+  });
+})
 
 export const followerController = {
   createFollwer,
@@ -204,5 +217,6 @@ export const followerController = {
   unfollowDatingUser,
   getAllSuggestedUsers,
   unfriendUser,
-  acceptFollowerRequestNotification
+  acceptFollowerRequestNotification,
+  acceptOrDeclineFollwerRequestByUserId
 };

@@ -890,6 +890,46 @@ const acceptFollowerRequestNotification = async ({
   return result;
 };
 
+const acceptOrDeclineFollwerRequestByUserId = async ({
+  userId,
+  followerId,
+  modeType,
+  status,
+}: {
+  userId: string;
+  followerId: string;
+  modeType: ModeType;
+  status: "ACCEPTED" | "CANCELED";  
+}) => {
+  // Validate status
+  if (![RequestStatus.ACCEPTED, RequestStatus.CANCELED].includes(status)) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Invalid status. Status should be ACCEPTED or CANCELED"
+    );
+  } 
+
+  const follow = await prisma.follow.findFirst({
+    where: {
+      followerId: followerId,
+      followingId: userId,
+      modeType: modeType,
+      requestStatus: RequestStatus.PENDING,
+    },
+  });
+
+  if (!follow) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Follow request not found");
+  }
+
+  const result = await prisma.follow.update({
+    where: { id: follow.id },
+    data: { requestStatus: status },
+  });
+
+  return result;
+};
+
 export const follwerService = {
   createFollowerAndFollowingService,
   unfollowUserSocialService,
@@ -904,4 +944,5 @@ export const follwerService = {
   getAllSuggestedUsers,
   unfriendUser,
   acceptFollowerRequestNotification,
+  acceptOrDeclineFollwerRequestByUserId
 };
