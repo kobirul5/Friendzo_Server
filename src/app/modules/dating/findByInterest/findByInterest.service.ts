@@ -78,7 +78,7 @@ const getPeopleBySharedInterests = async ({
       datingInterests: true,
       gender: true,
       dob: true,
-      likesReceived: true,
+      // likesReceived: true,
     },
   });
 
@@ -106,8 +106,8 @@ const getPeopleBySharedInterests = async ({
       dob: user.dob,
       // New fields
       interestPercentage: matchPercentage,
-      totalLikesReceived: user.likesReceived.length,
-      likedByCurrentUser: user.likesReceived.length > 0,
+      // totalLikesReceived: user.likesReceived.length,
+      // likedByCurrentUser: user.likesReceived.length > 0,
     };
   });
 
@@ -116,9 +116,9 @@ const getPeopleBySharedInterests = async ({
     (a, b) => b.interestPercentage - a.interestPercentage
   );
 
-  const totalLikes = matchedUsers
-    .map((user) => user.likesReceived.length)
-    .reduce((a, b) => a + b, 0);
+  // const totalLikes = matchedUsers
+  //   .map((user) => user.likesReceived.length)
+  //   .reduce((a, b) => a + b, 0);
 
   return usersWithMatchPercentage;
 };

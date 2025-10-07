@@ -21,11 +21,11 @@ router.post(
 auth(),
 likeController.createUserLikeService,
 );
-router.delete(
-'/user',
-auth(),
-likeController.removeUserLike,
-);
+// router.delete(
+// '/user',
+// auth(),
+// likeController.removeUserLike,
+// );
 
 router.get('/memories/:id', auth(), likeController.getMemoryLikeStats);
 router.get('/daily-like', auth(), likeController.getDayliMyLike);
