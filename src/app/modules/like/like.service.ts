@@ -127,50 +127,50 @@ const createUserLikeService = async (userId: string, likedUserId: string) => {
   }
 
   // Check if like already exists
-  // const existingLike = await prisma.userLike.findFirst({
-  //   where: {
-  //     userId,
-  //     likedUserId,
-  //   },
-  // });
+  const existingLike = await prisma.userLike.findFirst({
+    where: {
+      userId,
+      likedUserId,
+    },
+  });
 
-  // if (existingLike) {
-  //   throw new ApiError(400, "You have already liked this user.");
-  // }
+  if (existingLike) {
+    throw new ApiError(400, "You have already liked this user.");
+  }
 
   // // Create the like
-  // const like = await prisma.userLike.create({
-  //   data: {
-  //     userId,
-  //     likedUserId,
-  //   },
-  // });
+  const like = await prisma.userLike.create({
+    data: {
+      userId,
+      likedUserId,
+    },
+  });
 
   // // Notification payload
-  // const notifPayload: INotificationPayload = {
-  //   title: "New User Like",
-  //   message: "Someone liked you",
-  //   type: NotificationType.LIKE,
-  //   senderId: userId,
-  //   receiverId: likedUserId,
-  //   targetId: likedUserId,
-  //   targetType: "USER",
-  //   followStatus: "REJECTED", // not needed for user like
-  // };
+  const notifPayload: INotificationPayload = {
+    title: "New User Like",
+    message: "Someone liked you",
+    type: NotificationType.LIKE,
+    senderId: userId,
+    receiverId: likedUserId,
+    targetId: likedUserId,
+    targetType: "USER",
+    followStatus: "REJECTED", // not needed for user like
+  };
 
   // // Save notification
-  // await notificationServices.saveNotification(notifPayload, likedUserId);
+  await notificationServices.saveNotification(notifPayload, likedUserId);
 
   // // FCM push notification (if token exists)
-  // if (likedUser.fcmToken) {
-  //   await notificationServices.sendNotification(
-  //     likedUser.fcmToken,
-  //     notifPayload,
-  //     likedUserId
-  //   );
-  // }
+  if (likedUser.fcmToken) {
+    await notificationServices.sendNotification(
+      likedUser.fcmToken,
+      notifPayload,
+      likedUserId
+    );
+  }
 
-  // return like;
+  return like;
 };
 
 
@@ -324,38 +324,38 @@ const getMyWeeklyService = async (userId: string) => {
   };
 };
 
-// const removeUserLikeService = async (userId: string, likedUserId: string) => {
+const removeUserLikeService = async (userId: string, likedUserId: string) => {
 
-//   const existingLike = await prisma.userLike.findFirst({
-//     where: {
-//       userId,
-//       likedUserId,
-//     },
-//   });
+  const existingLike = await prisma.userLike.findFirst({
+    where: {
+      userId,
+      likedUserId,
+    },
+  });
 
-//   if (!existingLike) {
-//     throw new ApiError(404, "Like does not exist for this user.");
-//   }
+  if (!existingLike) {
+    throw new ApiError(404, "Like does not exist for this user.");
+  }
 
-//   if(userId !== existingLike.userId){
-//     throw new ApiError(400, "You can not remove this like.");
-//   }
+  if(userId !== existingLike.userId){
+    throw new ApiError(400, "You can not remove this like.");
+  }
 
-//   // await prisma.userLike.delete({
-//   //   where: {
-//   //     id: existingLike.id,
-//   //   },
-//   // });
+  await prisma.userLike.delete({
+    where: {
+      id: existingLike.id,
+    },
+  });
 
-//   return null;
-// };
+  return null;
+};
 
 
 export const likeService = {
   createUserLikeService,
   createEventLikeService,
   createMemoryLikeService,
-  // removeUserLikeService,
+  removeUserLikeService,
   getMemoryLikeCountService,
   getMemoryLikedUsersService,
   removeMemoryLikeService,
