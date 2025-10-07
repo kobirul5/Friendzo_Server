@@ -26,7 +26,9 @@ const getPeopleBySharedInterests = async ({
 
   const currentUserInterests = interest
     ? [interest]
-    : currentUser.datingInterests;
+    : currentUser.datingInterests.length > 0
+    ? currentUser.datingInterests
+    : ["Movies", "Music", "Travel"]; // Default interests if none are set
 
   if (currentUserInterests && currentUserInterests.length > 0) {
     // Validate interests against fixed array
