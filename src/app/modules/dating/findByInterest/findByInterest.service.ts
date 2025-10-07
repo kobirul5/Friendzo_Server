@@ -1,5 +1,6 @@
 import ApiError from "../../../../errors/ApiErrors";
 import prisma from "../../../../shared/prisma";
+import httpStatus from "http-status";
 
 const getPeopleBySharedInterests = async ({
   userId,
@@ -30,14 +31,13 @@ const getPeopleBySharedInterests = async ({
     ? currentUser.datingInterests
     : ["Movies", "Music", "Travel"]; // Default interests if none are set
 
-  if (currentUserInterests && currentUserInterests.length > 0) {
+  if (interest && currentUserInterests.length > 0) {
     // Validate interests against fixed array
-
     const interests = await prisma.interest.findMany({
       select: { name: true },
     });
 
-    const CategoriesArray = interests.map((interest) => interest.name);
+    const CategoriesArray = interests.map((i) => i.name);
 
     const invalidNames = currentUserInterests.filter(
       (name) =>
