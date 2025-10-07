@@ -27,7 +27,7 @@ const getPeopleBySharedInterests = async ({
   const currentUserInterests = interest
     ? [interest]
     : currentUser.datingInterests;
-
+console.log(currentUserInterests,"------------------")
   if (currentUserInterests && currentUserInterests.length > 0) {
     // Validate interests against fixed array
 
@@ -52,6 +52,8 @@ const getPeopleBySharedInterests = async ({
       );
     }
   }
+
+  console.log(currentUserInterests," currentUserInterests------------------")
 
   if (!currentUserInterests || currentUserInterests.length === 0) {
     return []; // or throw an error if interests are required
@@ -81,6 +83,8 @@ const getPeopleBySharedInterests = async ({
       likesReceived: true,
     },
   });
+
+  console.log(matchedUsers," matchedUsers------------------")
 
   // 3️ Calculate shared interests percentage
   const usersWithMatchPercentage = matchedUsers.map((user) => {
