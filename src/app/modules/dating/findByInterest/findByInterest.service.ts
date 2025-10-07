@@ -1,3 +1,4 @@
+import httpStatus from "http-status";
 import ApiError from "../../../../errors/ApiErrors";
 import prisma from "../../../../shared/prisma";
 
