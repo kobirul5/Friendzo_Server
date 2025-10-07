@@ -1,499 +1,3 @@
-// generator client {
-//   provider = "prisma-client-js"
-// }
-
-// datasource db {
-//   provider = "mongodb"
-//   url      = env("DATABASE_URL")
-// }
-
-// model User {
-//   id           String     @id @default(auto()) @map("_id") @db.ObjectId
-//   profileImage String?
-//   firstName    String?
-//   lastName     String?
-//   email        String     @unique
-//   about        String?    @default("")
-//   phoneNumber  String?
-//   password     String?
-//   fcmToken     String?
-//   role         UserRole   @default(USER)
-//   status       UserStatus @default(INACTIVE)
-//   age          Int?
-//   address      String?    @default("")
-
-//   // 🔑 Referral fields
-//   referralCode String  @unique
-//   referredBy   String? @db.ObjectId
-//   referrer     User?   @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-//   referrals    User[]  @relation("UserReferrals")
-//   isDatingMode Boolean @default(false)
-
-//   isVerified       Boolean   @default(false)
-//   isFaceVerified   Boolean   @default(false)
-//   otp              Int?
-//   expirationOtp    DateTime?
-//   gender           String?   @default("")
-//   // dating 
-//   totalCoins       Float     @default(0)
-//   interestedGender String    @default("")
-//   interests        String[]  @default([])
-//   datingInterests  String[]  @default([])
-//   datingAbout      String?   @default("")
-//   datingImage      String[]  @default([])
-//   aiMessage        Int       @default(0)
-
-//   dob              DateTime?
-//   lat              Float?
-//   lng              Float?
-//   isNotificationOn Boolean   @default(true)
-
-//   provider   String? // google, facebook etc
-//   providerId String? // social provider id
-//   memories   Memory[]
-//   event      Event[]
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   // Relationships
-//   EventLike     EventLike[]
-//   MemoryLike    MemoryLike[]
-//   Comment       Comment[]
-//   followers     Follow[]     @relation("Followers") // amy jare follw kortase,
-//   following     Follow[]     @relation("Following") // ami jare follw kortasi
-//   SentChats     Chat[]       @relation("SentChats")
-//   ReceivedChats Chat[]       @relation("ReceivedChats")
-
-//   SenderRooms   Room[] @relation("SenderRooms")
-//   ReceiverRooms Room[] @relation("ReceiverRooms")
-
-//   reportsMade    Report[] @relation("ReportCreatedBy")
-//   reportsOnMe    Report[] @relation("ReportedUser")
-//   blockedUsers   Block[]  @relation("BlockerRelation")
-//   blockedByUsers Block[]  @relation("BlockedRelation")
-
-//   purchases     GiftPurchase[]
-//   sentGifts     GiftSend[]     @relation("GiftSender")
-//   receivedGifts GiftSend[]     @relation("GiftReceiver")
-//   sendCoin      CoinGiftSend[] @relation("CoinGiftSender")
-//   receivedCoin  CoinGiftSend[] @relation("CoinGiftReceiver")
-//   payments      Payment[]
-
-//   //  Notifications where this user is the recipient
-//   notificationsReceived Notification[] @relation("Notification_receiverId")
-
-//   //  Notifications where this user is the sender
-//   notificationsSent Notification[] @relation("NotificationSender")
-//   ReportPost        ReportPost[]
-//   managerRole       String[]       @default([])
-
-//   @@map("users")
-//   Subscription Subscription[]
-// }
-
-// model Interest {
-//   id       String           @id @default(auto()) @map("_id") @db.ObjectId
-//   name     String           @unique
-//   image    String?          @default("")
-//   category InterestCategory @unique
-// }
-
-// enum InterestCategory {
-//   TRAVEL
-//   MOVIES
-//   MUSIC
-//   FOOTBALL
-//   PETS_LOVE
-//   GARDENING
-//   WRITING
-//   COOKING
-//   NATURE
-//   FASHION
-//   DEBATE
-//   SCIENCE
-//   MEDITATION
-//   GAMING
-// }
-
-// model Memory {
-//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-//   image       String
-//   description String
-//   address     String?
-//   lat         Float
-//   lng         Float
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-
-//   userId     String       @db.ObjectId
-//   user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   MemoryLike MemoryLike[]
-//   Comment    Comment[]
-//   ReportPost ReportPost[]
-// }
-
-// model Event {
-//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-//   image       String
-//   description String
-//   address     String?
-//   lat         Float
-//   lng         Float
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-
-//   userId String @db.ObjectId
-//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   EventLike EventLike[]
-// }
-
-// enum UserStatus {
-//   ACTIVE
-//   INACTIVE
-//   BLOCKED
-// }
-
-// enum UserRole {
-//   USER
-//   ADMIN
-//   SUPER_ADMIN
-//   MANAGER
-// }
-
-// model EventLike {
-//   id String @id @default(auto()) @map("_id") @db.ObjectId
-
-//   userId String @db.ObjectId
-//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   eventId String @db.ObjectId
-//   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-
-// model MemoryLike {
-//   id String @id @default(auto()) @map("_id") @db.ObjectId
-
-//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   userId String @db.ObjectId
-
-//   memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
-//   memoryId String @db.ObjectId
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-
-// model Comment {
-//   id      String @id @default(auto()) @map("_id") @db.ObjectId
-//   content String
-
-//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   userId String @db.ObjectId
-
-//   memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
-//   memoryId String @db.ObjectId
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-
-// model Follow {
-//   id String @id @default(auto()) @map("_id") @db.ObjectId
-
-//   follower      User          @relation("Following", fields: [followerId], references: [id], onDelete: Cascade) // ami jare follw kortasi
-//   followerId    String        @db.ObjectId
-//   requestStatus RequestStatus @default(PENDING)
-//   modeType      ModeType      @default(SOCIAL)
-//   following     User          @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade) // amy jare follw kortase,
-//   followingId   String        @db.ObjectId
-
-//   createdAt DateTime @default(now())
-// }
-
-// model Chat {
-//   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-//   message    String
-//   senderId   String   @db.ObjectId
-//   receiverId String   @db.ObjectId
-//   roomId     String   @db.ObjectId
-//   images     String[] @default([])
-
-//   isRead Boolean @default(false)
-
-//   sender   User @relation("SentChats", fields: [senderId], references: [id], onDelete: Cascade)
-//   receiver User @relation("ReceivedChats", fields: [receiverId], references: [id], onDelete: Cascade)
-//   room     Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-
-// model Room {
-//   id         String @id @default(auto()) @map("_id") @db.ObjectId
-//   senderId   String @db.ObjectId
-//   receiverId String @db.ObjectId
-//   sender     User   @relation("SenderRooms", fields: [senderId], references: [id], onDelete: Cascade)
-//   receiver   User   @relation("ReceiverRooms", fields: [receiverId], references: [id], onDelete: Cascade)
-//   chats      Chat[]
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-
-// model Report {
-//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-//   description String
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-
-//   // Reporter 
-//   reporterId String @db.ObjectId
-//   reporter   User   @relation("ReportCreatedBy", fields: [reporterId], references: [id], onDelete: Cascade)
-
-//   // Reported user
-//   reportedUserId String @db.ObjectId
-//   reportedUser   User   @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
-// }
-
-// model ReportPost {
-//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-//   description String
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-
-//   // Reporter 
-//   reporterId String @db.ObjectId
-//   reporter   User   @relation(fields: [reporterId], references: [id], onDelete: Cascade)
-
-//   // Reported user
-//   memoryId String @db.ObjectId
-//   memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
-// }
-
-// model Block {
-//   id            String   @id @default(auto()) @map("_id") @db.ObjectId
-//   blockerId     String   @db.ObjectId
-//   blockedUserId String   @db.ObjectId
-//   createdAt     DateTime @default(now())
-//   updatedAt     DateTime @updatedAt
-
-//   blocker     User @relation("BlockerRelation", fields: [blockerId], references: [id], onDelete: Cascade)
-//   blockedUser User @relation("BlockedRelation", fields: [blockedUserId], references: [id], onDelete: Cascade)
-
-//   @@unique([blockerId, blockedUserId]) // Prevent duplicate blocks
-// }
-
-// model Notification {
-//   id           String           @id @default(auto()) @map("_id") @db.ObjectId
-//   type         NotificationType
-//   title        String
-//   message      String?
-//   isRead       Boolean          @default(false)
-//   followStatus RequestStatus    @default(REJECTED)
-//   image        String?          @default("")
-
-//   receiverId String  @db.ObjectId
-//   receiver   User    @relation("Notification_receiverId", fields: [receiverId], references: [id], onDelete: Cascade)
-//   senderId   String? @db.ObjectId
-//   sender     User?   @relation("NotificationSender", fields: [senderId], references: [id])
-
-//   targetType String? @default("") // e.g., "event", "memory", "comment", etc.
-//   targetId   String? @default("") // ID of the item the notification is about
-
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   @@map("notifications")
-// }
-
-// enum NotificationType {
-//   LIKE
-//   COMMENT
-//   FOLLOW
-//   PURCHASE
-//   GIFT
-//   MENTION
-//   MESSAGE
-//   EVENT_INVITE
-//   MEMORY_SHARE
-//   REPORT
-//   BLOCK
-// }
-
-// // Dating and Social modes
-
-// model Coins {
-//   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-//   image      String
-//   coinAmount String
-//   price      Float
-//   createdAt  DateTime @default(now())
-//   updatedAt  DateTime @updatedAt
-// }
-
-// model CoinGiftSend {
-//   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-//   senderId   String   @db.ObjectId
-//   receiverId String   @db.ObjectId
-//   totalCoin  Float
-//   createdAt  DateTime @default(now())
-//   updatedAt  DateTime @updatedAt
-
-//   // Relations
-//   sender   User @relation("CoinGiftSender", fields: [senderId], references: [id], onDelete: Cascade)
-//   receiver User @relation("CoinGiftReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-// }
-
-// model GiftCard {
-//   id           String         @id @default(auto()) @map("_id") @db.ObjectId
-//   name         String?        @default("")
-//   gender       Gender         @default(HIM)
-//   category     GiftCategory
-//   image        String
-//   price        Float
-//   createdAt    DateTime       @default(now())
-//   updatedAt    DateTime       @updatedAt
-//   GiftPurchase GiftPurchase[]
-//   GiftSend     GiftSend[]
-// }
-
-// enum Gender {
-//   HIM
-//   HER
-//   EVERYONE
-// }
-
-// model GiftPurchase {
-//   id           String       @id @default(auto()) @map("_id") @db.ObjectId
-//   userId       String       @db.ObjectId
-//   giftCardId   String       @db.ObjectId
-//   giftCategory GiftCategory
-//   createdAt    DateTime     @default(now())
-//   updatedAt    DateTime     @updatedAt
-//   // Relations 
-//   user         User         @relation(fields: [userId], references: [id])
-//   giftCard     GiftCard     @relation(fields: [giftCardId], references: [id])
-// }
-
-// model GiftSend {
-//   id           String       @id @default(auto()) @map("_id") @db.ObjectId
-//   senderId     String       @db.ObjectId
-//   receiverId   String       @db.ObjectId
-//   giftCategory GiftCategory
-//   giftCardId   String       @db.ObjectId
-//   createdAt    DateTime     @default(now())
-//   updatedAt    DateTime     @updatedAt
-
-//   // Relations
-//   sender   User     @relation("GiftSender", fields: [senderId], references: [id])
-//   receiver User     @relation("GiftReceiver", fields: [receiverId], references: [id])
-//   giftCard GiftCard @relation(fields: [giftCardId], references: [id])
-// }
-
-// enum GiftCategory {
-//   ESSENTIAL
-//   EXCLUSIVE
-//   MAJESTIC
-// }
-
-// model Payment {
-//   id              String        @id @default(auto()) @map("_id") @db.ObjectId
-//   senderId        String        @db.ObjectId
-//   amount          Float
-//   totalCoins      Float         @default(0)
-//   currency        String        @default("USD")
-//   method          PaymentMethod
-//   paymentMethodId String
-//   status          PaymentStatus @default(PENDING)
-//   transactionId   String?       @unique
-//   createdAt       DateTime      @default(now())
-//   updatedAt       DateTime      @updatedAt
-//   sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
-// }
-
-// //subscription start
-
-// model SubscriptionPlan {
-//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-//   name      String   @unique
-//   price     Float
-//   currency  String   @default("USD")
-//   interval  String // 'MONTH', 'YEAR', etc.
-//   subtitle  String? @default("")
-//   discount  String? @default("")
-//   trialDays Int?     @default(0) // optional trial days
-//   active    Boolean  @default(true)
-//   features  Json? // array of objects [{ key: string, value: string }]
-//   createdAt DateTime @default(now())
-
-//   @@map("subscriptionPlans")
-//   Subscription Subscription[]
-// }
-
-// model Subscription {
-//   id            String             @id @default(auto()) @map("_id") @db.ObjectId
-//   userId        String             @db.ObjectId
-//   planId        String             @db.ObjectId
-//   amount        Float
-//   status        subscriptionStatus @default(ACTIVE) // 'ACTIVE', 'CANCELLED', 'PAUSED', 'EXPIRED'
-//   startedAt     DateTime           @default(now())
-//   endedAt       DateTime?
-//   nextBillingAt DateTime?
-//   trialEndsAt   DateTime?
-//   metadata      Json?
-//   createdAt     DateTime           @default(now())
-//   plan          SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
-//   user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//   @@index([userId])
-//   @@index([planId])
-// }
-
-// //subscription end
-
-// enum subscriptionStatus {
-//   ACTIVE
-//   CANCELLED
-//   PAUSED
-//   EXPIRED
-// }
-
-// model TotalVisitors {
-//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-//   userId    String?  @default("") @db.ObjectId
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
-
-// enum ModeType {
-//   DATING
-//   SOCIAL
-// }
-
-// enum RequestStatus {
-//   PENDING
-//   ACCEPTED
-//   REJECTED
-//   CANCELED
-// }
-
-// enum PaymentMethod {
-//   CARD
-//   BANK_TRANSFER
-// }
-
-// enum PaymentStatus {
-//   PENDING
-//   COMPLETED
-//   REFUNDED
-//   REQUIRES_CAPTURE
-// }
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -503,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Users
 model User {
   id           String     @id @default(auto()) @map("_id") @db.ObjectId
   profileImage String?
@@ -519,6 +22,7 @@ model User {
   age          Int?
   address      String?    @default("")
 
+  // 🔑 Referral fields
   referralCode String  @unique
   referredBy   String? @db.ObjectId
   referrer     User?   @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -530,6 +34,7 @@ model User {
   otp              Int?
   expirationOtp    DateTime?
   gender           String?   @default("")
+  // dating 
   totalCoins       Float     @default(0)
   interestedGender String    @default("")
   interests        String[]  @default([])
@@ -543,55 +48,55 @@ model User {
   lng              Float?
   isNotificationOn Boolean   @default(true)
 
-  provider   String?
-  providerId String?
+  provider   String? // google, facebook etc
+  providerId String? // social provider id
   memories   Memory[]
   event      Event[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Relationships
   EventLike     EventLike[]
   MemoryLike    MemoryLike[]
   Comment       Comment[]
-  followers     Follow[]     @relation("Followers")
-  following     Follow[]     @relation("Following")
+  followers     Follow[]     @relation("Followers") // amy jare follw kortase,
+  following     Follow[]     @relation("Following") // ami jare follw kortasi
   SentChats     Chat[]       @relation("SentChats")
   ReceivedChats Chat[]       @relation("ReceivedChats")
-  SenderRooms   Room[]       @relation("SenderRooms")
-  ReceiverRooms Room[]       @relation("ReceiverRooms")
-  reportsMade    Report[]    @relation("ReportCreatedBy")
-  reportsOnMe    Report[]    @relation("ReportedUser")
-  blockedUsers   Block[]     @relation("BlockerRelation")
-  blockedByUsers Block[]     @relation("BlockedRelation")
+
+  SenderRooms   Room[] @relation("SenderRooms")
+  ReceiverRooms Room[] @relation("ReceiverRooms")
+
+  reportsMade    Report[] @relation("ReportCreatedBy")
+  reportsOnMe    Report[] @relation("ReportedUser")
+  blockedUsers   Block[]  @relation("BlockerRelation")
+  blockedByUsers Block[]  @relation("BlockedRelation")
+
   purchases     GiftPurchase[]
   sentGifts     GiftSend[]     @relation("GiftSender")
   receivedGifts GiftSend[]     @relation("GiftReceiver")
   sendCoin      CoinGiftSend[] @relation("CoinGiftSender")
   receivedCoin  CoinGiftSend[] @relation("CoinGiftReceiver")
   payments      Payment[]
+
+  //  Notifications where this user is the recipient
   notificationsReceived Notification[] @relation("Notification_receiverId")
-  notificationsSent     Notification[] @relation("NotificationSender")
-  ReportPost            ReportPost[]
-  managerRole           String[]       @default([])
-  Subscription          Subscription[]
+
+  //  Notifications where this user is the sender
+  notificationsSent Notification[] @relation("NotificationSender")
+  ReportPost        ReportPost[]
+  managerRole       String[]       @default([])
 
   @@map("users")
-  // @@index([email])
-  // @@index([referralCode])
-  @@index([role])
-  @@index([status])
+  Subscription Subscription[]
 }
 
-// Interests
 model Interest {
   id       String           @id @default(auto()) @map("_id") @db.ObjectId
   name     String           @unique
   image    String?          @default("")
   category InterestCategory @unique
-
-  // @@index([name])
-  // @@index([category])
 }
 
 enum InterestCategory {
@@ -611,7 +116,6 @@ enum InterestCategory {
   GAMING
 }
 
-// Memory
 model Memory {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   image       String
@@ -627,12 +131,8 @@ model Memory {
   MemoryLike MemoryLike[]
   Comment    Comment[]
   ReportPost ReportPost[]
-
-  @@index([userId])
-  @@index([createdAt])
 }
 
-// Event
 model Event {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   image       String
@@ -647,9 +147,6 @@ model Event {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   EventLike EventLike[]
-
-  @@index([userId])
-  @@index([createdAt])
 }
 
 enum UserStatus {
@@ -665,69 +162,59 @@ enum UserRole {
   MANAGER
 }
 
-// EventLike
 model EventLike {
   id String @id @default(auto()) @map("_id") @db.ObjectId
+
   userId String @db.ObjectId
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   eventId String @db.ObjectId
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([eventId])
-  @@index([createdAt])
 }
 
-// MemoryLike
 model MemoryLike {
   id String @id @default(auto()) @map("_id") @db.ObjectId
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @db.ObjectId
+
   memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
   memoryId String @db.ObjectId
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([memoryId])
-  @@index([createdAt])
 }
 
-// Comment
 model Comment {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   content String
+
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @db.ObjectId
+
   memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
   memoryId String @db.ObjectId
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([memoryId])
-  @@index([createdAt])
 }
 
-// Follow
 model Follow {
   id String @id @default(auto()) @map("_id") @db.ObjectId
-  follower      User          @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+
+  follower      User          @relation("Following", fields: [followerId], references: [id], onDelete: Cascade) // ami jare follw kortasi
   followerId    String        @db.ObjectId
   requestStatus RequestStatus @default(PENDING)
   modeType      ModeType      @default(SOCIAL)
-  following     User          @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+  following     User          @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade) // amy jare follw kortase,
   followingId   String        @db.ObjectId
-  createdAt DateTime @default(now())
 
-  @@index([followerId])
-  @@index([followingId])
-  @@index([createdAt])
+  createdAt DateTime @default(now())
 }
 
-// Chat
 model Chat {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   message    String
@@ -735,20 +222,17 @@ model Chat {
   receiverId String   @db.ObjectId
   roomId     String   @db.ObjectId
   images     String[] @default([])
+
   isRead Boolean @default(false)
+
   sender   User @relation("SentChats", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User @relation("ReceivedChats", fields: [receiverId], references: [id], onDelete: Cascade)
   room     Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([roomId])
-  @@index([createdAt])
 }
 
-// Room
 model Room {
   id         String @id @default(auto()) @map("_id") @db.ObjectId
   senderId   String @db.ObjectId
@@ -756,62 +240,54 @@ model Room {
   sender     User   @relation("SenderRooms", fields: [senderId], references: [id], onDelete: Cascade)
   receiver   User   @relation("ReceiverRooms", fields: [receiverId], references: [id], onDelete: Cascade)
   chats      Chat[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([createdAt])
 }
 
-// Report
 model Report {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   description String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Reporter 
   reporterId String @db.ObjectId
   reporter   User   @relation("ReportCreatedBy", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  // Reported user
   reportedUserId String @db.ObjectId
   reportedUser   User   @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
-
-  @@index([reporterId])
-  @@index([reportedUserId])
-  @@index([createdAt])
 }
 
-// ReportPost
 model ReportPost {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   description String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Reporter 
   reporterId String @db.ObjectId
   reporter   User   @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  // Reported user
   memoryId String @db.ObjectId
   memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
-
-  @@index([reporterId])
-  @@index([memoryId])
-  @@index([createdAt])
 }
 
-// Block
 model Block {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   blockerId     String   @db.ObjectId
   blockedUserId String   @db.ObjectId
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
   blocker     User @relation("BlockerRelation", fields: [blockerId], references: [id], onDelete: Cascade)
   blockedUser User @relation("BlockedRelation", fields: [blockedUserId], references: [id], onDelete: Cascade)
 
-  @@unique([blockerId, blockedUserId])
-  @@index([blockerId])
-  @@index([blockedUserId])
+  @@unique([blockerId, blockedUserId]) // Prevent duplicate blocks
 }
 
-// Notification
 model Notification {
   id           String           @id @default(auto()) @map("_id") @db.ObjectId
   type         NotificationType
@@ -820,22 +296,37 @@ model Notification {
   isRead       Boolean          @default(false)
   followStatus RequestStatus    @default(REJECTED)
   image        String?          @default("")
+
   receiverId String  @db.ObjectId
   receiver   User    @relation("Notification_receiverId", fields: [receiverId], references: [id], onDelete: Cascade)
   senderId   String? @db.ObjectId
   sender     User?   @relation("NotificationSender", fields: [senderId], references: [id])
-  targetType String? @default("")
-  targetId   String? @default("")
+
+  targetType String? @default("") // e.g., "event", "memory", "comment", etc.
+  targetId   String? @default("") // ID of the item the notification is about
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("notifications")
-  @@index([receiverId])
-  @@index([senderId])
-  @@index([createdAt])
 }
 
-// Coins
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  PURCHASE
+  GIFT
+  MENTION
+  MESSAGE
+  EVENT_INVITE
+  MEMORY_SHARE
+  REPORT
+  BLOCK
+}
+
+// Dating and Social modes
+
 model Coins {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   image      String
@@ -843,12 +334,8 @@ model Coins {
   price      Float
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
-  @@index([price])
-  @@index([createdAt])
 }
 
-// CoinGiftSend
 model CoinGiftSend {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   senderId   String   @db.ObjectId
@@ -856,15 +343,12 @@ model CoinGiftSend {
   totalCoin  Float
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  // Relations
   sender   User @relation("CoinGiftSender", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User @relation("CoinGiftReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([createdAt])
 }
 
-// GiftCard
 model GiftCard {
   id           String         @id @default(auto()) @map("_id") @db.ObjectId
   name         String?        @default("")
@@ -876,13 +360,14 @@ model GiftCard {
   updatedAt    DateTime       @updatedAt
   GiftPurchase GiftPurchase[]
   GiftSend     GiftSend[]
-
-  @@index([name])
-  @@index([category])
-  @@index([price])
 }
 
-// GiftPurchase
+enum Gender {
+  HIM
+  HER
+  EVERYONE
+}
+
 model GiftPurchase {
   id           String       @id @default(auto()) @map("_id") @db.ObjectId
   userId       String       @db.ObjectId
@@ -890,15 +375,11 @@ model GiftPurchase {
   giftCategory GiftCategory
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+  // Relations 
   user         User         @relation(fields: [userId], references: [id])
   giftCard     GiftCard     @relation(fields: [giftCardId], references: [id])
-
-  @@index([userId])
-  @@index([giftCardId])
-  @@index([createdAt])
 }
 
-// GiftSend
 model GiftSend {
   id           String       @id @default(auto()) @map("_id") @db.ObjectId
   senderId     String       @db.ObjectId
@@ -907,17 +388,19 @@ model GiftSend {
   giftCardId   String       @db.ObjectId
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+
+  // Relations
   sender   User     @relation("GiftSender", fields: [senderId], references: [id])
   receiver User     @relation("GiftReceiver", fields: [receiverId], references: [id])
   giftCard GiftCard @relation(fields: [giftCardId], references: [id])
-
-  @@index([senderId])
-  @@index([receiverId])
-  @@index([giftCardId])
-  @@index([createdAt])
 }
 
-// Payment
+enum GiftCategory {
+  ESSENTIAL
+  EXCLUSIVE
+  MAJESTIC
+}
+
 model Payment {
   id              String        @id @default(auto()) @map("_id") @db.ObjectId
   senderId        String        @db.ObjectId
@@ -931,41 +414,33 @@ model Payment {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-  @@index([senderId])
-  @@index([status])
-  @@index([createdAt])
 }
 
-// SubscriptionPlan
+//subscription start
+
 model SubscriptionPlan {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String   @unique
   price     Float
   currency  String   @default("USD")
-  interval  String
+  interval  String // 'MONTH', 'YEAR', etc.
   subtitle  String? @default("")
   discount  String? @default("")
-  trialDays Int?     @default(0)
+  trialDays Int?     @default(0) // optional trial days
   active    Boolean  @default(true)
-  features  Json?
+  features  Json? // array of objects [{ key: string, value: string }]
   createdAt DateTime @default(now())
-  Subscription Subscription[]
 
   @@map("subscriptionPlans")
-  // @@index([name])
-  @@index([price])
-  @@index([active])
-  @@index([createdAt])
+  Subscription Subscription[]
 }
 
-// Subscription
 model Subscription {
   id            String             @id @default(auto()) @map("_id") @db.ObjectId
   userId        String             @db.ObjectId
   planId        String             @db.ObjectId
   amount        Float
-  status        subscriptionStatus @default(ACTIVE)
+  status        subscriptionStatus @default(ACTIVE) // 'ACTIVE', 'CANCELLED', 'PAUSED', 'EXPIRED'
   startedAt     DateTime           @default(now())
   endedAt       DateTime?
   nextBillingAt DateTime?
@@ -977,22 +452,24 @@ model Subscription {
 
   @@index([userId])
   @@index([planId])
-  @@index([status])
-  @@index([createdAt])
 }
 
-// TotalVisitors
+//subscription end
+
+enum subscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAUSED
+  EXPIRED
+}
+
 model TotalVisitors {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String?  @default("") @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([createdAt])
 }
 
-// Enums
 enum ModeType {
   DATING
   SOCIAL
@@ -1017,35 +494,558 @@ enum PaymentStatus {
   REQUIRES_CAPTURE
 }
 
-enum NotificationType {
-  LIKE
-  COMMENT
-  FOLLOW
-  PURCHASE
-  GIFT
-  MENTION
-  MESSAGE
-  EVENT_INVITE
-  MEMORY_SHARE
-  REPORT
-  BLOCK
-}
+// generator client {
+//   provider = "prisma-client-js"
+// }
 
-enum Gender {
-  HIM
-  HER
-  EVERYONE
-}
+// datasource db {
+//   provider = "mongodb"
+//   url      = env("DATABASE_URL")
+// }
 
-enum GiftCategory {
-  ESSENTIAL
-  EXCLUSIVE
-  MAJESTIC
-}
+// // Users
+// model User {
+//   id           String     @id @default(auto()) @map("_id") @db.ObjectId
+//   profileImage String?
+//   firstName    String?
+//   lastName     String?
+//   email        String     @unique
+//   about        String?    @default("")
+//   phoneNumber  String?
+//   password     String?
+//   fcmToken     String?
+//   role         UserRole   @default(USER)
+//   status       UserStatus @default(INACTIVE)
+//   age          Int?
+//   address      String?    @default("")
 
-enum subscriptionStatus {
-  ACTIVE
-  CANCELLED
-  PAUSED
-  EXPIRED
-}
+//   referralCode String  @unique
+//   referredBy   String? @db.ObjectId
+//   referrer     User?   @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+//   referrals    User[]  @relation("UserReferrals")
+//   isDatingMode Boolean @default(false)
+
+//   isVerified       Boolean   @default(false)
+//   isFaceVerified   Boolean   @default(false)
+//   otp              Int?
+//   expirationOtp    DateTime?
+//   gender           String?   @default("")
+//   totalCoins       Float     @default(0)
+//   interestedGender String    @default("")
+//   interests        String[]  @default([])
+//   datingInterests  String[]  @default([])
+//   datingAbout      String?   @default("")
+//   datingImage      String[]  @default([])
+//   aiMessage        Int       @default(0)
+
+//   dob              DateTime?
+//   lat              Float?
+//   lng              Float?
+//   isNotificationOn Boolean   @default(true)
+
+//   provider   String?
+//   providerId String?
+//   memories   Memory[]
+//   event      Event[]
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   EventLike     EventLike[]
+//   MemoryLike    MemoryLike[]
+//   Comment       Comment[]
+//   followers     Follow[]     @relation("Followers")
+//   following     Follow[]     @relation("Following")
+//   SentChats     Chat[]       @relation("SentChats")
+//   ReceivedChats Chat[]       @relation("ReceivedChats")
+//   SenderRooms   Room[]       @relation("SenderRooms")
+//   ReceiverRooms Room[]       @relation("ReceiverRooms")
+//   reportsMade    Report[]    @relation("ReportCreatedBy")
+//   reportsOnMe    Report[]    @relation("ReportedUser")
+//   blockedUsers   Block[]     @relation("BlockerRelation")
+//   blockedByUsers Block[]     @relation("BlockedRelation")
+//   purchases     GiftPurchase[]
+//   sentGifts     GiftSend[]     @relation("GiftSender")
+//   receivedGifts GiftSend[]     @relation("GiftReceiver")
+//   sendCoin      CoinGiftSend[] @relation("CoinGiftSender")
+//   receivedCoin  CoinGiftSend[] @relation("CoinGiftReceiver")
+//   payments      Payment[]
+//   notificationsReceived Notification[] @relation("Notification_receiverId")
+//   notificationsSent     Notification[] @relation("NotificationSender")
+//   ReportPost            ReportPost[]
+//   managerRole           String[]       @default([])
+//   Subscription          Subscription[]
+
+//   @@map("users")
+//   // @@index([email])
+//   // @@index([referralCode])
+//   @@index([role])
+//   @@index([status])
+// }
+
+// // Interests
+// model Interest {
+//   id       String           @id @default(auto()) @map("_id") @db.ObjectId
+//   name     String           @unique
+//   image    String?          @default("")
+//   category InterestCategory @unique
+
+//   // @@index([name])
+//   // @@index([category])
+// }
+
+// enum InterestCategory {
+//   TRAVEL
+//   MOVIES
+//   MUSIC
+//   FOOTBALL
+//   PETS_LOVE
+//   GARDENING
+//   WRITING
+//   COOKING
+//   NATURE
+//   FASHION
+//   DEBATE
+//   SCIENCE
+//   MEDITATION
+//   GAMING
+// }
+
+// // Memory
+// model Memory {
+//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+//   image       String
+//   description String
+//   address     String?
+//   lat         Float
+//   lng         Float
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+
+//   userId     String       @db.ObjectId
+//   user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   MemoryLike MemoryLike[]
+//   Comment    Comment[]
+//   ReportPost ReportPost[]
+
+//   @@index([userId])
+//   @@index([createdAt])
+// }
+
+// // Event
+// model Event {
+//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+//   image       String
+//   description String
+//   address     String?
+//   lat         Float
+//   lng         Float
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+
+//   userId String @db.ObjectId
+//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   EventLike EventLike[]
+
+//   @@index([userId])
+//   @@index([createdAt])
+// }
+
+// enum UserStatus {
+//   ACTIVE
+//   INACTIVE
+//   BLOCKED
+// }
+
+// enum UserRole {
+//   USER
+//   ADMIN
+//   SUPER_ADMIN
+//   MANAGER
+// }
+
+// // EventLike
+// model EventLike {
+//   id String @id @default(auto()) @map("_id") @db.ObjectId
+//   userId String @db.ObjectId
+//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   eventId String @db.ObjectId
+//   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@index([userId])
+//   @@index([eventId])
+//   @@index([createdAt])
+// }
+
+// // MemoryLike
+// model MemoryLike {
+//   id String @id @default(auto()) @map("_id") @db.ObjectId
+//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   userId String @db.ObjectId
+//   memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+//   memoryId String @db.ObjectId
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@index([userId])
+//   @@index([memoryId])
+//   @@index([createdAt])
+// }
+
+// // Comment
+// model Comment {
+//   id      String @id @default(auto()) @map("_id") @db.ObjectId
+//   content String
+//   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   userId String @db.ObjectId
+//   memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+//   memoryId String @db.ObjectId
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@index([userId])
+//   @@index([memoryId])
+//   @@index([createdAt])
+// }
+
+// // Follow
+// model Follow {
+//   id String @id @default(auto()) @map("_id") @db.ObjectId
+//   follower      User          @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+//   followerId    String        @db.ObjectId
+//   requestStatus RequestStatus @default(PENDING)
+//   modeType      ModeType      @default(SOCIAL)
+//   following     User          @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+//   followingId   String        @db.ObjectId
+//   createdAt DateTime @default(now())
+
+//   @@index([followerId])
+//   @@index([followingId])
+//   @@index([createdAt])
+// }
+
+// // Chat
+// model Chat {
+//   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+//   message    String
+//   senderId   String   @db.ObjectId
+//   receiverId String   @db.ObjectId
+//   roomId     String   @db.ObjectId
+//   images     String[] @default([])
+//   isRead Boolean @default(false)
+//   sender   User @relation("SentChats", fields: [senderId], references: [id], onDelete: Cascade)
+//   receiver User @relation("ReceivedChats", fields: [receiverId], references: [id], onDelete: Cascade)
+//   room     Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@index([senderId])
+//   @@index([receiverId])
+//   @@index([roomId])
+//   @@index([createdAt])
+// }
+
+// // Room
+// model Room {
+//   id         String @id @default(auto()) @map("_id") @db.ObjectId
+//   senderId   String @db.ObjectId
+//   receiverId String @db.ObjectId
+//   sender     User   @relation("SenderRooms", fields: [senderId], references: [id], onDelete: Cascade)
+//   receiver   User   @relation("ReceiverRooms", fields: [receiverId], references: [id], onDelete: Cascade)
+//   chats      Chat[]
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@index([senderId])
+//   @@index([receiverId])
+//   @@index([createdAt])
+// }
+
+// // Report
+// model Report {
+//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+//   description String
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+//   reporterId String @db.ObjectId
+//   reporter   User   @relation("ReportCreatedBy", fields: [reporterId], references: [id], onDelete: Cascade)
+//   reportedUserId String @db.ObjectId
+//   reportedUser   User   @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
+
+//   @@index([reporterId])
+//   @@index([reportedUserId])
+//   @@index([createdAt])
+// }
+
+// // ReportPost
+// model ReportPost {
+//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+//   description String
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+//   reporterId String @db.ObjectId
+//   reporter   User   @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+//   memoryId String @db.ObjectId
+//   memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+//   @@index([reporterId])
+//   @@index([memoryId])
+//   @@index([createdAt])
+// }
+
+// // Block
+// model Block {
+//   id            String   @id @default(auto()) @map("_id") @db.ObjectId
+//   blockerId     String   @db.ObjectId
+//   blockedUserId String   @db.ObjectId
+//   createdAt     DateTime @default(now())
+//   updatedAt     DateTime @updatedAt
+//   blocker     User @relation("BlockerRelation", fields: [blockerId], references: [id], onDelete: Cascade)
+//   blockedUser User @relation("BlockedRelation", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+//   @@unique([blockerId, blockedUserId])
+//   @@index([blockerId])
+//   @@index([blockedUserId])
+// }
+
+// // Notification
+// model Notification {
+//   id           String           @id @default(auto()) @map("_id") @db.ObjectId
+//   type         NotificationType
+//   title        String
+//   message      String?
+//   isRead       Boolean          @default(false)
+//   followStatus RequestStatus    @default(REJECTED)
+//   image        String?          @default("")
+//   receiverId String  @db.ObjectId
+//   receiver   User    @relation("Notification_receiverId", fields: [receiverId], references: [id], onDelete: Cascade)
+//   senderId   String? @db.ObjectId
+//   sender     User?   @relation("NotificationSender", fields: [senderId], references: [id])
+//   targetType String? @default("")
+//   targetId   String? @default("")
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("notifications")
+//   @@index([receiverId])
+//   @@index([senderId])
+//   @@index([createdAt])
+// }
+
+// // Coins
+// model Coins {
+//   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+//   image      String
+//   coinAmount String
+//   price      Float
+//   createdAt  DateTime @default(now())
+//   updatedAt  DateTime @updatedAt
+
+//   @@index([price])
+//   @@index([createdAt])
+// }
+
+// // CoinGiftSend
+// model CoinGiftSend {
+//   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+//   senderId   String   @db.ObjectId
+//   receiverId String   @db.ObjectId
+//   totalCoin  Float
+//   createdAt  DateTime @default(now())
+//   updatedAt  DateTime @updatedAt
+//   sender   User @relation("CoinGiftSender", fields: [senderId], references: [id], onDelete: Cascade)
+//   receiver User @relation("CoinGiftReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+//   @@index([senderId])
+//   @@index([receiverId])
+//   @@index([createdAt])
+// }
+
+// // GiftCard
+// model GiftCard {
+//   id           String         @id @default(auto()) @map("_id") @db.ObjectId
+//   name         String?        @default("")
+//   gender       Gender         @default(HIM)
+//   category     GiftCategory
+//   image        String
+//   price        Float
+//   createdAt    DateTime       @default(now())
+//   updatedAt    DateTime       @updatedAt
+//   GiftPurchase GiftPurchase[]
+//   GiftSend     GiftSend[]
+
+//   @@index([name])
+//   @@index([category])
+//   @@index([price])
+// }
+
+// // GiftPurchase
+// model GiftPurchase {
+//   id           String       @id @default(auto()) @map("_id") @db.ObjectId
+//   userId       String       @db.ObjectId
+//   giftCardId   String       @db.ObjectId
+//   giftCategory GiftCategory
+//   createdAt    DateTime     @default(now())
+//   updatedAt    DateTime     @updatedAt
+//   user         User         @relation(fields: [userId], references: [id])
+//   giftCard     GiftCard     @relation(fields: [giftCardId], references: [id])
+
+//   @@index([userId])
+//   @@index([giftCardId])
+//   @@index([createdAt])
+// }
+
+// // GiftSend
+// model GiftSend {
+//   id           String       @id @default(auto()) @map("_id") @db.ObjectId
+//   senderId     String       @db.ObjectId
+//   receiverId   String       @db.ObjectId
+//   giftCategory GiftCategory
+//   giftCardId   String       @db.ObjectId
+//   createdAt    DateTime     @default(now())
+//   updatedAt    DateTime     @updatedAt
+//   sender   User     @relation("GiftSender", fields: [senderId], references: [id])
+//   receiver User     @relation("GiftReceiver", fields: [receiverId], references: [id])
+//   giftCard GiftCard @relation(fields: [giftCardId], references: [id])
+
+//   @@index([senderId])
+//   @@index([receiverId])
+//   @@index([giftCardId])
+//   @@index([createdAt])
+// }
+
+// // Payment
+// model Payment {
+//   id              String        @id @default(auto()) @map("_id") @db.ObjectId
+//   senderId        String        @db.ObjectId
+//   amount          Float
+//   totalCoins      Float         @default(0)
+//   currency        String        @default("USD")
+//   method          PaymentMethod
+//   paymentMethodId String
+//   status          PaymentStatus @default(PENDING)
+//   transactionId   String?       @unique
+//   createdAt       DateTime      @default(now())
+//   updatedAt       DateTime      @updatedAt
+//   sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+//   @@index([senderId])
+//   @@index([status])
+//   @@index([createdAt])
+// }
+
+// // SubscriptionPlan
+// model SubscriptionPlan {
+//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//   name      String   @unique
+//   price     Float
+//   currency  String   @default("USD")
+//   interval  String
+//   subtitle  String? @default("")
+//   discount  String? @default("")
+//   trialDays Int?     @default(0)
+//   active    Boolean  @default(true)
+//   features  Json?
+//   createdAt DateTime @default(now())
+//   Subscription Subscription[]
+
+//   @@map("subscriptionPlans")
+//   // @@index([name])
+//   @@index([price])
+//   @@index([active])
+//   @@index([createdAt])
+// }
+
+// // Subscription
+// model Subscription {
+//   id            String             @id @default(auto()) @map("_id") @db.ObjectId
+//   userId        String             @db.ObjectId
+//   planId        String             @db.ObjectId
+//   amount        Float
+//   status        subscriptionStatus @default(ACTIVE)
+//   startedAt     DateTime           @default(now())
+//   endedAt       DateTime?
+//   nextBillingAt DateTime?
+//   trialEndsAt   DateTime?
+//   metadata      Json?
+//   createdAt     DateTime           @default(now())
+//   plan          SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+//   user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@index([userId])
+//   @@index([planId])
+//   @@index([status])
+//   @@index([createdAt])
+// }
+
+// // TotalVisitors
+// model TotalVisitors {
+//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//   userId    String?  @default("") @db.ObjectId
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@index([userId])
+//   @@index([createdAt])
+// }
+
+// // Enums
+// enum ModeType {
+//   DATING
+//   SOCIAL
+// }
+
+// enum RequestStatus {
+//   PENDING
+//   ACCEPTED
+//   REJECTED
+//   CANCELED
+// }
+
+// enum PaymentMethod {
+//   CARD
+//   BANK_TRANSFER
+// }
+
+// enum PaymentStatus {
+//   PENDING
+//   COMPLETED
+//   REFUNDED
+//   REQUIRES_CAPTURE
+// }
+
+// enum NotificationType {
+//   LIKE
+//   COMMENT
+//   FOLLOW
+//   PURCHASE
+//   GIFT
+//   MENTION
+//   MESSAGE
+//   EVENT_INVITE
+//   MEMORY_SHARE
+//   REPORT
+//   BLOCK
+// }
+
+// enum Gender {
+//   HIM
+//   HER
+//   EVERYONE
+// }
+
+// enum GiftCategory {
+//   ESSENTIAL
+//   EXCLUSIVE
+//   MAJESTIC
+// }
+
+// enum subscriptionStatus {
+//   ACTIVE
+//   CANCELLED
+//   PAUSED
+//   EXPIRED
+// }
