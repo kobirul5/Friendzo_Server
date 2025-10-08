@@ -350,7 +350,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
     select: { id: true, name: true, image: true, category: true },
   });
 
-  console.log("datingInterestsDetails", datingInterestsDetails);
+
 
   const followersCount = await prisma.follow.count({
     where: { followingId: userId },
@@ -385,6 +385,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
   });
   const isSubscribed = !!activeSubscription;
 
+      const isMe = !currentUserId;
   if (currentUserId) {
     const isFriend = await isFriendOrFollow(currentUserId, userId);
     return {
@@ -397,8 +398,12 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       isProfileComplete: profileComplete,
       isFriend: isFriend.isFriend,
       followStatus: isFriend.requestStatus,
+      isMe
     };
   }
+
+
+
 
   return {
     ...user,
@@ -409,6 +414,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
     gifts,
     isProfileComplete: profileComplete,
     isSubscribed,
+    isMe,
   };
 };
 
