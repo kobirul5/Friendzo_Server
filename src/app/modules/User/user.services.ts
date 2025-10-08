@@ -398,6 +398,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       isProfileComplete: profileComplete,
       isFriend: isFriend.isFriend,
       followStatus: isFriend.requestStatus,
+      userRequestStatus: isFriend.userRequestStatus,
       isMe
     };
   }
@@ -421,14 +422,14 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
 const isFriendOrFollow = async (
   userId: string,
   friendId: string
-): Promise<{ isFriend: boolean; requestStatus: string }> => {
+): Promise<{ isFriend: boolean; requestStatus: string, userRequestStatus: string }> => {
   // Fetch user mode
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { isDatingMode: true },
   });
 
-  if (!user) return { isFriend: false, requestStatus: "NOTFOLLOW" };
+  if (!user) return { isFriend: false, requestStatus: "NOTFOLLOW", userRequestStatus: "NOTFOLLOW" };
 
   const modeType = user.isDatingMode ? "DATING" : "SOCIAL";
 
@@ -456,7 +457,7 @@ const isFriendOrFollow = async (
   });
 
   if (follows.length === 0) {
-    return { isFriend: false, requestStatus: "NOTFOLLOW" };
+    return { isFriend: false, requestStatus: "NOTFOLLOW", userRequestStatus: "NOTFOLLOW" };
   }
 
   if (modeType === "DATING") {
@@ -472,24 +473,27 @@ const isFriendOrFollow = async (
       userFollow?.requestStatus === "ACCEPTED" &&
       friendFollow?.requestStatus === "ACCEPTED"
     ) {
-      return { isFriend: true, requestStatus: "ACCEPTED" };
+
+      return { isFriend: true, requestStatus: "ACCEPTED", userRequestStatus: "NOTFOLLOW"  };
     }
 
     // Not mutual yet
     return {
       isFriend: false,
       requestStatus:
-        userFollow?.requestStatus || friendFollow?.requestStatus || "NOTFOLLOW",
+        userFollow?.requestStatus || friendFollow?.requestStatus || "NOTFOLLOW" , 
+        userRequestStatus: userFollow?.requestStatus || friendFollow?.requestStatus || "NOTFOLLOW",
     };
   } else {
     // Social mode: one ACCEPTED follow is enough
     const accepted = follows.find((f) => f.requestStatus === "ACCEPTED");
     if (accepted) {
-      return { isFriend: true, requestStatus: "ACCEPTED" };
+      return { isFriend: true, requestStatus: "ACCEPTED", userRequestStatus: "NOTFOLLOW"  };
     }
     return {
       isFriend: false,
       requestStatus: follows[0]?.requestStatus || "NOTFOLLOW",
+      userRequestStatus: follows.find(f => f.followingId === userId)?.requestStatus || "NOTFOLLOW"
     };
   }
 };
