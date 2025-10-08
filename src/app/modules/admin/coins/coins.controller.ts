@@ -1,21 +1,23 @@
-import httpStatus from 'http-status';
-import { coinsService } from './coins.service';
-import catchAsync from '../../../../shared/catchAsync';
-import sendResponse from '../../../../shared/sendResponse';
+import httpStatus from "http-status";
+import { coinsService } from "./coins.service";
+import catchAsync from "../../../../shared/catchAsync";
+import sendResponse from "../../../../shared/sendResponse";
 
 const createCoins = catchAsync(async (req, res) => {
-  const data = JSON.parse(req.body.data);
-    const userId = req.user.id;
-    // const imagesFile = req.file as any;
-    const result = await coinsService.coinsCreate({
-      data,
-      userId,
-      // imagesFile,
-    });
+  // const data = JSON.parse(req.body.data);
+  const data = req.body;
+  const userId = req.user.id;
+
+  // const imagesFile = req.file as any;
+  const result = await coinsService.coinsCreate({
+    data,
+    userId,
+    // imagesFile,
+  });
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
-    message: 'Coins created successfully',
+    message: "Coins created successfully",
     data: result,
   });
 });
@@ -26,7 +28,7 @@ const getCoinsList = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Coins list retrieved successfully',
+    message: "Coins list retrieved successfully",
     data: result,
   });
 });
@@ -36,7 +38,7 @@ const getCoinsById = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Coins details retrieved successfully',
+    message: "Coins details retrieved successfully",
     data: result,
   });
 });
@@ -46,7 +48,7 @@ const updateCoins = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Coins updated successfully',
+    message: "Coins updated successfully",
     data: result,
   });
 });
@@ -56,7 +58,7 @@ const deleteCoins = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Coins deleted successfully',
+    message: "Coins deleted successfully",
     data: result,
   });
 });
