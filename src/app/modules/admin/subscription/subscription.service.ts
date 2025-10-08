@@ -158,34 +158,148 @@ const deleteSubscriptionPlan = async (id: string, userId: string) => {
   return;
 };
 
-// subscription service
 // const purchaseSubscription = async (data: any, userId: string) => {
-
 //   const user = await prisma.user.findUnique({ where: { id: userId } });
 //   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
 
-//   const { planId } = data;
+//   const { planId, paymentMethod } = data;
 
-//   const plan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
-//   if (!plan) throw new ApiError(httpStatus.NOT_FOUND, "Subscription plan not found");
-
-//   // Here you would integrate with a payment gateway to process the payment
-//   // For simplicity, we'll assume the payment is always successful
-
-//   const subscription = await prisma.subscription.create({
-//     data: {
-//       userId,
-//       planId,
-//       startedAt: new Date(),
-//       endedAt: new Date(new Date().setMonth(new Date().getMonth() + (plan.interval === 'MONTH' ? 1 : 12))),
-//       status: 'ACTIVE',
-//     },
+//   const plan = await prisma.subscriptionPlan.findUnique({
+//     where: { id: planId },
 //   });
+//   if (!plan)
+//     throw new ApiError(httpStatus.NOT_FOUND, "Subscription plan not found");
 
-//   return subscription;
-// }
+//   // Generate transaction ID
+//   const transactionId = `sub_${Date.now()}`;
 
-const purchaseSubscription = async (data: any, userId: string) => {
+//   const amountInCents = Math.round(plan.price * 100); // 5.5 → 550
+
+//   try {
+//     // Create Stripe PaymentIntent
+//     const paymentIntent = await stripe.paymentIntents.create({
+//       amount: amountInCents,
+//       currency: plan.currency,
+//       payment_method: paymentMethod,
+//       confirm: true,
+//       automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+//       metadata: {
+//         transactionId,
+//         planId,
+//         userId,
+//         amount: plan.price.toString(),
+//       },
+//     });
+
+//     if (paymentIntent.status !== "succeeded") {
+//       throw new ApiError(
+//         httpStatus.BAD_REQUEST,
+//         "Payment failed. Please try again."
+//       );
+//     }
+
+//     // Payment succeeded → create subscription
+//     const subscription = await prisma.$transaction(async (tx) => {
+//       // Create payment record
+//       const payment = await tx.payment.create({
+//         data: {
+//           transactionId,
+//           amount: plan.price, // convert back to float
+//           status: "COMPLETED",
+//           senderId: userId,
+//           method: "CARD",
+//           paymentMethodId: paymentIntent.payment_method as string,
+//         },
+//       });
+
+//       // Create subscription
+//       const newSubscription = await tx.subscription.create({
+//         data: {
+//           userId,
+//           planId,
+//           startedAt: new Date(),
+//           amount: plan.price,
+//           endedAt: new Date(
+//             new Date().setMonth(
+//               new Date().getMonth() + (plan.interval === "MONTH" ? 1 : 12)
+//             )
+//           ),
+//           status: "ACTIVE",
+//         },
+//       });
+
+//       type Feature = { key: string; value: string; isActive: boolean };
+
+//       // features safe cast
+//       const featuresArray: Feature[] = Array.isArray(plan.features)
+//         ? (plan.features as Feature[])
+//         : [];
+
+//       // find aiMessage feature
+//       const aiFeature = Array.isArray(featuresArray)
+//         ? featuresArray.find((f) => f?.key === "aiMessage" && f?.isActive)
+//         : undefined;
+
+//       console.log("AI Feature:", aiFeature);
+
+//       if (aiFeature && aiFeature.value) {
+//         // only update if value exists
+//         await tx.user.update({
+//           where: { id: userId },
+//           data: {
+//             aiMessage: {
+//               increment: parseInt(aiFeature.value),
+//             },
+//           },
+//         });
+//       } else {
+//         console.log("No aiMessage feature found, skipping update.");
+//       }
+
+//       // Notification payload
+//       const notifPayload: INotificationPayload = {
+//         title: "Subscription Purchased",
+//         message: `You have successfully purchased the ${plan.name} plan!`,
+//         type: "PURCHASE",
+//         senderId: userId,
+//         receiverId: userId,
+//         targetId: transactionId,
+//         targetType: "SUBSCRIPTION",
+//         followStatus: "REJECTED",
+//       };
+
+//       // Save notification
+//       await notificationServices.saveNotification(notifPayload, userId);
+
+//       // Push notification if user has token
+//       if (user.fcmToken) {
+//         await notificationServices.sendNotification(
+//           user.fcmToken,
+//           notifPayload,
+//           userId
+//         );
+//       }
+
+//       return newSubscription;
+//     });
+
+//     return { ...subscription, planDetails: plan };
+//   } catch (error: any) {
+//     console.error("Subscription purchase error:", error);
+//     throw new ApiError(
+//       httpStatus.BAD_REQUEST,
+//       error.message || "Subscription purchase failed"
+//     );
+//   }
+// };
+
+const featureFieldMap: Record<string, string> = {
+  aiMessage: "aiMessage",
+  boost: "boosts",
+  coin: "totalCoins",
+  priorityLikes: "priorityLikes",
+};
+ const purchaseSubscription = async (data: any, userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
 
@@ -199,8 +313,7 @@ const purchaseSubscription = async (data: any, userId: string) => {
 
   // Generate transaction ID
   const transactionId = `sub_${Date.now()}`;
-
-  const amountInCents = Math.round(plan.price * 100); // 5.5 → 550
+  const amountInCents = Math.round(plan.price * 100);
 
   try {
     // Create Stripe PaymentIntent
@@ -225,13 +338,13 @@ const purchaseSubscription = async (data: any, userId: string) => {
       );
     }
 
-    // Payment succeeded → create subscription
+    // Payment succeeded → create subscription & update features
     const subscription = await prisma.$transaction(async (tx) => {
       // Create payment record
-      const payment = await tx.payment.create({
+      await tx.payment.create({
         data: {
           transactionId,
-          amount: plan.price, // convert back to float
+          amount: plan.price,
           status: "COMPLETED",
           senderId: userId,
           method: "CARD",
@@ -255,35 +368,36 @@ const purchaseSubscription = async (data: any, userId: string) => {
         },
       });
 
-      type Feature = { key: string; value: string; isActive: boolean };
-
-      // features safe cast
-      const featuresArray: Feature[] = Array.isArray(plan.features)
-        ? (plan.features as Feature[])
+      // Handle plan features (safe check if key missing)
+      const featuresArray: any[] = Array.isArray(plan.features)
+        ? plan.features
         : [];
 
-      // find aiMessage feature
-      const aiFeature = Array.isArray(featuresArray)
-        ? featuresArray.find((f) => f?.key === "aiMessage" && f?.isActive)
-        : undefined;
+      for (const feature of featuresArray) {
+        if (feature?.isActive && feature?.value) {
+          const userField = featureFieldMap[feature.key];
+          if (!userField) {
+            console.log(`⚠️ Feature key "${feature.key}" not mapped, skipping`);
+            continue;
+          }
 
-      console.log("AI Feature:", aiFeature);
+          console.log(userField);
 
-      if (aiFeature && aiFeature.value) {
-        // only update if value exists
-        await tx.user.update({
-          where: { id: userId },
-          data: {
-            aiMessage: {
-              increment: parseInt(aiFeature.value),
-            },
-          },
-        });
-      } else {
-        console.log("No aiMessage feature found, skipping update.");
+          const incrementValue =
+            userField === "totalCoins"
+              ? parseFloat(feature.value)
+              : parseInt(feature.value, 10);
+
+          await tx.user.update({
+            where: { id: userId },
+            data: { [userField]: { increment: incrementValue } },
+          });
+
+          console.log(`✅ ${feature.key} incremented by ${incrementValue}`);
+        }
       }
 
-      // Notification payload
+      // Send notification
       const notifPayload: INotificationPayload = {
         title: "Subscription Purchased",
         message: `You have successfully purchased the ${plan.name} plan!`,
@@ -295,10 +409,8 @@ const purchaseSubscription = async (data: any, userId: string) => {
         followStatus: "REJECTED",
       };
 
-      // Save notification
       await notificationServices.saveNotification(notifPayload, userId);
 
-      // Push notification if user has token
       if (user.fcmToken) {
         await notificationServices.sendNotification(
           user.fcmToken,

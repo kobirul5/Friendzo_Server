@@ -41,7 +41,10 @@ model User {
   datingInterests  String[]  @default([])
   datingAbout      String?   @default("")
   datingImage      String[]  @default([])
+  //subscription
   aiMessage        Int       @default(0)
+  boots          Int       @default(0)
+  priorityLikes   Int       @default(0)
 
   dob              DateTime?
   lat              Float?

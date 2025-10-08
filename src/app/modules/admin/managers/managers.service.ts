@@ -191,6 +191,7 @@ const getByIdFromDb = async (id: string) => {
       memories: true,
       event: true,
       interests: true,
+      managerRole: true,
     },
   });
   if (!result) {

@@ -327,6 +327,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       datingImage: true,
       interestedGender: true,
       aiMessage: true, // string[]
+      managerRole: true,
     },
   });
 
