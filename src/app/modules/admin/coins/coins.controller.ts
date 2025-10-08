@@ -6,11 +6,11 @@ import sendResponse from '../../../../shared/sendResponse';
 const createCoins = catchAsync(async (req, res) => {
   const data = JSON.parse(req.body.data);
     const userId = req.user.id;
-    const imagesFile = req.file as any;
+    // const imagesFile = req.file as any;
     const result = await coinsService.coinsCreate({
       data,
       userId,
-      imagesFile,
+      // imagesFile,
     });
   sendResponse(res, {
     statusCode: httpStatus.CREATED,

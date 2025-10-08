@@ -333,7 +333,6 @@ enum NotificationType {
 
 model Coins {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  image      String
   coinAmount String
   price      Float
   createdAt  DateTime @default(now())

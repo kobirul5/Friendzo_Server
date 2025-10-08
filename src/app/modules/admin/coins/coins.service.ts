@@ -7,7 +7,7 @@ import { deleteImageAndFile } from '../../../../helpars/fileDelete';
 
 
 
-const coinsCreate = async ({ data, userId, imagesFile }: any) => { 
+const coinsCreate = async ({ data, userId}: any) => { 
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
@@ -18,31 +18,17 @@ const coinsCreate = async ({ data, userId, imagesFile }: any) => {
       "Unauthorized! Only Admin can create!"
     );
 
-  if (!imagesFile) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Image is required.");
-  }
 
   if(!data.price && data.coinAmount){
     throw new ApiError(httpStatus.BAD_REQUEST, "price and totalAmount is required.");
   }
   
-
-  // Only take  image
-  const uploaded = await fileUploader.uploadToDigitalOcean(imagesFile);
-
   const dataToSave: any = {
     ...data,
     price: parseFloat(data.price),
-    image: uploaded.Location, // single string
   };
 
-
   const created = await prisma.coins.create({ data: dataToSave });
-  // console.log("created", created);
-  if (!created) {
-    await deleteImageAndFile.deleteFileFromDigitalOcean(uploaded.Location);
-    throw new ApiError(500, "Failed to create fashion.");
-  }
 
   return created;
 };
