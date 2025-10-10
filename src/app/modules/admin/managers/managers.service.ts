@@ -48,6 +48,22 @@ const createUserService = async ({ userId, data, file }: CreateUserInput) => {
     newReferralCode = getRefferId();
   }
 
+  if (!parsedData.accessInput || parsedData.accessInput.length === 0) {
+    throw new ApiError(400, "At least one access must be selected");
+  }
+
+  if (parsedData.accessInput.includes("fullAccess")) {
+    // 
+    if (parsedData.accessInput.length > 1) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "'fullAccess' cannot be combined with other permissions."
+      );
+    }
+  }
+
+  
+
   // Use transaction to create user and managerRole atomically
   const newUser = await prisma.$transaction(async (tx) => {
     // Create user
