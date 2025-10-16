@@ -13,7 +13,7 @@ const createFollwer = catchAsync(async (req:Request, res:Response) => {
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
-    message: 'Follwer created successfully',
+    message: 'Request successfully sent',
     data: result,
   });
 });
