@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
-import { ModeType, RequestStatus, UserStatus } from "@prisma/client";
+import { ModeType, NotificationType, RequestStatus, UserStatus } from "@prisma/client";
 import {
   INotificationPayload,
   notificationServices,
@@ -75,7 +75,6 @@ const createFollowerAndFollowingService = async (payload: {
 
     return result;
   }
-  console.log(alreadyFollowing);
   // যদি আগে থেকে follow করা থাকে
   if (alreadyFollowing) {
     throw new ApiError(
@@ -84,7 +83,8 @@ const createFollowerAndFollowingService = async (payload: {
     );
   }
 
-  // নতুন follow তৈরি করা হচ্ছে
+
+
   const follow = await prisma.follow.create({
     data: {
       followerId: userId, // ✅ যে follow করছে
@@ -341,6 +341,16 @@ const acceptOrRejectFollwershipRequestService = async (
       },
     });
   }
+
+  await prisma.notification.updateMany({
+    where: {
+      targetId: follow.id,
+      type: NotificationType.FOLLOW,
+    },
+    data: {
+      followStatus: status,
+    },
+  });
 
   return {
     message: `Follow request ${status.toLowerCase()} successfully`,
@@ -925,6 +935,18 @@ const acceptOrDeclineFollwerRequestByUserId = async ({
   const result = await prisma.follow.update({
     where: { id: follow.id },
     data: { requestStatus: status },
+  });
+
+  // Notifications reference the related entity ID in `targetId` (see schema).
+  // Use updateMany because multiple notifications may reference the same follow.
+  await prisma.notification.updateMany({
+    where: {
+      targetId: follow.id,
+      type: NotificationType.FOLLOW,
+    },
+    data: {
+      followStatus: status,
+    },
   });
 
   return result;
