@@ -47,8 +47,8 @@ model User {
   priorityLikes   Int       @default(0)
 
   dob              DateTime?
-  lat              Float?
-  lng              Float?
+  lat              Float? @default(0.0)
+  lng              Float? @default(0.0)
   isNotificationOn Boolean   @default(true)
 
   provider   String? // google, facebook etc
@@ -128,8 +128,8 @@ model Memory {
   image       String
   description String
   address     String?
-  lat         Float @default(0)
-  lng         Float @default(0)
+  lat         Float @default(0.0)
+  lng         Float @default(0.0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -145,8 +145,8 @@ model Event {
   image       String
   description String
   address     String?
-  lat         Float @default(0)
-  lng         Float @default(0)
+  lat         Float @default(0.0)
+  lng         Float @default(0.0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
