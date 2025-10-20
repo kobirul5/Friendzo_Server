@@ -386,7 +386,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
   });
   const isSubscribed = !!activeSubscription;
 
-      const isMe = !currentUserId;
+     const isMe = currentUserId === userId;
   if (currentUserId) {
     const isFriend = await isFriendOrFollow(currentUserId, userId);
     return {

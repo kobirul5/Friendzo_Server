@@ -442,7 +442,7 @@ const getMyAllFriends = async (
   const friends = await prisma.follow.findMany({
     where: {
       OR: [
-        { followerId: userId, requestStatus: RequestStatus.ACCEPTED, modeType },
+        { followerId: userId, requestStatus: RequestStatus.ACCEPTED },
         {
           followingId: userId,
           requestStatus: RequestStatus.ACCEPTED,
