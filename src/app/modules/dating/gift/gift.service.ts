@@ -398,6 +398,32 @@ const sendGiftToFriends = async ({
       });
 
       // -----------------------------
+      // Popup
+      // -----------------------------
+      const giftPopup = await tx.giftPurchase.findFirst({
+        where: {
+          userId: senderId,
+          giftCardId,
+        },
+        include: {
+          giftCard: {
+            select: {
+              image: true,
+            },
+          },
+        }
+      })
+      await tx.gitPopUp.create({
+        data: {
+          senderId,
+          receiverId: receiver.id,
+          giftImage: giftPopup?.giftCard?.image || "",
+          type: "GIFT",
+          isSeen: false, // default false (to show popup once)
+        },
+      });
+
+      // -----------------------------
       // Notification
       // -----------------------------
       const notifPayload: INotificationPayload = {

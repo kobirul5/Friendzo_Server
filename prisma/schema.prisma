@@ -43,12 +43,12 @@ model User {
   datingImage      String[]  @default([])
   //subscription
   aiMessage        Int       @default(0)
-  boots          Int       @default(0)
-  priorityLikes   Int       @default(0)
+  boots            Int       @default(0)
+  priorityLikes    Int       @default(0)
 
   dob              DateTime?
-  lat              Float? @default(0.0)
-  lng              Float? @default(0.0)
+  lat              Float?    @default(0.0)
+  lng              Float?    @default(0.0)
   isNotificationOn Boolean   @default(true)
 
   provider   String? // google, facebook etc
@@ -76,12 +76,14 @@ model User {
   blockedUsers   Block[]  @relation("BlockerRelation")
   blockedByUsers Block[]  @relation("BlockedRelation")
 
-  purchases     GiftPurchase[]
-  sentGifts     GiftSend[]     @relation("GiftSender")
-  receivedGifts GiftSend[]     @relation("GiftReceiver")
-  sendCoin      CoinGiftSend[] @relation("CoinGiftSender")
-  receivedCoin  CoinGiftSend[] @relation("CoinGiftReceiver")
-  payments      Payment[]
+  purchases          GiftPurchase[]
+  sentGifts          GiftSend[]     @relation("GiftSender")
+  receivedGifts      GiftSend[]     @relation("GiftReceiver")
+  sentGiftsPopUp     gitPopUp[]     @relation("SentGifts")
+  receivedGiftsPopUp gitPopUp[]     @relation("ReceivedGifts")
+  sendCoin           CoinGiftSend[] @relation("CoinGiftSender")
+  receivedCoin       CoinGiftSend[] @relation("CoinGiftReceiver")
+  payments           Payment[]
 
   //  Notifications where this user is the recipient
   notificationsReceived Notification[] @relation("Notification_receiverId")
@@ -90,13 +92,13 @@ model User {
   notificationsSent Notification[] @relation("NotificationSender")
   ReportPost        ReportPost[]
   managerRole       String[]       @default([])
-    // Likes that this user has given to other users
-  likesGiven UserLike[] @relation("UserLikesGiven")
+  // Likes that this user has given to other users
+  likesGiven        UserLike[]     @relation("UserLikesGiven")
   // Likes that this user has received from other users
-  likesReceived UserLike[] @relation("UserLikesReceived")
+  likesReceived     UserLike[]     @relation("UserLikesReceived")
+  Subscription      Subscription[]
 
   @@map("users")
-  Subscription Subscription[]
 }
 
 model Interest {
@@ -128,8 +130,8 @@ model Memory {
   image       String
   description String
   address     String?
-  lat         Float @default(0.0)
-  lng         Float @default(0.0)
+  lat         Float    @default(0.0)
+  lng         Float    @default(0.0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -145,8 +147,8 @@ model Event {
   image       String
   description String
   address     String?
-  lat         Float @default(0.0)
-  lng         Float @default(0.0)
+  lat         Float    @default(0.0)
+  lng         Float    @default(0.0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -154,6 +156,26 @@ model Event {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   EventLike EventLike[]
+}
+
+model gitPopUp {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  giftImage  String @default("")
+  senderId   String @db.ObjectId
+  receiverId String @db.ObjectId
+  type       PopUp  @default(GIFT)
+  isSeen       Boolean  @default(false)
+
+  // 🧩 Relations
+  sender   User @relation("SentGifts", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedGifts", fields: [receiverId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum PopUp {
+  GIFT
+  COIN
 }
 
 enum UserStatus {
@@ -394,7 +416,7 @@ model UserLike {
   userId String @db.ObjectId
 
   // Je user ke like kora hocche
-  likedUser   User @relation("UserLikesReceived", fields: [likedUserId], references: [id], onDelete: Cascade)
+  likedUser   User   @relation("UserLikesReceived", fields: [likedUserId], references: [id], onDelete: Cascade)
   likedUserId String @db.ObjectId
 
   createdAt DateTime @default(now())
@@ -402,7 +424,6 @@ model UserLike {
 
   @@unique([userId, likedUserId]) // prevent duplicate likes
 }
-
 
 model GiftSend {
   id           String       @id @default(auto()) @map("_id") @db.ObjectId
@@ -443,20 +464,20 @@ model Payment {
 //subscription start
 
 model SubscriptionPlan {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String   @unique
-  price     Float
-  currency  String   @default("USD")
-  interval  String // 'MONTH', 'YEAR', etc.
-  subtitle  String? @default("")
-  discount  String? @default("")
-  trialDays Int?     @default(0) // optional trial days
-  active    Boolean  @default(true)
-  features  Json? // array of objects [{ key: string, value: string }]
-  createdAt DateTime @default(now())
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  name         String         @unique
+  price        Float
+  currency     String         @default("USD")
+  interval     String // 'MONTH', 'YEAR', etc.
+  subtitle     String?        @default("")
+  discount     String?        @default("")
+  trialDays    Int?           @default(0) // optional trial days
+  active       Boolean        @default(true)
+  features     Json? // array of objects [{ key: string, value: string }]
+  createdAt    DateTime       @default(now())
+  Subscription Subscription[]
 
   @@map("subscriptionPlans")
-  Subscription Subscription[]
 }
 
 model Subscription {
