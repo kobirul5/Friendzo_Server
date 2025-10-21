@@ -59,6 +59,7 @@ const createFollwer = catchAsync(async (req:Request, res:Response) => {
   });
 });
 
+
 const unfollowUser = catchAsync(async (req: Request, res: Response) => {
   const followerId = req.user.id; 
   const {followingId} = req.body;
@@ -72,6 +73,7 @@ const unfollowUser = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
 const unfollowDatingUser = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const {followId }= req.body
@@ -162,10 +164,10 @@ const getAllSuggestedUsers = catchAsync(async (req: Request, res: Response) => {
 // unfriend
 const unfriendUser = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id; 
-  const type = req.params.type
+  // const type = req.params.type
   const {friendId} = req.body;
 
-  const result = await follwerService.unfriendUser({userId, friendId, type});
+  const result = await follwerService.unfriendUser({userId, friendId});
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

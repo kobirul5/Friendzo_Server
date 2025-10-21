@@ -18,12 +18,12 @@ const createFollowerAndFollowingService = async (payload: {
     throw new ApiError(httpStatus.BAD_REQUEST, "You cannot follow yourself");
   }
 
-  if (modeType !== ModeType.DATING && modeType !== ModeType.SOCIAL) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Invalid mode type, it should be DATING or SOCIAL"
-    );
-  }
+  // if (modeType !== ModeType.DATING && modeType !== ModeType.SOCIAL) {
+  //   throw new ApiError(
+  //     httpStatus.BAD_REQUEST,
+  //     "Invalid mode type, it should be DATING or SOCIAL"
+  //   );
+  // }
 
   // check target user exists
   const targetUser = await prisma.user.findUnique({
@@ -39,7 +39,7 @@ const createFollowerAndFollowingService = async (payload: {
     where: {
       followerId: userId, // ✅ যে follow করছে
       followingId: followerId, // ✅ যাকে follow করা হচ্ছে
-      modeType,
+      // modeType,
     },
   });
 
@@ -89,7 +89,7 @@ const createFollowerAndFollowingService = async (payload: {
     data: {
       followerId: userId, // ✅ যে follow করছে
       followingId: followerId, // ✅ যাকে follow করা হচ্ছে
-      modeType,
+      // modeType,
       requestStatus: RequestStatus.PENDING, // default pending
     },
   });
@@ -145,7 +145,7 @@ const getMyFollowerService = async (userId: string) => {
   });
 
   const followers = await prisma.follow.findMany({
-    where: { followingId: userId, modeType: "SOCIAL" },
+    where: { followingId: userId, },
     include: {
       follower: {
         select: {
@@ -178,7 +178,7 @@ const getMyFollowingService = async (userId: string) => {
     where: { id: userId },
     include: {
       following: {
-        where: { modeType: "SOCIAL" },
+        // where: { modeType: "SOCIAL" }, 
         select: {
           id: true,
           requestStatus: true,
@@ -223,12 +223,12 @@ const unfollowUserSocialService = async (
     where: {
       followerId,
       followingId,
-      modeType: ModeType.SOCIAL,
+      // modeType: ModeType.SOCIAL,
     },
   });
 
   if (!follow) {
-    throw new Error("Follow relationship not found");
+    throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
   }
 
   // Delete the follow relation
@@ -442,11 +442,11 @@ const getMyAllFriends = async (
   const friends = await prisma.follow.findMany({
     where: {
       OR: [
-        { followerId: userId, requestStatus: RequestStatus.ACCEPTED, modeType },
+        { followerId: userId, requestStatus: RequestStatus.ACCEPTED },
         {
           followingId: userId,
           requestStatus: RequestStatus.ACCEPTED,
-          modeType,
+          // modeType,
         },
       ],
     },
@@ -525,7 +525,10 @@ const getMyAllFollwerRequest = async ({
     where: { id: userId },
     select: {
       followers: {
-        where: { requestStatus: RequestStatus.PENDING, modeType },
+        where: { 
+          requestStatus: RequestStatus.PENDING,
+          //  modeType 
+          },
         include: {
           follower: {
             select: {
@@ -569,7 +572,10 @@ const getMyAllFollwingRequest = async ({
     where: { id: userId },
     select: {
       following: {
-        where: { requestStatus: RequestStatus.PENDING, modeType: modeType },
+        where: { 
+          requestStatus: RequestStatus.PENDING, 
+          // modeType: modeType 
+        },
         include: {
           following: {
             select: {
@@ -654,7 +660,7 @@ const getAllSuggestedUsers = async ({
       following: {
         where: {
           requestStatus: RequestStatus.PENDING,
-          modeType: modeType,
+          // modeType: modeType,
         },
         select: { followingId: true }, // ✅
       },
@@ -670,7 +676,7 @@ const getAllSuggestedUsers = async ({
   const users = await prisma.user.findMany({
     where: {
       id: { notIn: whereId },
-      isDatingMode: type === "dating" ? true : undefined,
+      // isDatingMode: type === "dating" ? true : undefined,
       blockedByUsers: { none: { blockerId: userId } },
       blockedUsers: { none: { blockerId: userId } },
       status: UserStatus.ACTIVE,
@@ -743,26 +749,26 @@ const getAllSuggestedUsers = async ({
 const unfriendUser = async ({
   userId,
   friendId,
-  type,
+  // type,
 }: {
   userId: string;
   friendId: string;
-  type: string;
+  // type: string;
 }) => {
-  if (type !== "dating" && type !== "social") {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Invalid type. Type must be 'dating'"
-    );
-  }
+  // if (type !== "dating" && type !== "social") {
+  //   throw new ApiError(
+  //     httpStatus.BAD_REQUEST,
+  //     "Invalid type. Type must be 'dating'"
+  //   );
+  // }
 
-  const modeType = type === "dating" ? ModeType.DATING : ModeType.SOCIAL;
+  // const modeType = type === "dating" ? ModeType.DATING : ModeType.SOCIAL;
 
   const follow = await prisma.follow.findFirst({
     where: {
       OR: [
-        { followerId: userId, followingId: friendId, modeType },
-        { followerId: friendId, followingId: userId, modeType },
+        { followerId: userId, followingId: friendId },
+        { followerId: friendId, followingId: userId },
       ],
     },
   });
@@ -779,26 +785,29 @@ const unfriendUser = async ({
     },
   });
 
-  const myFollow = await prisma.follow.findFirst({
+  const myFollow = await prisma.follow.findMany({
     where: {
       followerId: userId,
       followingId: friendId,
-      modeType,
+      // requestStatus: RequestStatus.PENDING,
     },
   });
 
-  if (
-    myFollow &&
-    myFollow.followerId === userId &&
-    myFollow.requestStatus === RequestStatus.PENDING
-  ) {
-    await prisma.follow.delete({
-      where: { id: follow.id },
+  if (myFollow.length > 0) {
+    await prisma.follow.deleteMany({
+      where: {
+        followerId: userId,
+        followingId: friendId,
+        // requestStatus: RequestStatus.PENDING,
+      },
     });
+
     return { message: "Follow request canceled (deleted)" };
   }
 
-  return result;
+  return { message: "No pending follow request found" };
+
+
 };
 
 // accept notification
@@ -909,7 +918,7 @@ const acceptOrDeclineFollwerRequestByUserId = async ({
   userId: string;
   followerId: string;
   modeType: ModeType;
-  status: "ACCEPTED" | "CANCELED";  
+  status: "ACCEPTED" | "CANCELED";
 }) => {
   // Validate status
   if (![RequestStatus.ACCEPTED, RequestStatus.CANCELED].includes(status)) {
@@ -917,13 +926,13 @@ const acceptOrDeclineFollwerRequestByUserId = async ({
       httpStatus.BAD_REQUEST,
       "Invalid status. Status should be ACCEPTED or CANCELED"
     );
-  } 
+  }
 
   const follow = await prisma.follow.findFirst({
     where: {
       followerId: followerId,
       followingId: userId,
-      modeType: modeType,
+      // modeType: modeType,
       requestStatus: RequestStatus.PENDING,
     },
   });
