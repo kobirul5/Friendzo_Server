@@ -970,9 +970,9 @@ const unfollowUserByUserId = async ({userId, followerId}:{userId: string; follow
     },
   })
 
-  if (!follow) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
-  }
+  // if (!follow) {
+  //   throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
+  // }
   
   const result = await prisma.follow.deleteMany({
     where: {
@@ -996,7 +996,7 @@ const unfollowUserByUserId = async ({userId, followerId}:{userId: string; follow
     },
   })
 
-  console.log(result);
+  console.log(updatedFollow, "updatedFollow");
 
   return result;
 }
