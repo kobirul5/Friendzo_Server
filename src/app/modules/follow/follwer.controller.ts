@@ -206,6 +206,21 @@ const acceptOrDeclineFollwerRequestByUserId = catchAsync(async (req: Request, re
   });
 })
 
+const unfollowUserBYUserId = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id; 
+  const {userId: followerId} = req.body;
+
+  const result = await follwerService.unfollowUserByUserId({userId, followerId});
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Unfollowed successfully',
+    data: result,
+  });
+})
+
+
 export const followerController = {
   createFollwer,
   getMyFollowersAndFollowingCount,
@@ -220,5 +235,6 @@ export const followerController = {
   getAllSuggestedUsers,
   unfriendUser,
   acceptFollowerRequestNotification,
-  acceptOrDeclineFollwerRequestByUserId
+  acceptOrDeclineFollwerRequestByUserId,
+  unfollowUserBYUserId,
 };

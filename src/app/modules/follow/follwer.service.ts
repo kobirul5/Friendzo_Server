@@ -961,6 +961,48 @@ const acceptOrDeclineFollwerRequestByUserId = async ({
   return result;
 };
 
+const unfollowUserByUserId = async ({userId, followerId}:{userId: string; followerId: string}) => {
+
+  const follow = await prisma.follow.findFirst({
+    where: {
+      followerId: userId,
+      followingId: followerId,
+    },
+  })
+
+  if (!follow) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
+  }
+  
+  const result = await prisma.follow.deleteMany({
+    where: {
+      followerId: userId,
+      followingId: followerId ,
+    },
+  });
+
+  const updatedFollow = await prisma.follow.deleteMany({
+    where: {
+      OR:[
+        {
+          followerId: followerId,
+          followingId: userId,
+        },
+        {
+          followerId: userId,
+          followingId: followerId,
+        },
+      ]
+    },
+  })
+
+  console.log(result);
+
+  return result;
+}
+
+
+
 export const follwerService = {
   createFollowerAndFollowingService,
   unfollowUserSocialService,
@@ -975,5 +1017,6 @@ export const follwerService = {
   getAllSuggestedUsers,
   unfriendUser,
   acceptFollowerRequestNotification,
-  acceptOrDeclineFollwerRequestByUserId
+  acceptOrDeclineFollwerRequestByUserId,
+  unfollowUserByUserId
 };

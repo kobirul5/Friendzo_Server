@@ -23,5 +23,7 @@ router.get("/follwer-request/:type", auth(), followerController.getMyAllFollwerR
 router.get("/follwing-request/:type", auth(), followerController.getMyAllFollwingRequest);
 router.get("/suggested-user/:type", auth(), followerController.getAllSuggestedUsers);
 router.put("/unfriend", auth(), followerController.unfriendUser);
+router.delete("/unfollow-user", auth(), followerController.unfollowUserBYUserId);
+
 
 export const follwerRoutes = router;
