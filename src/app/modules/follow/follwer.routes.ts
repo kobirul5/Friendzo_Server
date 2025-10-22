@@ -11,6 +11,7 @@ router.get("/count", auth(), followerController.getMyFollowersAndFollowingCount)
 router.get("/follower", auth(), followerController.getMyAllFollwer);
 router.get("/following", auth(), followerController.getMyAllFollowing);
 router.delete("/unfollow", auth(), followerController.unfollowUser);
+router.delete("/unfollow-user", auth(), followerController.unfollowUserBYUserId);
 router.delete("/unfollow-dating", auth(), followerController.unfollowDatingUser);
 
 // 
@@ -23,7 +24,6 @@ router.get("/follwer-request/:type", auth(), followerController.getMyAllFollwerR
 router.get("/follwing-request/:type", auth(), followerController.getMyAllFollwingRequest);
 router.get("/suggested-user/:type", auth(), followerController.getAllSuggestedUsers);
 router.put("/unfriend", auth(), followerController.unfriendUser);
-router.delete("/unfollow-user", auth(), followerController.unfollowUserBYUserId);
 
 
 export const follwerRoutes = router;

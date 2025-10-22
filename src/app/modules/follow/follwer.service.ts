@@ -981,22 +981,22 @@ const unfollowUserByUserId = async ({userId, followerId}:{userId: string; follow
     },
   });
 
-  const updatedFollow = await prisma.follow.deleteMany({
-    where: {
-      OR:[
-        {
-          followerId: followerId,
-          followingId: userId,
-        },
-        {
-          followerId: userId,
-          followingId: followerId,
-        },
-      ]
-    },
-  })
+  // const updatedFollow = await prisma.follow.deleteMany({
+  //   where: {
+  //     OR:[
+  //       {
+  //         followerId: followerId,
+  //         followingId: userId,
+  //       },
+  //       {
+  //         followerId: userId,
+  //         followingId: followerId,
+  //       },
+  //     ]
+  //   },
+  // })
 
-  console.log(updatedFollow, "updatedFollow");
+  // console.log(updatedFollow, "updatedFollow");
 
   return result;
 }
