@@ -303,12 +303,12 @@ const acceptOrRejectFollwershipRequestService = async (
   }
 
   // Optional: ensure modeType matches
-  if (follow.modeType !== modeType) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Mode type mismatch for this follow request"
-    );
-  }
+  // if (follow.modeType !== modeType) {
+  //   throw new ApiError(
+  //     httpStatus.BAD_REQUEST,
+  //     "Mode type mismatch for this follow request"
+  //   );
+  // }
 
   // Update single follow request
   const updatedFollow = await prisma.follow.update({
