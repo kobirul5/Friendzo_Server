@@ -1001,7 +1001,73 @@ const unfollowUserByUserId = async ({userId, followerId}:{userId: string; follow
   return result;
 }
 
+const getSeeFollowerFollowing = async ({userId, targetId}:{userId: string; targetId: string}) => {
 
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User are not authorized!");
+
+  const target = await prisma.user.findUnique({ where: { id: targetId } });
+  if (!target) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+
+
+  const followData = await prisma.user.findFirst({
+    where: {
+      id: targetId,
+    },
+  select: {
+    followers:  {
+      select: {
+        follower: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profileImage: true,
+          },
+        },
+      }
+    },
+    following:  {
+      select: {
+        following: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            profileImage: true,
+          },
+        },
+      }
+    },
+  }
+  })
+
+  if (!followData) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
+  }
+
+  // ✅ Clean structure (remove duplicates and unwrap)
+  const followers = Array.from(
+    new Map(
+      followData.followers.map((f) => [f.follower.id, f.follower])
+    ).values()
+  );
+
+  const following = Array.from(
+    new Map(
+      followData.following.map((f) => [f.following.id, f.following])
+    ).values()
+  );
+
+  return {
+    success: true,
+    message: "Fetched successfully",
+    data: {
+      followers,
+      following,
+    },
+  };
+}
 
 export const follwerService = {
   createFollowerAndFollowingService,
@@ -1018,5 +1084,6 @@ export const follwerService = {
   unfriendUser,
   acceptFollowerRequestNotification,
   acceptOrDeclineFollwerRequestByUserId,
-  unfollowUserByUserId
+  unfollowUserByUserId,
+  getSeeFollowerFollowing
 };
