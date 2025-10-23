@@ -221,11 +221,24 @@ const unfollowUserBYUserId = catchAsync(async (req: Request, res: Response) => {
 })
 
 
-const getSeeFollowerFollowing = catchAsync(async (req: Request, res: Response) => {
+const getSeeFollower = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id; 
   const {id: targetId} = req.params;
 
   const result = await follwerService.getSeeFollowerFollowing({userId, targetId});
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Unfollowed successfully',
+    data: result,
+  });
+})
+const getSeeFollowing = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id; 
+  const {id: targetId} = req.params;
+
+  const result = await follwerService.getSeeFollowing({userId, targetId});
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -252,5 +265,6 @@ export const followerController = {
   acceptFollowerRequestNotification,
   acceptOrDeclineFollwerRequestByUserId,
   unfollowUserBYUserId,
-  getSeeFollowerFollowing
+  getSeeFollower,
+  getSeeFollowing
 };

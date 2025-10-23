@@ -24,7 +24,8 @@ router.get("/follwer-request/:type", auth(), followerController.getMyAllFollwerR
 router.get("/follwing-request/:type", auth(), followerController.getMyAllFollwingRequest);
 router.get("/suggested-user/:type", auth(), followerController.getAllSuggestedUsers);
 router.put("/unfriend", auth(), followerController.unfriendUser);
-router.get("/see-follower-following/:id", auth(), followerController.getSeeFollowerFollowing);
+router.get("/see-follower/:id", auth(), followerController.getSeeFollower);
+router.get("/see-following/:id", auth(), followerController.getSeeFollowing);
 
 
 export const follwerRoutes = router;
