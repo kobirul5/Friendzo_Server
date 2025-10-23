@@ -238,6 +238,26 @@ const unfollowUserSocialService = async (
     },
   });
 
+
+    if(follow){
+    const notification = await prisma.notification.findFirst({
+      where: {
+        targetId: follow.id,
+        type: NotificationType.FOLLOW,
+      },
+    })
+
+    if(notification){
+      await prisma.notification.deleteMany({
+        where: {
+          targetId: follow.id,
+          type: NotificationType.FOLLOW,
+        },
+      })
+    }
+  }
+
+
   return { unfollowed: true };
 };
 
@@ -261,12 +281,32 @@ const unfollowUserDatingService = async (followId: string, userId: string) => {
     );
   }
 
+  
+
   // Delete the follow relation
   await prisma.follow.deleteMany({
     where: {
       id: follow.id,
     },
   });
+
+    if(follow){
+    const notification = await prisma.notification.findFirst({
+      where: {
+        targetId: follow.id,
+        type: NotificationType.FOLLOW,
+      },
+    })
+
+    if(notification){
+      await prisma.notification.deleteMany({
+        where: {
+          targetId: follow.id,
+          type: NotificationType.FOLLOW,
+        },
+      })
+    }
+  }
 
   return { unfollowed: true };
 };
@@ -802,6 +842,24 @@ const unfriendUser = async ({
       },
     });
 
+      if(follow){
+    const notification = await prisma.notification.findFirst({
+      where: {
+        targetId: follow.id,
+        type: NotificationType.FOLLOW,
+      },
+    })
+
+    if(notification){
+      await prisma.notification.deleteMany({
+        where: {
+          targetId: follow.id,
+          type: NotificationType.FOLLOW,
+        },
+      })
+    }
+  }
+
     return { message: "Follow request canceled (deleted)" };
   }
 
@@ -973,6 +1031,24 @@ const unfollowUserByUserId = async ({userId, followerId}:{userId: string; follow
   // if (!follow) {
   //   throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
   // }
+
+  if(follow){
+    const notification = await prisma.notification.findFirst({
+      where: {
+        targetId: follow.id,
+        type: NotificationType.FOLLOW,
+      },
+    })
+
+    if(notification){
+      await prisma.notification.deleteMany({
+        where: {
+          targetId: follow.id,
+          type: NotificationType.FOLLOW,
+        },
+      })
+    }
+  }
   
   const result = await prisma.follow.deleteMany({
     where: {
