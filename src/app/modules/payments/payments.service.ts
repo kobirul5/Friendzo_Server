@@ -306,8 +306,53 @@ const getPaymentList = async (
   };
 };
 
+
+// Export all service functions
+const createCoinPurchasePaymentHandleFromApp = async ({
+  coinAmount,
+  price,
+  userId,
+}: {
+  coinAmount: number;
+  price: number;
+  userId: string;
+}) => {
+  const transactionId = getTransactionId();
+  const totalAmount = price;
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+
+
+  
+  const result = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      totalCoins: {
+        increment: coinAmount,
+      },
+    },
+  });
+
+
+  const payment = await prisma.payment.create({
+    data: {
+      transactionId,
+      amount: totalAmount,
+      status: PaymentStatus.COMPLETED,
+      senderId: userId,
+      method: "CARD",
+      paymentMethodId: "APP_PURCHASE",
+    },
+  })
+
+
+  return result;
+}
+
 export const paymentsService = {
   createCoinPurchase,
   createGiftCoinPurchase,
-  getPaymentList
+  getPaymentList,
+  createCoinPurchasePaymentHandleFromApp
 };

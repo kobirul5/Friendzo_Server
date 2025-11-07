@@ -13,6 +13,12 @@ router.post(
   // validateRequest(paymentValidation.createSchema),
   paymentsController.createPayment
 );
+router.post(
+  "/coin-purchase",
+  auth(),
+  // validateRequest(paymentValidation.createSchema),
+  paymentsController.createCoinPurchase
+);
 
 router.get("/", auth(UserRole.ADMIN, UserRole.MANAGER), paymentsController.getPaymentList);
 

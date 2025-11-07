@@ -658,6 +658,133 @@ const getMyAllFollwingRequest = async ({
 
 //  getAllSuggestedUsers
 
+// const getAllSuggestedUsers = async ({
+//   userId,
+//   type,
+// }: {
+//   userId: string;
+//   type: string;
+// }) => {
+//   if (type !== "social" && type !== "dating") {
+//     throw new ApiError(
+//       httpStatus.BAD_REQUEST,
+//       'Invalid type. Type must be "social" or "dating"'
+//     );
+//   }
+
+//   const modeType: ModeType =
+//     type === "social" ? ModeType.SOCIAL : ModeType.DATING;
+
+//   // 1️ Get the current user
+//   const currentUser = await prisma.user.findUnique({
+//     where: { id: userId },
+//     select: { id: true, datingInterests: true, lat: true, lng: true },
+//   });
+
+//   if (!currentUser) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+//   }
+
+//   // // 1️⃣ Get already followed userIds in this mode
+//   // const alreadyFollowedIds = await prisma.follow.findMany({
+//   //   where: {
+//   //     followerId: userId,
+//   //     // requestStatus: RequestStatus.ACCEPTED,
+//   //     modeType: modeType,
+//   //   },
+//   //   select: { followerId: true },
+//   // });
+//   const alreadyFollowed = await prisma.user.findUnique({
+//     where: { id: userId },
+//     select: {
+//       following: {
+//         where: {
+//           requestStatus: RequestStatus.PENDING,
+//           // modeType: modeType,
+//         },
+//         select: { followingId: true }, // ✅
+//       },
+//     },
+//   });
+
+//   const excludeIds = alreadyFollowed?.following.map((f) => f.followingId) || [];
+
+//   const whereId =
+//     excludeIds.length > 0 ? [currentUser.id, ...excludeIds] : [currentUser.id];
+
+//   // 2️ Get all users except blocked & self
+//   const users = await prisma.user.findMany({
+//     where: {
+//       id: { notIn: whereId },
+//       // isDatingMode: type === "dating" ? true : undefined,
+//       blockedByUsers: { none: { blockerId: userId } },
+//       blockedUsers: { none: { blockerId: userId } },
+//       status: UserStatus.ACTIVE,
+//       // followers: {
+//       //   none: {
+//       //     followerId: userId,
+//       //     requestStatus: RequestStatus.ACCEPTED,
+//       //     modeType: modeType, // <-- only remove already followed in this mode
+//       //   },
+//       // },
+//     },
+//     select: {
+//       id: true,
+//       firstName: true,
+//       lastName: true,
+//       profileImage: true,
+//       address: true,
+//       isDatingMode: true,
+//       datingInterests: true,
+//       createdAt: true,
+//       lat: true,
+//       lng: true,
+//       followers: true,
+//     },
+//   });
+
+//   if (users.length === 0) {
+//     return [];
+//   }
+
+//   const suggestedUsers = users
+//     .map((user) => {
+//       let score = 0;
+
+//       // Interest match score
+//       const commonInterests = user.datingInterests.filter((i) =>
+//         currentUser.datingInterests.includes(i)
+//       );
+//       score += commonInterests.length * 10;
+
+//       // Proximity score
+//       if (user.lat && user.lng && currentUser.lat && currentUser.lng) {
+//         const distance = Math.sqrt(
+//           (user.lat - currentUser.lat) ** 2 + (user.lng - currentUser.lng) ** 2
+//         );
+//         score += 1 / (distance + 0.01);
+//       }
+
+//       // New user boost
+//       const isNew =
+//         new Date().getTime() - new Date(user.createdAt).getTime() <
+//         7 * 24 * 60 * 60 * 1000;
+//       if (isNew) score += 5;
+
+//       return { ...user, score };
+//     })
+//     .sort((a, b) => b.score - a.score);
+
+//   return suggestedUsers.map((user) => ({
+//     id: user.id,
+//     firstName: user.firstName,
+//     lastName: user.lastName,
+//     profileImage: user.profileImage,
+//     address: user.address,
+//     datingInterests: user.datingInterests,
+//   }));
+// };
+
 const getAllSuggestedUsers = async ({
   userId,
   type,
@@ -675,7 +802,7 @@ const getAllSuggestedUsers = async ({
   const modeType: ModeType =
     type === "social" ? ModeType.SOCIAL : ModeType.DATING;
 
-  // 1️ Get the current user
+  // 1️⃣ Get current user
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
     select: { id: true, datingInterests: true, lat: true, lng: true },
@@ -685,48 +812,28 @@ const getAllSuggestedUsers = async ({
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  // // 1️⃣ Get already followed userIds in this mode
-  // const alreadyFollowedIds = await prisma.follow.findMany({
-  //   where: {
-  //     followerId: userId,
-  //     // requestStatus: RequestStatus.ACCEPTED,
-  //     modeType: modeType,
-  //   },
-  //   select: { followerId: true },
-  // });
+  // 2️⃣ Exclude already followed users
   const alreadyFollowed = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       following: {
-        where: {
-          requestStatus: RequestStatus.PENDING,
-          // modeType: modeType,
-        },
-        select: { followingId: true }, // ✅
+        where: { requestStatus: RequestStatus.PENDING },
+        select: { followingId: true },
       },
     },
   });
 
   const excludeIds = alreadyFollowed?.following.map((f) => f.followingId) || [];
-
   const whereId =
     excludeIds.length > 0 ? [currentUser.id, ...excludeIds] : [currentUser.id];
 
-  // 2️ Get all users except blocked & self
+  // 3️⃣ Fetch users (exclude blocked/self)
   const users = await prisma.user.findMany({
     where: {
       id: { notIn: whereId },
-      // isDatingMode: type === "dating" ? true : undefined,
       blockedByUsers: { none: { blockerId: userId } },
       blockedUsers: { none: { blockerId: userId } },
       status: UserStatus.ACTIVE,
-      // followers: {
-      //   none: {
-      //     followerId: userId,
-      //     requestStatus: RequestStatus.ACCEPTED,
-      //     modeType: modeType, // <-- only remove already followed in this mode
-      //   },
-      // },
     },
     select: {
       id: true,
@@ -739,14 +846,13 @@ const getAllSuggestedUsers = async ({
       createdAt: true,
       lat: true,
       lng: true,
-      followers: true,
+      boost: true, // ✅ include boost for sorting
     },
   });
 
-  if (users.length === 0) {
-    return [];
-  }
+  if (users.length === 0) return [];
 
+  // 4️⃣ Scoring system (interest + proximity + newness)
   const suggestedUsers = users
     .map((user) => {
       let score = 0;
@@ -765,16 +871,28 @@ const getAllSuggestedUsers = async ({
         score += 1 / (distance + 0.01);
       }
 
-      // New user boost
+      // New user bonus
       const isNew =
         new Date().getTime() - new Date(user.createdAt).getTime() <
         7 * 24 * 60 * 60 * 1000;
       if (isNew) score += 5;
 
+      // ✅ Boost multiplier
+      if (user.boost && user.boost > 1) {
+        score *= user.boost; // boosted users rank higher proportionally
+      }
+
       return { ...user, score };
     })
-    .sort((a, b) => b.score - a.score);
+    // ✅ Sort boosted + higher score first
+    .sort((a, b) => {
+      const aBoosted = a.boost > 1 ? 1 : 0;
+      const bBoosted = b.boost > 1 ? 1 : 0;
+      if (aBoosted !== bBoosted) return bBoosted - aBoosted;
+      return b.score - a.score;
+    });
 
+  // 5️⃣ Return final result
   return suggestedUsers.map((user) => ({
     id: user.id,
     firstName: user.firstName,

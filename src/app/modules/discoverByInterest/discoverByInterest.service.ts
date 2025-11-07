@@ -572,6 +572,7 @@ const getPeopleBySharedInterests = async ({
       lat: true,
       lng: true,
       address: true,
+      boost: true,
     },
   });
 
@@ -614,8 +615,11 @@ const getPeopleBySharedInterests = async ({
       dob: user.dob ?? 0, // Keep null or set to new Date('1900-01-01') if needed
       lat: user.lat ?? 0, // Keep null (used for distance calc)
       lng: user.lng ?? 0, // Keep null
-      address: user.address ?? 'Location not shared', // Default address string
+      address: user.address ?? 'Location not shared',
+      boost: user.boost , // Default address string
     };
+
+    
 
     return {
       ...sanitizedUser,
@@ -624,10 +628,18 @@ const getPeopleBySharedInterests = async ({
     };
   });
 
+
   // 6️⃣ Sort by highest match first
-  usersWithMatchPercentage.sort(
-    (a, b) => b.interestPercentage - a.interestPercentage
-  );
+usersWithMatchPercentage.sort((a, b) => {
+  const aBoosted = a.boost > 1 ? 1 : 0;
+  const bBoosted = b.boost > 1 ? 1 : 0;
+
+  if (aBoosted !== bBoosted) return bBoosted - aBoosted; // boosted first
+  if (b.interestPercentage !== a.interestPercentage)
+    return b.interestPercentage - a.interestPercentage; // higher match first
+  return a.distanceKm - b.distanceKm; // nearer first
+});
+
 
   console.log(`✅ Found ${usersWithMatchPercentage.length} new matches!`);
 
