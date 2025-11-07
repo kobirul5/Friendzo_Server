@@ -431,6 +431,122 @@ const featureFieldMap: Record<string, string> = {
     );
   }
 };
+const purchaseSubscriptionStatic = async (data: any, userId: string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+
+  const { planName, planPrice } = data;
+
+  // const plan = await prisma.subscriptionPlan.findUnique({
+  //   where: { id: planId },
+  // });
+  // if (!plan)
+  //   throw new ApiError(httpStatus.NOT_FOUND, "Subscription plan not found");
+
+  // Generate transaction ID
+  const transactionId = `sub_${Date.now()}`;
+
+  // Define static feature values based on plan
+  let bootsValue = 0;
+  let priorityLikesValue = 0;
+  let aiMessageValue = 0;
+  let coinValue = 0;
+
+
+  switch (planName.toLowerCase()) {
+    case "plan1":
+      bootsValue = 15;
+      priorityLikesValue = 15;
+      break;
+    case "plan2":
+      bootsValue = 25;
+      priorityLikesValue = 25;
+      aiMessageValue = 20;
+      coinValue = 100;
+      break;
+    case "plan3":
+      bootsValue = 30;
+      priorityLikesValue = 30;
+      aiMessageValue = 30;
+      coinValue = 200;
+      break;
+    default:
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid plan type, please choose plan1, plan2, or plan3.");
+  }
+
+  // Create subscription & update features
+  const subscription = await prisma.$transaction(async (tx) => {
+    // Create payment record
+    await tx.payment.create({
+      data: {
+        transactionId,
+        amount: planPrice,
+        status: "COMPLETED",
+        senderId: userId,
+        method: "BANK_TRANSFER",
+        paymentMethodId: "",
+      },
+    });
+
+    // Create subscription
+    const newSubscription = await tx.subscription.create({
+      data: {
+        userId,
+ // No specific plan ID for static plans
+        startedAt: new Date(),
+        amount: planPrice,
+        status: "ACTIVE",
+      },
+    });
+
+    // Update user's static subscription features
+    await tx.user.update({
+      where: { id: userId },
+      data: {
+        boost: { increment: bootsValue },
+        priorityLikes: { increment: priorityLikesValue },
+        aiMessage: { increment: aiMessageValue },
+        totalCoins: { increment: coinValue },
+      },
+    });
+
+    // (Optional) Send notification
+    // const notifPayload: INotificationPayload = {
+    //   title: "Subscription Purchased",
+    //   message: `You have successfully purchased the ${plan.name} plan!`,
+    //   type: "PURCHASE",
+    //   senderId: userId,
+    //   receiverId: userId,
+    //   targetId: transactionId,
+    //   targetType: "SUBSCRIPTION",
+    //   followStatus: "REJECTED",
+    // };
+    // await notificationServices.saveNotification(notifPayload, userId);
+    // if (user.fcmToken) {
+    //   await notificationServices.sendNotification(
+    //     user.fcmToken,
+    //     notifPayload,
+    //     userId
+    //   );
+    // }
+
+    return newSubscription;
+  });
+
+  const userPlanDetails =  await prisma.user.findFirst({
+    where: { id: userId },
+    select: {
+      boost: true,
+      priorityLikes: true,
+      aiMessage: true,
+      totalCoins: true,
+    },
+  });
+
+
+  return { ...subscription, planDetails: userPlanDetails };
+};
+
 
 // const getUserSubscriptions = async (userId: string) => {
 //   // check user first
@@ -496,4 +612,5 @@ export const subscriptionService = {
   //subscription
   purchaseSubscription,
   getUserSubscriptions,
+  purchaseSubscriptionStatic
 };

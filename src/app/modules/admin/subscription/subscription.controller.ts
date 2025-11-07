@@ -68,6 +68,18 @@ const purchaseSubscription = catchAsync(async (req, res) => {
   });
   
 });
+const purchaseSubscriptionStatic = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const data = req.body;
+  const result = await subscriptionService.purchaseSubscriptionStatic(data, userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Subscription plan updated successfully',
+    data: result,
+  });
+  
+});
 
 const getUserSubscriptions = catchAsync(async (req, res) => {
   const userId = req.user.id;
@@ -90,6 +102,7 @@ export const subscriptionController = {
   deleteSubscriptionPlan,
   // subscription
   purchaseSubscription,
-getUserSubscriptions
+getUserSubscriptions,
+purchaseSubscriptionStatic
 
 }

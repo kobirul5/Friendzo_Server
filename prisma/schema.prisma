@@ -43,7 +43,7 @@ model User {
   datingImage      String[]  @default([])
   //subscription
   aiMessage        Int       @default(0)
-  boots            Int       @default(0)
+  boost            Int       @default(0)
   priorityLikes    Int       @default(0)
 
   dob              DateTime?
@@ -483,7 +483,7 @@ model SubscriptionPlan {
 model Subscription {
   id            String             @id @default(auto()) @map("_id") @db.ObjectId
   userId        String             @db.ObjectId
-  planId        String             @db.ObjectId
+  planId        String?             @db.ObjectId
   amount        Float
   status        subscriptionStatus @default(ACTIVE) // 'ACTIVE', 'CANCELLED', 'PAUSED', 'EXPIRED'
   startedAt     DateTime           @default(now())
@@ -492,7 +492,7 @@ model Subscription {
   trialEndsAt   DateTime?
   metadata      Json?
   createdAt     DateTime           @default(now())
-  plan          SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  plan          SubscriptionPlan?   @relation(fields: [planId], references: [id], onDelete: Cascade)
   user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])

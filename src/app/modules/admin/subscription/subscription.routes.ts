@@ -7,6 +7,7 @@ const router = express.Router();
 
 // subscription routes
 router.post("/", auth(), subscriptionController.purchaseSubscription);
+router.post("/purchase", auth(), subscriptionController.purchaseSubscriptionStatic);
 
 router.get("/my-subscriptions", auth(), subscriptionController.getUserSubscriptions);
 
