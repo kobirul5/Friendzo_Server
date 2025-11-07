@@ -503,7 +503,7 @@ const purchaseSubscriptionStatic = async (data: any, userId: string) => {
     await tx.user.update({
       where: { id: userId },
       data: {
-        boost: { increment: bootsValue },
+        boosts: { increment: bootsValue },
         priorityLikes: { increment: priorityLikesValue },
         aiMessage: { increment: aiMessageValue },
         totalCoins: { increment: coinValue },
@@ -536,7 +536,7 @@ const purchaseSubscriptionStatic = async (data: any, userId: string) => {
   const userPlanDetails =  await prisma.user.findFirst({
     where: { id: userId },
     select: {
-      boost: true,
+      boosts: true,
       priorityLikes: true,
       aiMessage: true,
       totalCoins: true,

@@ -572,7 +572,7 @@ const getPeopleBySharedInterests = async ({
       lat: true,
       lng: true,
       address: true,
-      boost: true,
+      boosts: true,
     },
   });
 
@@ -616,7 +616,7 @@ const getPeopleBySharedInterests = async ({
       lat: user.lat ?? 0, // Keep null (used for distance calc)
       lng: user.lng ?? 0, // Keep null
       address: user.address ?? 'Location not shared',
-      boost: user.boost , // Default address string
+      boost: user.boosts , // Default address string
     };
 
     

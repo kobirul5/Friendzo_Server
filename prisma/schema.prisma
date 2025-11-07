@@ -43,7 +43,7 @@ model User {
   datingImage      String[]  @default([])
   //subscription
   aiMessage        Int       @default(0)
-  boost            Int       @default(0)
+  boosts            Int       @default(0)
   priorityLikes    Int       @default(0)
 
   dob              DateTime?

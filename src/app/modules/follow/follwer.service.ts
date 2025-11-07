@@ -846,7 +846,7 @@ const getAllSuggestedUsers = async ({
       createdAt: true,
       lat: true,
       lng: true,
-      boost: true, // ✅ include boost for sorting
+      boosts: true, // ✅ include boost for sorting
     },
   });
 
@@ -878,16 +878,16 @@ const getAllSuggestedUsers = async ({
       if (isNew) score += 5;
 
       // ✅ Boost multiplier
-      if (user.boost && user.boost > 1) {
-        score *= user.boost; // boosted users rank higher proportionally
+      if (user.boosts && user.boosts > 1) {
+        score *= user.boosts; // boosted users rank higher proportionally
       }
 
       return { ...user, score };
     })
     // ✅ Sort boosted + higher score first
     .sort((a, b) => {
-      const aBoosted = a.boost > 1 ? 1 : 0;
-      const bBoosted = b.boost > 1 ? 1 : 0;
+      const aBoosted = a.boosts > 1 ? 1 : 0;
+      const bBoosted = b.boosts > 1 ? 1 : 0;
       if (aBoosted !== bBoosted) return bBoosted - aBoosted;
       return b.score - a.score;
     });

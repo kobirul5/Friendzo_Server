@@ -66,6 +66,9 @@ import prisma from "./shared/prisma";
 import app from "./app";
 import { setupWebSocket } from "./helpars/websocket";
 import { initiateSuperAdmin } from "./app/db/db";
+import { startCronJobs } from "./cron/cron";
+
+
 
 let server: Server;
 
@@ -81,6 +84,8 @@ async function startServer() {
 
     // ✅ WebSocket setup
     setupWebSocket(server);
+    // ✅ Start cron jobs
+    startCronJobs();  // <-- start your cron jobs here
 
     // // ✅ Initialize super admin asynchronously (non-blocking)
     // initiateSuperAdmin()
@@ -94,6 +99,7 @@ async function startServer() {
       await prisma.$disconnect();
       process.exit(0);
     };
+
 
     process.on("SIGTERM", gracefulShutdown);
     process.on("SIGINT", gracefulShutdown);

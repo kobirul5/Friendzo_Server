@@ -89,7 +89,7 @@ const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
           lastName: true,
           email: true,
           profileImage: true,
-          boost: true,
+          boosts: true,
         },
       },
       _count: {
@@ -120,8 +120,8 @@ const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
   });
 
   formattedMemories.sort((a, b) => {
-    const aBoosted = a.user.boost > 1 ? 1 : 0;
-    const bBoosted = b.user.boost > 1 ? 1 : 0;
+    const aBoosted = a.user.boosts > 1 ? 1 : 0;
+    const bBoosted = b.user.boosts > 1 ? 1 : 0;
 
     if (aBoosted === bBoosted) {
       // if same boost status, keep recent first
