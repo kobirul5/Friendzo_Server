@@ -4,7 +4,7 @@ import prisma from "../shared/prisma";
 
 // Runs every 1 minute (for testing)
 export const startCronJobs = () => {
-  cron.schedule("*/1 * * * *", async () => {
+  cron.schedule("0 0 * * *", async () => {
     console.log("🕐 Running boost/priorityLikes decrement cron...");
 
     try {
