@@ -209,19 +209,59 @@ const getTodaysBuzz = async (userId: string) => {
 
 
   // Step 3: Fetch those users separately (without event relation)
-  const users = await prisma.user.findMany({
+  // const users = await prisma.user.findMany({
+  //   where: {
+  //   id: {
+  //     not: userId,
+  //   },
+  //   lat: {
+  //     not: null,        
+  //   },
+  //   lng: {
+  //     not: null,       
+  //   },
+  //   role: {not: UserRole.ADMIN},
+  // },
+  //   select: {
+  //     id: true,
+  //     firstName: true,
+  //     lastName: true,
+  //     profileImage: true,
+  //     email: true,
+  //     lat: true,
+  //     lng: true,
+  //   },
+  // });
+
+
+  const allowedUsers = await prisma.user.findMany({
     where: {
-    id: {
-      not: userId,
+      id: { not: userId },
+      lat: { not: null },
+      lng: { not: null },
+      role: { not: UserRole.ADMIN },
+
+      OR: [
+        // I follow them → accepted
+        {
+          followers: {
+            some: {
+              followerId: userId,
+              requestStatus: "ACCEPTED"
+            }
+          }
+        },
+        // They follow me → accepted
+        {
+          following: {
+            some: {
+              followingId: userId,
+              requestStatus: "ACCEPTED"
+            }
+          }
+        }
+      ]
     },
-    lat: {
-      not: null,        
-    },
-    lng: {
-      not: null,       
-    },
-    role: {not: UserRole.ADMIN},
-  },
     select: {
       id: true,
       firstName: true,
@@ -235,7 +275,7 @@ const getTodaysBuzz = async (userId: string) => {
 
   return {
     todaysEvents, // strip embedded user from event
-    users,
+    users: allowedUsers,
   };
 };
 
