@@ -97,6 +97,13 @@ const deleteItemFromDb = async (id: string) => {
   if (!id) {
     throw new ApiError(httpStatus.BAD_REQUEST,"Id is required");
   }
+
+  const giftParches = await prisma.giftPurchase.findFirst({where:{giftCardId:id}});
+  if(giftParches){
+    throw new ApiError(httpStatus.BAD_REQUEST, "This gift card has already been purchased by users and cannot be deleted.");
+  }
+
+
   const giftCard = await prisma.giftCard.findUnique({ where: { id } });
   if (!giftCard) {
     throw new ApiError(httpStatus.NOT_FOUND,"GiftCard not found");
