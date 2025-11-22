@@ -70,6 +70,7 @@ const ifNoParameterGetNearbyPeople = async (
 
   // 8️ Sort by nearest
   nearbyUsers.sort((a, b) => a.distanceInKm - b.distanceInKm);
+  nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= 657018);
 
   return nearbyUsers;
 };
@@ -168,6 +169,9 @@ const getNearbyPeople = async ( {
   if (radiusKm) {
     nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= radiusKm);
   }
+  if (!radiusKm) {
+    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= 65);
+  }
 
   // 8️ Apply distance range filter (new support)
   if (minDistance !== undefined && maxDistance !== undefined) {
@@ -183,10 +187,8 @@ const getNearbyPeople = async ( {
   // 9️ Sort by nearest first
   nearbyUsers.sort((a, b) => a.distanceInKm - b.distanceInKm);
 
-  return nearbyUsers;
+  return [nearbyUsers];
 };
-
-
 
 
 const getTodaysBuzz = async (userId: string) => {

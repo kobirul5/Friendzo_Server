@@ -11,10 +11,11 @@ const getNearbyPeopleController = catchAsync(
 
     const lat = parseFloat(req.query.lat as string);
     const lng = parseFloat(req.query.lng as string);
-    // const radiusKm = parseFloat(req.query.radiusKm as string) || 10000; // default to 10km if not provided
+    const radiusKm = parseFloat(req.query.radiusKm as string) || 657018000; // default to 10km if not provided
     const search = req.query.search as string;
     const gender = req.query.gender as string;
 
+    console.log(radiusKm)
 // maxDistance 
 const maxDistance =  Number(req.query.maxDistance as string)
 // minDistance 

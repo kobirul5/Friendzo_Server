@@ -24,7 +24,7 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "User already exists");
+    throw new ApiError(httpStatus.BAD_REQUEST, `User already exists with this email ${email}`);
   }
 
   // Hash password
