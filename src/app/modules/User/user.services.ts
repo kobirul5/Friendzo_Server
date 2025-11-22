@@ -766,7 +766,7 @@ const checkUser = async (email: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, `User not found with email: ${email}`);
   }
 
-  return user;
+  return "User already exists with this email";
 };
 
 export const userService = {
