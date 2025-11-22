@@ -147,6 +147,19 @@ const decreaseAiMessageCount = catchAsync(async (req: Request, res: Response) =>
   });
 })
 
+const checkUser = catchAsync(async (req: Request, res: Response) => {
+  const email = req.body.email;
+
+  const result = await userService.checkUser(email);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User profile retrieved successfully",
+    data: result,
+  });
+});
+
+
 export const userController = {
   createUser,
   updateProfile,
@@ -158,5 +171,6 @@ export const userController = {
   changeDatingMode,
   seeMode,
   decreaseAiMessageCount,
+  checkUser,
   // deleteUserDocumentImage,
 };

@@ -753,6 +753,22 @@ const decreaseAiMessageCount = async (userId: string) => {
   return updatedUser;
 };
 
+
+
+const checkUser = async (email: string) => {
+  const user = await prisma.user.findFirst({
+    where: {
+      email: email,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, `User not found with email: ${email}`);
+  }
+
+  return user;
+};
+
 export const userService = {
   createUserIntoDb,
   profileImageUpload,
@@ -764,5 +780,6 @@ export const userService = {
   changeDatingMode,
   seeMode,
   decreaseAiMessageCount,
+  checkUser
   // deleteUserDocumentImage,
 };
