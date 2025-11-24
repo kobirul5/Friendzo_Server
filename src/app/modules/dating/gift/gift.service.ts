@@ -2,7 +2,10 @@ import httpStatus from "http-status";
 import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
 import { Gender, GiftCategory } from "@prisma/client";
-import { INotificationPayload, notificationServices } from "../../notification/notification.service";
+import {
+  INotificationPayload,
+  notificationServices,
+} from "../../notification/notification.service";
 
 const buyGiftCard = async ({ data, userId }: any) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -34,7 +37,7 @@ const buyGiftCard = async ({ data, userId }: any) => {
       "You don't have enough coins to buy this gift card!"
     );
 
-const updatedUser =  await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: user.id },
     data: {
       totalCoins: user.totalCoins - giftCard.price,
@@ -52,8 +55,7 @@ const updatedUser =  await prisma.user.update({
     },
   });
 
-
-   // -----------------------------
+  // -----------------------------
   // Notification
   // -----------------------------
   const notifPayload: INotificationPayload = {
@@ -79,8 +81,6 @@ const updatedUser =  await prisma.user.update({
     );
   }
 
-
-
   return result;
 };
 
@@ -94,6 +94,9 @@ const getGiftCardList = async ({
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user)
     throw new ApiError(httpStatus.NOT_FOUND, "Unauthorized!, User not found!");
+  if (!gender) {
+    gender = (user.interestedGender as Gender) || Gender.EVERYONE;
+  }
 
   if (
     gender !== Gender.HIM &&
@@ -110,6 +113,7 @@ const getGiftCardList = async ({
       gender: gender,
       category: GiftCategory.ESSENTIAL,
     },
+    orderBy: { createdAt: "desc" },
   });
 
   const Exclusive = await prisma.giftCard.findMany({
@@ -117,6 +121,7 @@ const getGiftCardList = async ({
       gender: gender,
       category: GiftCategory.EXCLUSIVE,
     },
+    orderBy: { createdAt: "desc" },
   });
 
   const Majestic = await prisma.giftCard.findMany({
@@ -124,6 +129,7 @@ const getGiftCardList = async ({
       gender: gender,
       category: GiftCategory.MAJESTIC,
     },
+    orderBy: { createdAt: "desc" },
   });
 
   const result = {
@@ -187,7 +193,6 @@ const getGiftCardList = async ({
 //   }
 // };
 
-
 const getMyPurchasesAndReceivedGifts = async (userId: string) => {
   // 1️⃣ Purchases groupBy
   const purchases = await prisma.giftPurchase.groupBy({
@@ -250,8 +255,7 @@ const getMyPurchasesAndReceivedGifts = async (userId: string) => {
   };
 };
 
-
-// Send gift for my friends 
+// Send gift for my friends
 
 interface SendGiftInput {
   senderId: string;
@@ -317,11 +321,8 @@ interface SendGiftInput {
 //     return { message: "Gifts sent successfully!" };
 //   });
 
-
 //   return result
 // };
-
-
 
 const sendGiftToFriends = async ({
   senderId,
@@ -411,8 +412,8 @@ const sendGiftToFriends = async ({
               image: true,
             },
           },
-        }
-      })
+        },
+      });
       await tx.gitPopUp.create({
         data: {
           senderId,
@@ -428,7 +429,9 @@ const sendGiftToFriends = async ({
       // -----------------------------
       const notifPayload: INotificationPayload = {
         title: "You received a gift!",
-        message: `${receiver.firstName || "Someone"} received a ${giftCategory} gift from a friend!`,
+        message: `${
+          receiver.firstName || "Someone"
+        } received a ${giftCategory} gift from a friend!`,
         type: "GIFT",
         senderId,
         receiverId: receiver.id,
@@ -454,18 +457,12 @@ const sendGiftToFriends = async ({
   return result;
 };
 
-
-
-
 export const giftService = {
   buyGiftCard,
   getGiftCardList,
   getMyPurchasesAndReceivedGifts,
-  sendGiftToFriends
+  sendGiftToFriends,
 };
-
-
-
 
 // const sendGiftToFriends = async ({
 //   senderId,
@@ -549,4 +546,3 @@ export const giftService = {
 //     return { message: "Gifts sent successfully!" };
 //   });
 // };
-
