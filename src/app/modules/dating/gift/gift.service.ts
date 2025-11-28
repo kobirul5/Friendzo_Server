@@ -457,11 +457,131 @@ const sendGiftToFriends = async ({
   return result;
 };
 
+// sendMultipleGifts
+const sendMultipleGifts = async ({
+  senderId,
+  receiverId,
+  giftCardIds, // array of giftCardId
+}: any) => {
+  const result = await prisma.$transaction(async (tx) => {
+    if (!giftCardIds || giftCardIds.length === 0) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "No gifts selected to send");
+    }
+    
+    // 1. Check if receiver exists
+    const receiver = await tx.user.findUnique({
+      where: { id: receiverId },
+      select: { id: true, firstName: true, lastName: true, fcmToken: true },
+    });
+
+    if (!receiver) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Receiver not found");
+    }
+
+    // 2. Check if sender has enough purchased gifts for each giftCardId
+    const purchasedGifts = await tx.giftPurchase.findMany({
+      where: {
+        userId: senderId,
+        giftCardId: { in: giftCardIds },
+      },
+      select: { id: true, giftCardId: true, giftCategory: true },
+    });
+
+    if (purchasedGifts.length < giftCardIds.length) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Not enough purchased gifts to send"
+      );
+    }
+
+    // Match gifts by giftCardId (1 gift for each giftCardId)
+    const selectedGifts: any[] = [];
+    const usedGiftIds = new Set<string>();
+
+    for (const gcId of giftCardIds) {
+      const gift = purchasedGifts.find(
+        (g) => g.giftCardId === gcId && !usedGiftIds.has(g.id)
+      );
+
+      if (!gift) {
+        throw new ApiError(
+          httpStatus.BAD_REQUEST,
+          `You don't have the gift for giftCardId: ${gcId}`
+        );
+      }
+
+      usedGiftIds.add(gift.id);
+      selectedGifts.push(gift);
+    }
+
+    // 3. Delete selected gifts from purchase
+    await tx.giftPurchase.deleteMany({
+      where: { id: { in: selectedGifts.map((g) => g.id) } },
+    });
+
+    // 4. Send all gifts to receiver
+    for (const gift of selectedGifts) {
+      await tx.giftSend.create({
+        data: {
+          senderId,
+          receiverId,
+          giftCardId: gift.giftCardId,
+          giftCategory: gift.giftCategory,
+        },
+      });
+
+      // Popup info
+      const giftPopup = await tx.giftCard.findUnique({
+        where: { id: gift.giftCardId },
+        select: { image: true },
+      });
+
+      await tx.gitPopUp.create({
+        data: {
+          senderId,
+          receiverId,
+          giftImage: giftPopup?.image || "",
+          type: "GIFT",
+          isSeen: false,
+        },
+      });
+    }
+
+    // 5. Notification
+    const notifPayload: INotificationPayload = {
+      title: "You received gifts!",
+      message: `You received ${giftCardIds.length} gift(s) from a friend!`,
+      type: "GIFT",
+      senderId,
+      receiverId,
+      followStatus: "REJECTED",
+    };
+
+    // Save notification
+    await notificationServices.saveNotification(notifPayload, receiver.id);
+
+    // Push notification
+    if (receiver.fcmToken) {
+      await notificationServices.sendNotification(
+        receiver.fcmToken,
+        notifPayload,
+        receiver.id
+      );
+    }
+
+    return { message: "Gifts sent successfully!" };
+  });
+
+  return result;
+};
+
+
 export const giftService = {
   buyGiftCard,
   getGiftCardList,
   getMyPurchasesAndReceivedGifts,
   sendGiftToFriends,
+  sendMultipleGifts
 };
 
 // const sendGiftToFriends = async ({

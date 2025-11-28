@@ -66,10 +66,31 @@ const sendGiftToFriends = catchAsync(async (req, res) => {
   });
 
 })
+const sendMultipleGifts = catchAsync(async (req, res) => {
+  
+  const senderId = req.user.id;
+  const { receiverId, giftCardIds } = req.body;
+
+  const result = await giftService.sendMultipleGifts(
+    {
+  senderId,
+  receiverId,
+  giftCardIds,
+}
+  );
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "GiftCard list retrieved successfully",
+    data: result,
+  });
+
+})
 
 export const giftController = {
   buyGiftCard,
   getGiftCardList,
   getMyPurchasesAndReceivedGifts,
-  sendGiftToFriends
+  sendGiftToFriends,
+  sendMultipleGifts
 };
