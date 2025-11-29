@@ -330,6 +330,10 @@ const sendGiftToFriends = async ({
   giftCardId,
 }: SendGiftInput) => {
   const result = await prisma.$transaction(async (tx) => {
+    const sender = await tx.user.findUnique({
+      where: { id: senderId },
+      select: { firstName: true, lastName: true },
+    });
     // 1. Check if sender has enough gifts
     const purchasedCount = await tx.giftPurchase.count({
       where: { userId: senderId, giftCardId },
@@ -428,10 +432,8 @@ const sendGiftToFriends = async ({
       // Notification
       // -----------------------------
       const notifPayload: INotificationPayload = {
-        title: "You received a gift!",
-        message: `${
-          receiver.firstName || "Someone"
-        } received a ${giftCategory} gift from a friend!`,
+        title: `${sender?.firstName} ${sender?.lastName} sent you a gift!`,
+        message: `You received a ${giftCategory} gift from ${sender?.firstName} ${sender?.lastName}!`,
         type: "GIFT",
         senderId,
         receiverId: receiver.id,
@@ -463,11 +465,13 @@ const sendMultipleGifts = async ({
   receiverId,
   giftCardIds, // array of giftCardId
 }: any) => {
+  const user = await prisma.user.findUnique({ where: { id: senderId } });
+
   const result = await prisma.$transaction(async (tx) => {
     if (!giftCardIds || giftCardIds.length === 0) {
       throw new ApiError(httpStatus.BAD_REQUEST, "No gifts selected to send");
     }
-    
+
     // 1. Check if receiver exists
     const receiver = await tx.user.findUnique({
       where: { id: receiverId },
@@ -549,8 +553,8 @@ const sendMultipleGifts = async ({
 
     // 5. Notification
     const notifPayload: INotificationPayload = {
-      title: "You received gifts!",
-      message: `You received ${giftCardIds.length} gift(s) from a friend!`,
+      title: `${user?.firstName} ${user?.lastName} sent you gifts!`,
+      message: `You received ${giftCardIds.length} ${purchasedGifts[0].giftCategory} gifts from ${user?.firstName} ${user?.lastName}!`,
       type: "GIFT",
       senderId,
       receiverId,
@@ -575,13 +579,12 @@ const sendMultipleGifts = async ({
   return result;
 };
 
-
 export const giftService = {
   buyGiftCard,
   getGiftCardList,
   getMyPurchasesAndReceivedGifts,
   sendGiftToFriends,
-  sendMultipleGifts
+  sendMultipleGifts,
 };
 
 // const sendGiftToFriends = async ({
