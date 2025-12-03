@@ -3,7 +3,8 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import { paginationHelper } from "../../../helpars/paginationHelper";
 import { IPaginationOptions } from "../../../interfaces/paginations";
-import { InterestCategory } from "@prisma/client";
+import e from "express";
+import { fileUploader } from "../../../helpars/fileUploader";
 
 const getTotalReportService = async (options: IPaginationOptions) => {
   const totalReport = await prisma.report.count();
@@ -196,20 +197,13 @@ const getDailyReportService = async () => {
 const createInterestService = async (interestData: {
   name: string;
   image?: string;
-  category: InterestCategory;
+  category: string;
 }) => {
   // Check if interest with the same category already exists
 
-  if (!Object.values(InterestCategory).includes(interestData.category)) {
-    throw new ApiError(
-      400,
-      "Invalid interest category, must be one of: " +
-        Object.values(InterestCategory).join(", ")
-    );
-  }
-
-  const existingInterest = await prisma.interest.findUnique({
+  const existingInterest = await prisma.interest.findFirst({
     where: { category: interestData.category },
+    select: { id: true, image: true, name: true, category: true },
   });
 
   if (existingInterest) {
@@ -233,34 +227,34 @@ const getAllInterestsService = async () => {
 
 const getConversationService = async () => {
   const rooms = await prisma.room.findMany({
-      include: {
-        chats: {
-          orderBy: { createdAt: "desc" },
-          take: 1, // latest message per room
-        },
-        sender: { select: { id: true, firstName: true, lastName: true } },
-        receiver: { select: { id: true, firstName: true, lastName: true } },
+    include: {
+      chats: {
+        orderBy: { createdAt: "desc" },
+        take: 1, // latest message per room
       },
-    });
+      sender: { select: { id: true, firstName: true, lastName: true } },
+      receiver: { select: { id: true, firstName: true, lastName: true } },
+    },
+  });
 
-    // Map rooms to readable format
-    const conversations = rooms.map((room) => ({
-      roomId: room.id,
-      participants: {
-        sender: room.sender,
-        receiver: room.receiver,
-      },
-      lastMessage: room.chats[0] || null,
-      unreadCount: room.chats.reduce(
-        (acc, chat) => (chat.isRead ? acc : acc + 1),
-        0
-      ),
-    }));
+  // Map rooms to readable format
+  const conversations = rooms.map((room) => ({
+    roomId: room.id,
+    participants: {
+      sender: room.sender,
+      receiver: room.receiver,
+    },
+    lastMessage: room.chats[0] || null,
+    unreadCount: room.chats.reduce(
+      (acc, chat) => (chat.isRead ? acc : acc + 1),
+      0
+    ),
+  }));
 
-    return conversations;
-}
+  return conversations;
+};
 
-// single conversation 
+// single conversation
 const getSingleConversationService = async (roomId: string) => {
   // Fetch room with all chats/messages
   const room = await prisma.room.findUnique({
@@ -299,8 +293,50 @@ const getSingleConversationService = async (roomId: string) => {
   };
 };
 
+// update interest
 
+const updateInterestService = async (
+  interestId: string,
+  updateData: {
+    name?: string;
+    file: Express.Multer.File;
+    category?: string;
+  }
+) => {
+  const interest = await prisma.interest.findUnique({
+    where: { id: interestId },
+  });
+  if (!interest) throw new ApiError(404, "Interest not found");
 
+  if (!updateData.file) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "No image file provided");
+  }
+
+  let uploadedFile;
+  try {
+    uploadedFile = await fileUploader.uploadToDigitalOcean(updateData.file);
+  } catch (error) {
+    console.error("File upload failed:", error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "File upload failed");
+  }
+
+  if (!uploadedFile?.Location) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to get file URL"
+    );
+  }
+
+  const updatedInterest = await prisma.interest.update({
+    where: { id: interestId },
+    data: {
+      ...updateData,
+      image: uploadedFile.Location,
+    },
+  });
+
+  return updatedInterest;
+};
 
 export const adminService = {
   getTotalUsersService,
@@ -312,5 +348,6 @@ export const adminService = {
   createInterestService,
   getAllInterestsService,
   getConversationService,
-  getSingleConversationService
+  getSingleConversationService,
+  updateInterestService,
 };

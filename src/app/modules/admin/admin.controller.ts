@@ -113,6 +113,19 @@ const getSingleConversationService = catchAsync(async (req, res) => {
   });
 });
 
+// update interest
+const updateInterest = catchAsync(async (req, res) => {
+  const { interestId } = req.params;
+   const file = req.file as Express.Multer.File;
+  const result = await adminService.updateInterestService(interestId, { ...req.body, file });  
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Interest updated successfully',
+    data: result,
+  });
+});
+
 export const adminController = {
   getTotalUsers,
   deleteUser,
@@ -123,5 +136,6 @@ export const adminController = {
   createInterest,
   getInterests,
   getConversation,
-  getSingleConversationService
+  getSingleConversationService,
+  updateInterest
 };
