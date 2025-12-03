@@ -93,10 +93,51 @@ const uploadSingleImageService = async (file: Express.Multer.File) => {
   return uploadedFile.Location;
 };
 
+// badge upload service
+const uploadBadgeImageService = async (file: Express.Multer.File, userId:string) => {
+  const user =  await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+  if(user.role !== "ADMIN"){
+    throw new ApiError(httpStatus.FORBIDDEN, "Only admins can upload badge images");
+  }
+
+  if (!file) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "No image file provided");
+  }
+
+  let uploadedFile;
+  try {
+    uploadedFile = await fileUploader.uploadToDigitalOcean(file);
+  } catch (error) {
+    console.error("File upload failed:", error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "File upload failed");
+  }
+
+  if (!uploadedFile?.Location) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to get file URL");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { adminBadge: uploadedFile.Location },
+    select: { adminBadge: true, id: true, email: true, firstName: true, lastName: true, role: true },
+  });
+
+  return updatedUser;
+
+  }
+
+
 
 export const fileUploadService = {
   uploadImages,
   deleteFiles,
   deleteFile,
-  uploadSingleImageService
+  uploadSingleImageService,
+  uploadBadgeImageService
 };

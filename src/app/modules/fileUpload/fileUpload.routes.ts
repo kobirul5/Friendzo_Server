@@ -20,6 +20,20 @@ router.post(
   fileUploader.uploadSingle, 
   fileUploadController.uploadSingleImageController
 );
+// badge upload
+router.put(
+  "/upload-badge",
+  auth(),
+  fileUploader.uploadFile, 
+  fileUploadController.uploadBadgeImageController
+);
+//
+router.post(
+  "/upload-single",
+  auth(),
+  fileUploader.uploadSingle, 
+  fileUploadController.uploadSingleImageController
+);
 
 
 router.delete(

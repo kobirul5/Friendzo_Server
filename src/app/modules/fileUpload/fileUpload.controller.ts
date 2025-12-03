@@ -57,12 +57,26 @@ const uploadSingleImageController = catchAsync(async (req, res) => {
     });
 });
 
+// badge upload controller
+const uploadBadgeImageController = catchAsync(async (req, res) => {
+  const file = req.file as Express.Multer.File;
+  const userId = req.user.id
+    const fileUrl = await fileUploadService.uploadBadgeImageService(file, userId);
 
+
+  sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Image uploaded successfully",
+      data: fileUrl
+    });
+});
 
 
 export const fileUploadController = {
   uploadMultipleImage,
   deleteMultipleImage,
   deleteSingleImage,
-  uploadSingleImageController
+  uploadSingleImageController,
+  uploadBadgeImageController
 };

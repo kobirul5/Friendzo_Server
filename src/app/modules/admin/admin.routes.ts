@@ -52,8 +52,8 @@ router.get(
 );
 router.put(
   "/interest/:interestId",
-  auth(UserRole.ADMIN, UserRole.MANAGER),
-    fileUploader.uploadSingle, 
+  auth(),
+    fileUploader.uploadFile, 
   adminController.updateInterest
 );
 

@@ -117,7 +117,7 @@ const getSingleConversationService = catchAsync(async (req, res) => {
 const updateInterest = catchAsync(async (req, res) => {
   const { interestId } = req.params;
    const file = req.file as Express.Multer.File;
-  const result = await adminService.updateInterestService(interestId, { ...req.body, file });  
+  const result = await adminService.updateInterestService(interestId, { ...req.body.data, file });  
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

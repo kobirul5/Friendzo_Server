@@ -303,6 +303,7 @@ const updateInterestService = async (
     category?: string;
   }
 ) => {
+  console.log("Update data received in service:", updateData);
   const interest = await prisma.interest.findUnique({
     where: { id: interestId },
   });
@@ -327,10 +328,12 @@ const updateInterestService = async (
     );
   }
 
+  console.log("Uploaded file URL:", uploadedFile.Location);
+
   const updatedInterest = await prisma.interest.update({
     where: { id: interestId },
     data: {
-      ...updateData,
+      // ...updateData,
       image: uploadedFile.Location,
     },
   });
