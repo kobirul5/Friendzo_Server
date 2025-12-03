@@ -80,7 +80,7 @@ const getNearbyPeople = async ( {
     userId,
     lat,
     lng,
-    radiusKm = 657018000,
+    radiusKm ,
     minDistance,
     maxDistance,
     search,

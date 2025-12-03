@@ -11,18 +11,17 @@ const getNearbyPeopleController = catchAsync(
 
     const lat = parseFloat(req.query.lat as string);
     const lng = parseFloat(req.query.lng as string);
-    const radiusKm = parseFloat(req.query.radiusKm as string) || 657018000; // default to 10km if not provided
+    const radiusKm = parseFloat(req.query.radiusKm as string) ; // default to 10km if not provided
     const search = req.query.search as string;
     const gender = req.query.gender as string;
 
-    console.log(radiusKm)
-// maxDistance 
-const maxDistance =  Number(req.query.maxDistance as string)
-// minDistance 
-const minDistance =  Number(req.query.minDistance as string)
+    console.log(radiusKm);
+    // maxDistance
+    const maxDistance = Number(req.query.maxDistance as string);
+    // minDistance
+    const minDistance = Number(req.query.minDistance as string);
 
-  
-  const result = await discoverByInterestService.getNearbyPeople({
+    const result = await discoverByInterestService.getNearbyPeople({
       userId,
       lat,
       lng,
@@ -30,10 +29,8 @@ const minDistance =  Number(req.query.minDistance as string)
       search,
       gender,
       minDistance,
-          maxDistance,
-
-    }
-    );
+      maxDistance,
+    });
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
