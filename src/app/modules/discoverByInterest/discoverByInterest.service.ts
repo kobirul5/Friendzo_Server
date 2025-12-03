@@ -187,7 +187,11 @@ const getNearbyPeople = async ( {
   // 9️ Sort by nearest first
   nearbyUsers.sort((a, b) => a.distanceInKm - b.distanceInKm);
 
-  return [nearbyUsers];
+  if (!nearbyUsers || nearbyUsers.length === 0) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Nearby users not found.");
+  }
+
+  return nearbyUsers;
 };
 
 
