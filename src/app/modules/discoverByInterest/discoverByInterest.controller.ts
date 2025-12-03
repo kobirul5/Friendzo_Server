@@ -26,7 +26,7 @@ const minDistance =  Number(req.query.minDistance as string)
       userId,
       lat,
       lng,
-      // radiusKm,
+      radiusKm,
       search,
       gender,
       minDistance,

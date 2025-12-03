@@ -80,7 +80,7 @@ const getNearbyPeople = async ( {
     userId,
     lat,
     lng,
-    radiusKm,
+    radiusKm = 657018000,
     minDistance,
     maxDistance,
     search,
@@ -96,6 +96,8 @@ const getNearbyPeople = async ( {
     gender?: string;
   }
 ) => {
+
+  console.log(radiusKm, "from service");
   // 1️ Check user exists
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -149,6 +151,7 @@ const getNearbyPeople = async ( {
 
   // 5️ Fetch other users
   const users = await prisma.user.findMany({ where: dynamicWhere });
+  console.log(` Found ${users.length} users after filtering.`);
 
   // 6️ Calculate distance
   const usersWithDistance = users
@@ -164,31 +167,35 @@ const getNearbyPeople = async ( {
     })
     .filter(Boolean);
 
+    console.log(` ${usersWithDistance.length} users with calculated distance.`);
   // 7️ Apply radius filter (old support)
   let nearbyUsers = usersWithDistance;
   if (radiusKm) {
     nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= radiusKm);
   }
   if (!radiusKm) {
-    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= 65);
+    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= 657018);
   }
+  // console.log(radiusKm)
 
   // 8️ Apply distance range filter (new support)
-  if (minDistance !== undefined && maxDistance !== undefined) {
-    nearbyUsers = nearbyUsers.filter(
-      (u) => u.distanceInKm >= minDistance && u.distanceInKm <= maxDistance
-    );
-  } else if (maxDistance !== undefined) {
-    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= maxDistance);
-  } else if (minDistance !== undefined) {
-    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm >= minDistance);
-  }
+  // if (minDistance !== undefined && maxDistance !== undefined) {
+  //   nearbyUsers = nearbyUsers.filter(
+  //     (u) => u.distanceInKm >= minDistance && u.distanceInKm <= maxDistance
+  //   );
+  // } else if (maxDistance !== undefined) {
+  //   nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= maxDistance);
+  // } else if (minDistance !== undefined) {
+  //   nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm >= minDistance);
+  // }
+
+  console.log(` ${nearbyUsers.length} users after distance filtering.`);
 
   // 9️ Sort by nearest first
   nearbyUsers.sort((a, b) => a.distanceInKm - b.distanceInKm);
 
   if (!nearbyUsers || nearbyUsers.length === 0) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Nearby users not found.");
+    throw new ApiError(httpStatus.NOT_FOUND, "No users found.");
   }
 
   return nearbyUsers;

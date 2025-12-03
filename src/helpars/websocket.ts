@@ -64,6 +64,34 @@ export function setupWebSocket(server: Server) {
               return;
             }
 
+            const follow = await prisma.follow.findFirst({
+              where: {
+                OR: [
+                  {
+                    followerId: ws.userId,
+                    followingId: receiverId,
+                    requestStatus: "ACCEPTED",
+                  },
+                  {
+                    followerId: receiverId,
+                    followingId: ws.userId,
+                    requestStatus: "ACCEPTED",
+                  },
+                ],
+              },
+            });
+
+            if (!follow) {
+              ws.send(
+                JSON.stringify({
+                  event: "error",
+                  message:
+                    "You cannot send messages until a follow request is accepted.",
+                })
+              );
+              return;
+            }
+
             let room = await prisma.room.findFirst({
               where: {
                 OR: [
@@ -246,19 +274,21 @@ export function setupWebSocket(server: Server) {
                 };
               });
 
-
               const profileImage = await prisma.user.findUnique({
                 where: { id: ws.userId },
                 select: {
                   profileImage: true,
                 },
-              })
+              });
 
               // ✅ Send to client
               ws.send(
                 JSON.stringify({
                   event: "messageList",
-                  data: { profileImage: profileImage?.profileImage, userWithLastMessages },
+                  data: {
+                    profileImage: profileImage?.profileImage,
+                    userWithLastMessages,
+                  },
                 })
               );
             } catch (error) {
@@ -276,7 +306,7 @@ export function setupWebSocket(server: Server) {
             break;
           }
 
-          // 
+          //
           case "giftPopup": {
             if (!ws.userId) {
               console.log("User not authenticated for giftPopup");
@@ -332,7 +362,6 @@ export function setupWebSocket(server: Server) {
 
             break;
           }
-
 
           default:
             console.log("Unknown event type:", parsedData.event);
