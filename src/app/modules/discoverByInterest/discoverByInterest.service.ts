@@ -174,7 +174,7 @@ const getNearbyPeople = async ( {
     nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= radiusKm);
   }
   if (!radiusKm) {
-    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= 657018);
+    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= 5000);
   }
   // console.log(radiusKm)
 
