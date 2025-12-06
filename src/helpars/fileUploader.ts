@@ -6,7 +6,7 @@ import {
   ObjectCannedACL,
 } from "@aws-sdk/client-s3";
 import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
+// import { CloudinaryStorage } from "multer-storage-cloudinary";
 import streamifier from "streamifier";
 import dotenv from "dotenv";
 
@@ -36,14 +36,14 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // ✅ Fixed Cloudinary Storage
-const cloudinaryStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    public_id: (req, file) => `${Date.now()}_${file.originalname}`,
-  },
-});
+// const cloudinaryStorage = new CloudinaryStorage({
+//   cloudinary,
+//   params: {
+//     public_id: (req, file) => `${Date.now()}_${file.originalname}`,
+//   },
+// });
 
-const cloudinaryUpload = multer({ storage: cloudinaryStorage });
+// const cloudinaryUpload = multer({ storage: cloudinaryStorage });
 
 // Upload single image
 const uploadSingle = upload.single("profileImage");
@@ -177,7 +177,7 @@ export const fileUploader = {
   uploadMultipleImage,
   updateProfile,
   uploadFile,
-  cloudinaryUpload,
+  // cloudinaryUpload,
   uploadToDigitalOcean,
   uploadToCloudinary,
 };
