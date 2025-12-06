@@ -8,7 +8,6 @@ router.get("/", auth(), discoverByInterestController.getNearbyPeopleController);
 
 router.get(
   "/all-interest",
-  auth(),
   discoverByInterestController.getAllInterestController
 );
 
