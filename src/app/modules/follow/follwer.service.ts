@@ -171,18 +171,20 @@ const getMyFollowingService = async (userId: string) => {
   }
 
   const totalFollowing = await prisma.follow.count({
-    where: { followerId: userId },
+    where: { 
+      followerId: userId,
+      requestStatus: RequestStatus.ACCEPTED,
+    },
   });
 
   const following = await prisma.user.findUnique({
     where: { id: userId },
     include: {
       following: {
-        // where: { modeType: "SOCIAL" }, 
+        where: { requestStatus: RequestStatus.ACCEPTED },  // 🔥 Only accepted
         select: {
           id: true,
           requestStatus: true,
-          // followingId: true,
           following: {
             select: {
               id: true,
@@ -205,7 +207,7 @@ const getMyFollowingService = async (userId: string) => {
     firstName: f.following.firstName,
     lastName: f.following.lastName,
     profileImage: f.following.profileImage,
-    requestStatus: f.requestStatus, // e.g., "accepted"
+    requestStatus: f.requestStatus,
   }));
 
   return {
@@ -213,6 +215,7 @@ const getMyFollowingService = async (userId: string) => {
     totalFollowing,
   };
 };
+
 
 const unfollowUserSocialService = async (
   followerId: string,
