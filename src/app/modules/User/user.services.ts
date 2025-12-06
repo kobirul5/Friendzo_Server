@@ -15,7 +15,7 @@ import { jwtHelpers } from "../../../helpars/jwtHelpers";
 import emailSender from "../../../shared/emailSender";
 import { registrationOtpTemplate } from "./registrationOtpTemplate";
 import { getRefferId } from "../../../helpars/generateRefferId";
-import { Gender, ModeType, User } from "@prisma/client";
+import { Gender, ModeType, RequestStatus, User } from "@prisma/client";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
 
 const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
@@ -357,7 +357,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
     where: { followingId: userId },
   });
   const followingsCount = await prisma.follow.count({
-    where: { followerId: userId },
+    where: { followerId: userId, requestStatus: RequestStatus.ACCEPTED },
   });
   const gifts = await getGifts(userId);
 
