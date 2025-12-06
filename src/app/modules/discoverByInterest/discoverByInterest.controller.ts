@@ -11,7 +11,7 @@ const getNearbyPeopleController = catchAsync(
 
     const lat = parseFloat(req.query.lat as string);
     const lng = parseFloat(req.query.lng as string);
-    const radiusKm = parseFloat(req.query.radiusKm as string) ; // default to 10km if not provided
+    const radiusKm = parseFloat(req.query.radiusKm as string); // default to 10km if not provided
     const search = req.query.search as string;
     const gender = req.query.gender as string;
 
@@ -74,8 +74,22 @@ const getPeopleBySharedInterestsController = catchAsync(
   }
 );
 
+const getAllInterestController = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await discoverByInterestService.getAllInterest();
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "All interests retrieved successfully.",
+      data: result,
+    });
+  }
+);
+
 export const discoverByInterestController = {
   getNearbyPeopleController,
   getPeopleBySharedInterestsController,
   getTodaysBuzzController,
+  getAllInterestController,
 };

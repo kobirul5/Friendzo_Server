@@ -1,15 +1,10 @@
+import httpStatus from "http-status";
+import prisma from "../../../shared/prisma";
+import { haversine } from "../../../shared/haversine";
+import ApiError from "../../../errors/ApiErrors";
+import { Gender, Prisma, RequestStatus, UserRole } from "@prisma/client";
 
-import httpStatus from 'http-status';
-import prisma from '../../../shared/prisma';
-import { haversine } from '../../../shared/haversine';
-import ApiError from '../../../errors/ApiErrors';
-import { Gender, Prisma, RequestStatus, UserRole } from '@prisma/client';
-
-
-
-const ifNoParameterGetNearbyPeople = async (
-  userId: string,
-) => {
+const ifNoParameterGetNearbyPeople = async (userId: string) => {
   // 1️ Check user exists
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -20,11 +15,9 @@ const ifNoParameterGetNearbyPeople = async (
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
-
-
   // 2️ Determine base coordinates
-  const baseLat =  Number(currentUser.lat);
-  const baseLng =  Number(currentUser.lng);
+  const baseLat = Number(currentUser.lat);
+  const baseLng = Number(currentUser.lng);
 
   // if (baseLat == null || baseLng == null) {
   //   throw new ApiError(httpStatus.BAD_REQUEST, "No valid coordinates found.");
@@ -42,7 +35,7 @@ const ifNoParameterGetNearbyPeople = async (
     id: { notIn: [...excludedIds, userId] },
     lat: { not: null },
     lng: { not: null },
-    role: { not: UserRole.ADMIN }
+    role: { not: UserRole.ADMIN },
   };
 
   // 5️ Fetch users
@@ -75,46 +68,40 @@ const ifNoParameterGetNearbyPeople = async (
   return nearbyUsers;
 };
 
-
-const getNearbyPeople = async ( {
-    userId,
-    lat,
-    lng,
-    radiusKm ,
-    minDistance,
-    maxDistance,
-    search,
-    gender,
-  } : {
-    userId: string;
-    lat?: number;
-    lng?: number;
-    radiusKm?: number;
-    minDistance?: number;
-    maxDistance?: number;
-    search?: string;
-    gender?: string;
-  }
-) => {
-
+const getNearbyPeople = async ({
+  userId,
+  lat,
+  lng,
+  radiusKm,
+  minDistance,
+  maxDistance,
+  search,
+  gender,
+}: {
+  userId: string;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  minDistance?: number;
+  maxDistance?: number;
+  search?: string;
+  gender?: string;
+}) => {
   console.log(radiusKm, "from service");
   // 1️ Check user exists
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
     select: { id: true, lat: true, lng: true },
   });
-    if (!currentUser) {
+  if (!currentUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
-  if( !lat && !lng && !radiusKm && !minDistance && !maxDistance){
-   const result = await ifNoParameterGetNearbyPeople(userId)
-   result.sort((a, b) => a.distanceInKm - b.distanceInKm);
-   return result
+  if (!lat && !lng && !radiusKm && !minDistance && !maxDistance) {
+    const result = await ifNoParameterGetNearbyPeople(userId);
+    result.sort((a, b) => a.distanceInKm - b.distanceInKm);
+    return result;
   }
-
-
-
 
   // 2️ Determine base coordinates
   const baseLat = lat ?? Number(currentUser.lat);
@@ -167,7 +154,7 @@ const getNearbyPeople = async ( {
     })
     .filter(Boolean);
 
-    console.log(` ${usersWithDistance.length} users with calculated distance.`);
+  console.log(` ${usersWithDistance.length} users with calculated distance.`);
   // 7️ Apply radius filter (old support)
   let nearbyUsers = usersWithDistance;
   if (radiusKm) {
@@ -201,7 +188,6 @@ const getNearbyPeople = async ( {
   return nearbyUsers;
 };
 
-
 const getTodaysBuzz = async (userId: string) => {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -216,10 +202,8 @@ const getTodaysBuzz = async (userId: string) => {
         gte: todayStart,
         lte: todayEnd,
       },
-    }
+    },
   });
-
-
 
   // Step 3: Fetch those users separately (without event relation)
   // const users = await prisma.user.findMany({
@@ -228,10 +212,10 @@ const getTodaysBuzz = async (userId: string) => {
   //     not: userId,
   //   },
   //   lat: {
-  //     not: null,        
+  //     not: null,
   //   },
   //   lng: {
-  //     not: null,       
+  //     not: null,
   //   },
   //   role: {not: UserRole.ADMIN},
   // },
@@ -246,7 +230,6 @@ const getTodaysBuzz = async (userId: string) => {
   //   },
   // });
 
-
   const allowedUsers = await prisma.user.findMany({
     where: {
       id: { not: userId },
@@ -260,20 +243,20 @@ const getTodaysBuzz = async (userId: string) => {
           followers: {
             some: {
               followerId: userId,
-              requestStatus: "ACCEPTED"
-            }
-          }
+              requestStatus: "ACCEPTED",
+            },
+          },
         },
         // They follow me → accepted
         {
           following: {
             some: {
               followingId: userId,
-              requestStatus: "ACCEPTED"
-            }
-          }
-        }
-      ]
+              requestStatus: "ACCEPTED",
+            },
+          },
+        },
+      ],
     },
     select: {
       id: true,
@@ -291,7 +274,6 @@ const getTodaysBuzz = async (userId: string) => {
     users: allowedUsers,
   };
 };
-
 
 // const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, interest: string}) => {
 //   // 1️ Get current user's interests
@@ -334,7 +316,6 @@ const getTodaysBuzz = async (userId: string) => {
 //     }
 //   }
 
-
 //   if (!currentUserInterests || currentUserInterests.length === 0) {
 //     return []; // or throw an error if interests are required
 //   }
@@ -347,7 +328,6 @@ const getTodaysBuzz = async (userId: string) => {
 //   });
 
 //   const excludedIds = following.map(f => f.followingId);
- 
 
 //   // 2️ Get other users who share at least one interest
 //   const matchedUsers = await prisma.user.findMany({
@@ -388,8 +368,6 @@ const getTodaysBuzz = async (userId: string) => {
 //       interestPercentage: matchPercentage,
 //     };
 //   });
-
-  
 
 //   // Optional: sort by highest match first
 //   usersWithMatchPercentage.sort(
@@ -513,7 +491,6 @@ const getTodaysBuzz = async (userId: string) => {
 //   return usersWithMatchPercentage;
 // };
 
-
 const getPeopleBySharedInterests = async ({
   userId,
   interest,
@@ -545,7 +522,8 @@ const getPeopleBySharedInterests = async ({
   const CategoriesArray = interests.map((i) => i.name);
 
   const invalidNames = currentUserInterests.filter(
-    (name) => !CategoriesArray.includes(name as (typeof CategoriesArray)[number])
+    (name) =>
+      !CategoriesArray.includes(name as (typeof CategoriesArray)[number])
   );
 
   if (invalidNames.length > 0) {
@@ -564,15 +542,15 @@ const getPeopleBySharedInterests = async ({
       where: { followerId: userId },
       select: { followingId: true },
     }),
-    
+
     // 🤝 ALL MUTUAL FRIENDS (BOTH DIRECTIONS - ACCEPTED ONLY)
     prisma.follow.findMany({
-      where: { 
+      where: {
         requestStatus: RequestStatus.ACCEPTED,
         OR: [
           { followingId: userId }, // ✅ They accepted YOUR request
-          { followerId: userId }   // ✅ YOU accepted THEIR request
-        ]
+          { followerId: userId }, // ✅ YOU accepted THEIR request
+        ],
       },
       select: { followerId: true, followingId: true },
     }),
@@ -581,7 +559,7 @@ const getPeopleBySharedInterests = async ({
   // ✅ VALIDATION: Check if userId exists as follower
   const userAsFollowerCheck = await prisma.follow.findFirst({
     where: { followerId: userId },
-    select: { id: true }
+    select: { id: true },
   });
 
   if (!userAsFollowerCheck) {
@@ -592,18 +570,23 @@ const getPeopleBySharedInterests = async ({
   const usersIFollow = following.map((f) => f.followingId);
 
   // ✅ ALL mutual friends (BOTH directions - remove duplicates & yourself)
-  const mutualFriends = [...new Set(
-    acceptedFriendsBothWays
-      .map(f => [f.followerId, f.followingId])
-      .flat()
-      .filter(id => id !== userId) // Remove yourself
-      .filter(id => !usersIFollow.includes(id)) // Remove already-followed
-  )];
+  const mutualFriends = [
+    ...new Set(
+      acceptedFriendsBothWays
+        .map((f) => [f.followerId, f.followingId])
+        .flat()
+        .filter((id) => id !== userId) // Remove yourself
+        .filter((id) => !usersIFollow.includes(id)) // Remove already-followed
+    ),
+  ];
 
   // ✅ EXCLUDE: Yourself + Users you follow + ALL Mutual friends
   const excludedIds = [...new Set([userId, ...usersIFollow, ...mutualFriends])];
 
-  console.log(`🚫 Excluding ${excludedIds.length} users:`, excludedIds.slice(0, 5));
+  console.log(
+    `🚫 Excluding ${excludedIds.length} users:`,
+    excludedIds.slice(0, 5)
+  );
 
   // 4️⃣ Fetch matched users (EXCLUDING friends & followed)
   const matchedUsers = await prisma.user.findMany({
@@ -647,32 +630,31 @@ const getPeopleBySharedInterests = async ({
       user.lat != null &&
       user.lng != null
     ) {
-      distanceKm = Math.round(
-        haversine(
-          { lat: currentUser.lat, lng: currentUser.lng },
-          { lat: user.lat, lng: user.lng }
-        ) * 100
-      ) / 100;
+      distanceKm =
+        Math.round(
+          haversine(
+            { lat: currentUser.lat, lng: currentUser.lng },
+            { lat: user.lat, lng: user.lng }
+          ) * 100
+        ) / 100;
     }
 
     // ✅ SANITIZED USER WITH DEFAULT VALUES FOR NULL FIELDS
     const sanitizedUser = {
-      id: user.id ?? '', // Should never be null, but safe
-      firstName: user.firstName ?? 'Unknown', // Default name
-      lastName: user.lastName ?? 'User',
+      id: user.id ?? "", // Should never be null, but safe
+      firstName: user.firstName ?? "Unknown", // Default name
+      lastName: user.lastName ?? "User",
       profileImage: user.profileImage,
-      email: user.email ,
+      email: user.email,
       role: user.role,
       interests: user.interests ?? [], // Empty array if null
-      gender: user.gender ?? 'Prefer not to say', // Default gender string
+      gender: user.gender ?? "Prefer not to say", // Default gender string
       dob: user.dob ?? 0, // Keep null or set to new Date('1900-01-01') if needed
       lat: user.lat ?? 0, // Keep null (used for distance calc)
       lng: user.lng ?? 0, // Keep null
-      address: user.address ?? 'Location not shared',
-      boost: user.boosts , // Default address string
+      address: user.address ?? "Location not shared",
+      boost: user.boosts, // Default address string
     };
-
-    
 
     return {
       ...sanitizedUser,
@@ -681,26 +663,36 @@ const getPeopleBySharedInterests = async ({
     };
   });
 
-
   // 6️⃣ Sort by highest match first
-usersWithMatchPercentage.sort((a, b) => {
-  const aBoosted = a.boost > 1 ? 1 : 0;
-  const bBoosted = b.boost > 1 ? 1 : 0;
+  usersWithMatchPercentage.sort((a, b) => {
+    const aBoosted = a.boost > 1 ? 1 : 0;
+    const bBoosted = b.boost > 1 ? 1 : 0;
 
-  if (aBoosted !== bBoosted) return bBoosted - aBoosted; // boosted first
-  if (b.interestPercentage !== a.interestPercentage)
-    return b.interestPercentage - a.interestPercentage; // higher match first
-  return a.distanceKm - b.distanceKm; // nearer first
-});
-
+    if (aBoosted !== bBoosted) return bBoosted - aBoosted; // boosted first
+    if (b.interestPercentage !== a.interestPercentage)
+      return b.interestPercentage - a.interestPercentage; // higher match first
+    return a.distanceKm - b.distanceKm; // nearer first
+  });
 
   console.log(`✅ Found ${usersWithMatchPercentage.length} new matches!`);
 
   return usersWithMatchPercentage;
 };
-export const discoverByInterestService = {
-getNearbyPeople,
-getPeopleBySharedInterests,
-getTodaysBuzz
 
+const getAllInterest = async () => {
+  const interests = await prisma.interest.findMany({
+    select: {
+      name: true,
+      image: true,
+    },
+  });
+
+  return interests;
+};
+
+export const discoverByInterestService = {
+  getNearbyPeople,
+  getPeopleBySharedInterests,
+  getTodaysBuzz,
+  getAllInterest,
 };
