@@ -24,7 +24,7 @@ export const registrationOtpTemplate = (otp: number) => `
               <p style="font-size: 12px; color: #999; text-align: center;">
                   Best Regards,<br/>
                   <span style="font-weight: bold; color: #2196f3;">Team Support</span><br/>
-                  <a href="mailto:support@yourapp.com" style="color: #2196f3; text-decoration: none; font-weight: bold;">Contact Support</a>
+                  <a href="mailto:noreply.together.io@gmail.com" style="color: #2196f3; text-decoration: none; font-weight: bold;">Contact Support</a>
               </p>
           </div>
       </div>

@@ -229,8 +229,8 @@ const forgotPassword = async (payload: { email: string }) => {
         <div style="text-align: center; margin-top: 30px;">
             <p style="font-size: 12px; color: #999; text-align: center;">
                 Best Regards,<br/>
-                <span style="font-weight: bold; color: #3f51b5;">Nmbull Team</span><br/>
-                <a href="mailto:support@nmbull.com" style="color: #ffffff; text-decoration: none; font-weight: bold;">Contact Support</a>
+                <span style="font-weight: bold; color: #3f51b5;">Togetherapp Team</span><br/>
+                <a href="mailto:noreply.together.io@gmail.com" style="color: #ffffff; text-decoration: none; font-weight: bold;">Contact Support</a>
             </p>
         </div>
     </div>
@@ -293,7 +293,7 @@ const resendOtp = async (email: string) => {
                 <p style="font-size: 12px; color: #999; text-align: center;">
                     Best Regards,<br/>
                     <span style="font-weight: bold; color: #3f51b5;">levimusuc@team.com</span><br/>
-                    <a href="mailto:support@booksy.buzz.com" style="color: #ffffff; text-decoration: none; font-weight: bold;">Contact Support</a>
+                    <a href="mailto:noreply.together.io@gmail.com" style="color: #ffffff; text-decoration: none; font-weight: bold;">Contact Support</a>
                 </p>
             </div>
         </div>
