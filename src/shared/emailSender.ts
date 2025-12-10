@@ -22,4 +22,4 @@ const emailSender = async (email: string, html: string, subject: string) => {
   });
 };
 
-// export default emailSender;
+export default emailSender;
