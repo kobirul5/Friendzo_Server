@@ -64,33 +64,33 @@ export function setupWebSocket(server: Server) {
               return;
             }
 
-            const follow = await prisma.follow.findFirst({
-              where: {
-                OR: [
-                  {
-                    followerId: ws.userId,
-                    followingId: receiverId,
-                    requestStatus: "ACCEPTED",
-                  },
-                  {
-                    followerId: receiverId,
-                    followingId: ws.userId,
-                    requestStatus: "ACCEPTED",
-                  },
-                ],
-              },
-            });
+            // const follow = await prisma.follow.findFirst({
+            //   where: {
+            //     OR: [
+            //       {
+            //         followerId: ws.userId,
+            //         followingId: receiverId,
+            //         requestStatus: "ACCEPTED",
+            //       },
+            //       {
+            //         followerId: receiverId,
+            //         followingId: ws.userId,
+            //         requestStatus: "ACCEPTED",
+            //       },
+            //     ],
+            //   },
+            // });
 
-            if (!follow) {
-              ws.send(
-                JSON.stringify({
-                  event: "error",
-                  message:
-                    "You cannot send messages until a follow request is accepted.",
-                })
-              );
-              return;
-            }
+            // if (!follow) {
+            //   ws.send(
+            //     JSON.stringify({
+            //       event: "error",
+            //       message:
+            //         "You cannot send messages until a follow request is accepted.",
+            //     })
+            //   );
+            //   return;
+            // }
 
             let room = await prisma.room.findFirst({
               where: {
