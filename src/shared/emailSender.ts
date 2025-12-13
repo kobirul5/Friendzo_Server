@@ -3,14 +3,12 @@ import config from "../config";
 
 const emailSender = async (email: string, html: string, subject: string) => {
   const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
+    host: "premium51.web-hosting.com",
     port: 587,
     secure: false,
     auth: {
-      // user: "sahin.backend@gmail.com",
-      // pass: "jgac trhv xkxa esaw",
-      user: config.emailSender.email, // Use the email from config
-      pass: config.emailSender.app_pass, // Use the app password from config
+      user: "noreply@togetherapp.ai", // Use the email from config
+      pass: "i5{f)+JjW^GHnf{o%A", // Use the app password from config
     },
   });
 
