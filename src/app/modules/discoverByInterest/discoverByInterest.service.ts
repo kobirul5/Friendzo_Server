@@ -103,9 +103,6 @@ const getNearbyPeople = async ({
     return result;
   }
 
-  console.log(` Current user found: ${currentUser.lat}, ${currentUser.lng}.-----------------`);
-  console.log(` Input coordinates: ${lat}, ${lng}.-----------------`);
-
 const getValidCoordinate = (input?: number, fallback?: number): number => {
   if (typeof input === "number" && !isNaN(input)) return input;
   if (typeof fallback === "number" && !isNaN(fallback)) return fallback;
@@ -115,9 +112,6 @@ const getValidCoordinate = (input?: number, fallback?: number): number => {
 const baseLat = getValidCoordinate(lat, currentUser.lat as number);
 const baseLng = getValidCoordinate(lng, currentUser.lng as number);
 
-
-
-  console.log(` Base coordinates: ${baseLat}, ${baseLng}.-----------------`);
 
   if (baseLat == null || baseLng == null) {
     throw new ApiError(httpStatus.BAD_REQUEST, "No valid coordinates found.");
@@ -150,7 +144,6 @@ const baseLng = getValidCoordinate(lng, currentUser.lng as number);
 
   // 5️ Fetch other users
   const users = await prisma.user.findMany({ where: dynamicWhere });
-  console.log(` Found ${users.length} users after filtering.`);
 
   // 6️ Calculate distance
   const usersWithDistance = users
@@ -166,8 +159,7 @@ const baseLng = getValidCoordinate(lng, currentUser.lng as number);
     })
     .filter(Boolean);
 
-  console.log(` ${usersWithDistance.length} users with calculated distance.`);
-  // 7️ Apply radius filter (old support)
+    // 7️ Apply radius filter (old support)
   let nearbyUsers = usersWithDistance;
   // if (radiusKm) {
   //   nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= radiusKm);
@@ -177,11 +169,9 @@ const baseLng = getValidCoordinate(lng, currentUser.lng as number);
   // }
   // console.log(radiusKm)
 
-  console.log(` ${nearbyUsers.length} users after radius filtering.`);
 
   // 8️ Apply distance range filter (new support)
   if (minDistance !== undefined && maxDistance !== undefined) {
-    console.log(minDistance, maxDistance, "--------------")
     nearbyUsers = nearbyUsers.filter(
       (u) => u.distanceInKm >= minDistance && u.distanceInKm <= maxDistance
     );
@@ -200,7 +190,6 @@ const baseLng = getValidCoordinate(lng, currentUser.lng as number);
     throw new ApiError(httpStatus.NOT_FOUND, "No users found.");
   }
 
-  console.log(` Returning ${nearbyUsers.length} nearby users.`);
 
   return nearbyUsers;
 };
