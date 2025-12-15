@@ -87,7 +87,7 @@ const getNearbyPeople = async ({
   search?: string;
   gender?: string;
 }) => {
-  console.log(radiusKm, "from service");
+  // console.log(radiusKm, "from service");
   // 1️ Check user exists
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -97,15 +97,27 @@ const getNearbyPeople = async ({
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
-  if (!lat && !lng && !radiusKm && !minDistance && !maxDistance) {
+  if (!lat && !lng && !minDistance && !maxDistance) {
     const result = await ifNoParameterGetNearbyPeople(userId);
     result.sort((a, b) => a.distanceInKm - b.distanceInKm);
     return result;
   }
 
-  // 2️ Determine base coordinates
-  const baseLat = lat ?? Number(currentUser.lat);
-  const baseLng = lng ?? Number(currentUser.lng);
+  console.log(` Current user found: ${currentUser.lat}, ${currentUser.lng}.-----------------`);
+  console.log(` Input coordinates: ${lat}, ${lng}.-----------------`);
+
+const getValidCoordinate = (input?: number, fallback?: number): number => {
+  if (typeof input === "number" && !isNaN(input)) return input;
+  if (typeof fallback === "number" && !isNaN(fallback)) return fallback;
+  return 0;
+};
+
+const baseLat = getValidCoordinate(lat, currentUser.lat as number);
+const baseLng = getValidCoordinate(lng, currentUser.lng as number);
+
+
+
+  console.log(` Base coordinates: ${baseLat}, ${baseLng}.-----------------`);
 
   if (baseLat == null || baseLng == null) {
     throw new ApiError(httpStatus.BAD_REQUEST, "No valid coordinates found.");
@@ -157,16 +169,19 @@ const getNearbyPeople = async ({
   console.log(` ${usersWithDistance.length} users with calculated distance.`);
   // 7️ Apply radius filter (old support)
   let nearbyUsers = usersWithDistance;
-  if (radiusKm) {
-    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= radiusKm);
-  }
-  if (!radiusKm) {
-    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= 5000);
-  }
+  // if (radiusKm) {
+  //   nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= radiusKm);
+  // }
+  // if (!radiusKm) {
+  //   nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= 5000);
+  // }
   // console.log(radiusKm)
+
+  console.log(` ${nearbyUsers.length} users after radius filtering.`);
 
   // 8️ Apply distance range filter (new support)
   if (minDistance !== undefined && maxDistance !== undefined) {
+    console.log(minDistance, maxDistance, "--------------")
     nearbyUsers = nearbyUsers.filter(
       (u) => u.distanceInKm >= minDistance && u.distanceInKm <= maxDistance
     );
@@ -184,6 +199,8 @@ const getNearbyPeople = async ({
   if (!nearbyUsers || nearbyUsers.length === 0) {
     throw new ApiError(httpStatus.NOT_FOUND, "No users found.");
   }
+
+  console.log(` Returning ${nearbyUsers.length} nearby users.`);
 
   return nearbyUsers;
 };
