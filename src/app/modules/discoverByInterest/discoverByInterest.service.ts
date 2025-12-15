@@ -166,17 +166,17 @@ const getNearbyPeople = async ({
   // console.log(radiusKm)
 
   // 8️ Apply distance range filter (new support)
-  // if (minDistance !== undefined && maxDistance !== undefined) {
-  //   nearbyUsers = nearbyUsers.filter(
-  //     (u) => u.distanceInKm >= minDistance && u.distanceInKm <= maxDistance
-  //   );
-  // } else if (maxDistance !== undefined) {
-  //   nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= maxDistance);
-  // } else if (minDistance !== undefined) {
-  //   nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm >= minDistance);
-  // }
+  if (minDistance !== undefined && maxDistance !== undefined) {
+    nearbyUsers = nearbyUsers.filter(
+      (u) => u.distanceInKm >= minDistance && u.distanceInKm <= maxDistance
+    );
+  } else if (maxDistance !== undefined) {
+    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= maxDistance);
+  } else if (minDistance !== undefined) {
+    nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm >= minDistance);
+  }
 
-  console.log(` ${nearbyUsers.length} users after distance filtering.`);
+  // console.log(` ${nearbyUsers.length} users after distance filtering.`);
 
   // 9️ Sort by nearest first
   nearbyUsers.sort((a, b) => a.distanceInKm - b.distanceInKm);
