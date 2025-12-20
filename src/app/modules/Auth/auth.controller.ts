@@ -108,7 +108,7 @@ const verifyForgotPasswordOtp = catchAsync(async (req: Request, res: Response) =
   sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
-      message: "Check your email!",
+      message: "OTP verification successful",
       data: result
   })
 });

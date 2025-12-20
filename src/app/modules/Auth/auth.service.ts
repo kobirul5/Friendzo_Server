@@ -348,7 +348,18 @@ const verifyForgotPasswordOtp = async (payload: {
     },
   });
 
-  return { message: 'OTP verification successful' };
+  // Generate JWT token
+  const token = jwtHelpers.generateToken(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+    config.jwt.jwt_secret as Secret,
+    config.jwt.expires_in as string
+  )
+
+  return  token ;
 };
 
 
