@@ -358,7 +358,7 @@ const verifyForgotPasswordOtp = async (payload: {
     config.jwt.expires_in as string
   );
 
-  return token;
+  return {token};
 };
 
 // reset password
