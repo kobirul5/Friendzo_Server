@@ -7,11 +7,12 @@ import ApiError from "../../../errors/ApiErrors";
 import emailSender from "../../../shared/emailSender";
 import { UserRole, UserStatus } from "@prisma/client";
 import httpStatus from "http-status";
-import crypto from 'crypto';
-import { getGoogleUser, getFacebookUser } from "../../../shared/socilaAuthHelper"
+import crypto from "crypto";
+import {
+  getGoogleUser,
+  getFacebookUser,
+} from "../../../shared/socilaAuthHelper";
 import { getRefferId } from "../../../helpars/generateRefferId";
-
-
 
 // user login
 // const loginUser = async (payload: { email: string; password: string ; role: string; fcmToken?: string }) => {
@@ -29,7 +30,6 @@ import { getRefferId } from "../../../helpars/generateRefferId";
 //     `User not found with email ${payload.email} and role ${payload.role}`
 //   );
 // }
-
 
 //   if (!userData?.email) {
 //     throw new ApiError(
@@ -58,12 +58,14 @@ import { getRefferId } from "../../../helpars/generateRefferId";
 //   return { token: accessToken , role: userData.role };
 // };
 
-
-const loginUser = async (payload: { email: string; password: string; fcmToken?: string }) => {
+const loginUser = async (payload: {
+  email: string;
+  password: string;
+  fcmToken?: string;
+}) => {
   const userData = await prisma.user.findFirst({
     where: {
       email: payload.email,
-      
     },
   });
 
@@ -104,21 +106,25 @@ const loginUser = async (payload: { email: string; password: string; fcmToken?: 
     config.jwt.expires_in as string
   );
 
-   const requiredFields = [
+  const requiredFields = [
     userData.firstName,
     userData.lastName,
     userData.phoneNumber,
     userData.gender,
     userData.about,
     userData.interests?.length > 0,
-    userData.profileImage
+    userData.profileImage,
   ];
 
-   const profileComplete = requiredFields.every(Boolean);
+  const profileComplete = requiredFields.every(Boolean);
 
-  return { token: accessToken, role: userData.role, id: userData.id, isProfileComplete: profileComplete };
+  return {
+    token: accessToken,
+    role: userData.role,
+    id: userData.id,
+    isProfileComplete: profileComplete,
+  };
 };
-
 
 // get user profile
 const getMyProfile = async (userToken: string) => {
@@ -167,7 +173,6 @@ const changePassword = async (
     throw new ApiError(404, "User not found");
   }
 
-
   if (!user.password) {
     throw new ApiError(400, "User password is not set.");
   }
@@ -190,7 +195,6 @@ const changePassword = async (
   return { message: "Password changed successfully" };
 };
 
-
 const forgotPassword = async (payload: { email: string }) => {
   // Fetch user data or throw if not found
   const userData = await prisma.user.findFirstOrThrow({
@@ -207,37 +211,40 @@ const forgotPassword = async (payload: { email: string }) => {
 
   // Create the email content
   const html = `
-<div style="font-family: Arial, sans-serif; color: #333; padding: 30px; background: linear-gradient(135deg, #6c63ff, #3f51b5); border-radius: 8px;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px;">
-        <h2 style="color: #ffffff; font-size: 28px; text-align: center; margin-bottom: 20px;">
-            <span style="color: #ffeb3b;">Forgot Password OTP</span>
-        </h2>
-        <p style="font-size: 16px; color: #333; line-height: 1.5; text-align: center;">
-            Your forgot password OTP code is below.
-        </p>
-        <p style="font-size: 32px; font-weight: bold; color: #ff4081; text-align: center; margin: 20px 0;">
-            ${otp}
-        </p>
-        <div style="text-align: center; margin-bottom: 20px;">
-            <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                This OTP will expire in <strong>10 minutes</strong>. If you did not request this, please ignore this email.
-            </p>
-            <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                If you need assistance, feel free to contact us.
-            </p>
-        </div>
-        <div style="text-align: center; margin-top: 30px;">
-            <p style="font-size: 12px; color: #999; text-align: center;">
-                Best Regards,<br/>
-                <span style="font-weight: bold; color: #3f51b5;">Togetherapp Team</span><br/>
-                <a href="mailto:noreply.together.io@gmail.com" style="color: #ffffff; text-decoration: none; font-weight: bold;">Contact Support</a>
-            </p>
-        </div>
+<div style="font-family: Arial, sans-serif; background:#f6f8fb; padding:40px;">
+  <div style="max-width:600px; background:#fff; margin:auto; padding:30px; border-radius:6px;">
+
+    <h2 style="color:#222;">Together App</h2>
+    <p style="color:#555;">Password Reset Request</p>
+
+    <p style="margin-top:20px;">
+      We received a request to reset your password.
+      Please use the OTP below to continue:
+    </p>
+
+    <div style="text-align:center; margin:30px 0;">
+      <strong style="font-size:28px; letter-spacing:5px;">
+        ${otp}
+      </strong>
     </div>
+
+    <p style="font-size:14px; color:#555;">
+      This OTP will expire in <strong>10 minutes</strong>.
+      If you did not request a password reset, please ignore this email.
+    </p>
+
+    <p style="font-size:12px; color:#999; margin-top:30px;">
+      Together App Security Team
+    </p>
+  </div>
 </div> `;
 
   // Send the OTP email to the user
-  await emailSender(userData.email, html, 'Forgot Password OTP',);
+  await emailSender(
+    userData.email,
+    html,
+    "Together App - Password Reset Verification"
+  );
 
   // Update the user's OTP and expiration in the database
   await prisma.user.update({
@@ -248,9 +255,8 @@ const forgotPassword = async (payload: { email: string }) => {
     },
   });
 
-  return { message: 'Reset password OTP sent to your email successfully', otp };
+  return { message: "Reset password OTP sent to your email successfully", otp };
 };
-
 
 const resendOtp = async (email: string) => {
   // Check if the user exists
@@ -259,7 +265,7 @@ const resendOtp = async (email: string) => {
   });
 
   if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'This user is not found!');
+    throw new ApiError(httpStatus.NOT_FOUND, "This user is not found!");
   }
 
   // Generate a new OTP
@@ -270,38 +276,33 @@ const resendOtp = async (email: string) => {
 
   // Create email content
   const html = `
-    <div style="font-family: Arial, sans-serif; color: #333; padding: 30px; background: linear-gradient(135deg, #6c63ff, #3f51b5); border-radius: 8px;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px;">
-            <h2 style="color: #ffffff; font-size: 28px; text-align: center; margin-bottom: 20px;">
-                <span style="color: #ffeb3b;">Resend OTP</span>
-            </h2>
-            <p style="font-size: 16px; color: #333; line-height: 1.5; text-align: center;">
-                Here is your new OTP code to complete the process.
-            </p>
-            <p style="font-size: 32px; font-weight: bold; color: #ff4081; text-align: center; margin: 20px 0;">
-                ${otp}
-            </p>
-            <div style="text-align: center; margin-bottom: 20px;">
-                <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                    This OTP will expire in <strong>5 minutes</strong>. If you did not request this, please ignore this email.
-                </p>
-                <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
-                    If you need further assistance, feel free to contact us.
-                </p>
-            </div>
-            <div style="text-align: center; margin-top: 30px;">
-                <p style="font-size: 12px; color: #999; text-align: center;">
-                    Best Regards,<br/>
-                    <span style="font-weight: bold; color: #3f51b5;">levimusuc@team.com</span><br/>
-                    <a href="mailto:noreply.together.io@gmail.com" style="color: #ffffff; text-decoration: none; font-weight: bold;">Contact Support</a>
-                </p>
-            </div>
-        </div>
+    <div style="font-family: Arial, sans-serif; background:#f5f7fa; padding:40px;">
+  <div style="max-width:600px; background:#fff; margin:auto; padding:30px; border-radius:6px;">
+
+    <h2>Together App</h2>
+
+    <p>
+      As requested, here is your new OTP code:
+    </p>
+
+    <div style="font-size:28px; font-weight:bold; margin:20px 0;">
+      ${otp}
     </div>
+
+    <p style="font-size:14px;">
+      This code will expire in 5 minutes.
+    </p>
+
+    <p style="font-size:12px; color:#999; margin-top:30px;">
+      Please do not share this code with anyone.
+    </p>
+
+  </div>
+</div>
   `;
 
   // Send the OTP to user's email
-  await emailSender(user.email, html, 'Resend OTP');
+  await emailSender(user.email, html, "Together App - Your Verification Code");
 
   // Update the user's profile with the new OTP and expiration
   const updatedUser = await prisma.user.update({
@@ -312,9 +313,8 @@ const resendOtp = async (email: string) => {
     },
   });
 
-  return { message: 'OTP resent successfully' };
+  return { message: "OTP resent successfully" };
 };
-
 
 const verifyForgotPasswordOtp = async (payload: {
   email: string;
@@ -326,9 +326,8 @@ const verifyForgotPasswordOtp = async (payload: {
   });
 
   if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'This user is not found!');
+    throw new ApiError(httpStatus.NOT_FOUND, "This user is not found!");
   }
-
 
   // Check if the OTP is valid and not expired
   if (
@@ -336,7 +335,7 @@ const verifyForgotPasswordOtp = async (payload: {
     !user.expirationOtp ||
     user.expirationOtp < new Date()
   ) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid OTP');
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid OTP");
   }
 
   // Update the user's OTP, OTP expiration, and verification status
@@ -357,11 +356,10 @@ const verifyForgotPasswordOtp = async (payload: {
     },
     config.jwt.jwt_secret as Secret,
     config.jwt.expires_in as string
-  )
+  );
 
-  return  token ;
+  return token;
 };
-
 
 // reset password
 const resetPassword = async (payload: { password: string; email: string }) => {
@@ -371,9 +369,8 @@ const resetPassword = async (payload: { password: string; email: string }) => {
   });
 
   if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'This user is not found!');
+    throw new ApiError(httpStatus.NOT_FOUND, "This user is not found!");
   }
-
 
   // Hash the new password
   const hashedPassword = await bcrypt.hash(payload.password, 10);
@@ -388,25 +385,25 @@ const resetPassword = async (payload: { password: string; email: string }) => {
     },
   });
 
-  return { message: 'Password reset successfully' };
+  return { message: "Password reset successfully" };
 };
 
-
-
-
-const socialLogin = async (provider: 'google' | 'facebook', accessToken: string) => {
+const socialLogin = async (
+  provider: "google" | "facebook",
+  accessToken: string
+) => {
   let userData;
 
-  if (provider === 'google') {
+  if (provider === "google") {
     userData = await getGoogleUser(accessToken);
-  } else if (provider === 'facebook') {
+  } else if (provider === "facebook") {
     userData = await getFacebookUser(accessToken);
   } else {
-    throw new Error('Invalid provider');
+    throw new Error("Invalid provider");
   }
 
   if (!userData.email) {
-    throw new Error('Email not found from provider');
+    throw new Error("Email not found from provider");
   }
 
   let user = await prisma.user.findUnique({
@@ -416,7 +413,9 @@ const socialLogin = async (provider: 'google' | 'facebook', accessToken: string)
   // Generate unique referral code for the new user
   let newReferralCode = getRefferId();
   // Ensure uniqueness in DB
-  while (await prisma.user.findUnique({ where: { referralCode: newReferralCode } })) {
+  while (
+    await prisma.user.findUnique({ where: { referralCode: newReferralCode } })
+  ) {
     newReferralCode = getRefferId();
   }
 
@@ -425,16 +424,15 @@ const socialLogin = async (provider: 'google' | 'facebook', accessToken: string)
     user = await prisma.user.create({
       data: {
         email: userData.email,
-        firstName: userData.name || '',
-        profileImage: userData.picture?.data?.url || userData.picture || '',
+        firstName: userData.name || "",
+        profileImage: userData.picture?.data?.url || userData.picture || "",
         isVerified: true,
         referralCode: newReferralCode,
-        status: 'ACTIVE',
-        role: 'USER',
+        status: "ACTIVE",
+        role: "USER",
       },
     });
   }
-
 
   const token = jwtHelpers.generateToken(
     {
@@ -449,23 +447,20 @@ const socialLogin = async (provider: 'google' | 'facebook', accessToken: string)
   return { token, user };
 };
 
-
 const deleteAccount = async (userId: string) => {
   // Check if the user exists
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
   if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
   // Delete the user account
   await prisma.user.delete({
     where: { id: userId },
   });
-  return { message: 'Account deleted successfully' };
+  return { message: "Account deleted successfully" };
 };
-
-
 
 export const AuthServices = {
   loginUser,
@@ -476,5 +471,5 @@ export const AuthServices = {
   resetPassword,
   resendOtp,
   verifyForgotPasswordOtp,
-  deleteAccount
+  deleteAccount,
 };

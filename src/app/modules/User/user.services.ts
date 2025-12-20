@@ -24,7 +24,10 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
-    throw new ApiError(httpStatus.BAD_REQUEST, `User already exists with this email ${email}`);
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `User already exists with this email ${email}`
+    );
   }
 
   // Hash password
@@ -97,7 +100,7 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
   await emailSender(
     newUser.email,
     registrationOtpTemplate(otp),
-    "User Email Verification OTP"
+    "Together App - Verify Your Email Address"
   );
 
   // Generate JWT token
@@ -351,8 +354,6 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
     select: { id: true, name: true, image: true, category: true },
   });
 
-
-
   const followersCount = await prisma.follow.count({
     where: { followingId: userId },
   });
@@ -386,7 +387,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
   });
   const isSubscribed = !!activeSubscription;
 
-     const isMe = currentUserId === userId;
+  const isMe = currentUserId === userId;
   if (currentUserId) {
     const isFriend = await isFriendOrFollow(currentUserId, userId);
     return {
@@ -400,12 +401,9 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       isFriend: isFriend.isFriend,
       followStatus: isFriend.requestStatus,
       userRequestStatus: isFriend.userRequestStatus,
-      isMe
+      isMe,
     };
   }
-
-
-
 
   return {
     ...user,
@@ -423,14 +421,23 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
 const isFriendOrFollow = async (
   userId: string,
   friendId: string
-): Promise<{ isFriend: boolean; requestStatus: string, userRequestStatus: string }> => {
+): Promise<{
+  isFriend: boolean;
+  requestStatus: string;
+  userRequestStatus: string;
+}> => {
   // Fetch user mode
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { isDatingMode: true },
   });
 
-  if (!user) return { isFriend: false, requestStatus: "NOTFOLLOW", userRequestStatus: "NOTFOLLOW" };
+  if (!user)
+    return {
+      isFriend: false,
+      requestStatus: "NOTFOLLOW",
+      userRequestStatus: "NOTFOLLOW",
+    };
 
   const modeType = user.isDatingMode ? "DATING" : "SOCIAL";
 
@@ -458,7 +465,11 @@ const isFriendOrFollow = async (
   });
 
   if (follows.length === 0) {
-    return { isFriend: false, requestStatus: "NOTFOLLOW", userRequestStatus: "NOTFOLLOW" };
+    return {
+      isFriend: false,
+      requestStatus: "NOTFOLLOW",
+      userRequestStatus: "NOTFOLLOW",
+    };
   }
 
   if (modeType === "DATING") {
@@ -474,27 +485,37 @@ const isFriendOrFollow = async (
       userFollow?.requestStatus === "ACCEPTED" &&
       friendFollow?.requestStatus === "ACCEPTED"
     ) {
-
-      return { isFriend: true, requestStatus: "ACCEPTED", userRequestStatus: "NOTFOLLOW"  };
+      return {
+        isFriend: true,
+        requestStatus: "ACCEPTED",
+        userRequestStatus: "NOTFOLLOW",
+      };
     }
 
     // Not mutual yet
     return {
       isFriend: false,
       requestStatus:
-        userFollow?.requestStatus || friendFollow?.requestStatus || "NOTFOLLOW" , 
-        userRequestStatus: userFollow?.requestStatus || friendFollow?.requestStatus || "NOTFOLLOW",
+        userFollow?.requestStatus || friendFollow?.requestStatus || "NOTFOLLOW",
+      userRequestStatus:
+        userFollow?.requestStatus || friendFollow?.requestStatus || "NOTFOLLOW",
     };
   } else {
     // Social mode: one ACCEPTED follow is enough
     const accepted = follows.find((f) => f.requestStatus === "ACCEPTED");
     if (accepted) {
-      return { isFriend: true, requestStatus: "ACCEPTED", userRequestStatus: "NOTFOLLOW"  };
+      return {
+        isFriend: true,
+        requestStatus: "ACCEPTED",
+        userRequestStatus: "NOTFOLLOW",
+      };
     }
     return {
       isFriend: false,
       requestStatus: follows[0]?.requestStatus || "NOTFOLLOW",
-      userRequestStatus: follows.find(f => f.followingId === userId)?.requestStatus || "NOTFOLLOW"
+      userRequestStatus:
+        follows.find((f) => f.followingId === userId)?.requestStatus ||
+        "NOTFOLLOW",
     };
   }
 };
@@ -684,7 +705,6 @@ const changeDatingMode = async ({ userId }: { userId: string }) => {
       id: true,
       isDatingMode: true,
       firstName: true,
-
     },
   });
 
@@ -753,8 +773,6 @@ const decreaseAiMessageCount = async (userId: string) => {
   return updatedUser;
 };
 
-
-
 const checkUser = async (email: string) => {
   const user = await prisma.user.findFirst({
     where: {
@@ -763,7 +781,10 @@ const checkUser = async (email: string) => {
   });
 
   if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, `User not found with email: ${email}`);
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `User not found with email: ${email}`
+    );
   }
 
   return "User already exists with this email";
@@ -780,6 +801,6 @@ export const userService = {
   changeDatingMode,
   seeMode,
   decreaseAiMessageCount,
-  checkUser
+  checkUser,
   // deleteUserDocumentImage,
 };
