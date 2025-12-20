@@ -214,7 +214,7 @@ const forgotPassword = async (payload: { email: string }) => {
 <div style="font-family: Arial, sans-serif; background:#f6f8fb; padding:40px;">
   <div style="max-width:600px; background:#fff; margin:auto; padding:30px; border-radius:6px;">
 
-    <h2 style="color:#222;">Together App</h2>
+    <h2 style="color:#222;">Together</h2>
     <p style="color:#555;">Password Reset Request</p>
 
     <p style="margin-top:20px;">
@@ -234,7 +234,7 @@ const forgotPassword = async (payload: { email: string }) => {
     </p>
 
     <p style="font-size:12px; color:#999; margin-top:30px;">
-      Together App Security Team
+      Together Security Team
     </p>
   </div>
 </div> `;
@@ -243,7 +243,7 @@ const forgotPassword = async (payload: { email: string }) => {
   await emailSender(
     userData.email,
     html,
-    "Together App - Password Reset Verification"
+    "Together - Password Reset Verification"
   );
 
   // Update the user's OTP and expiration in the database
@@ -279,7 +279,7 @@ const resendOtp = async (email: string) => {
     <div style="font-family: Arial, sans-serif; background:#f5f7fa; padding:40px;">
   <div style="max-width:600px; background:#fff; margin:auto; padding:30px; border-radius:6px;">
 
-    <h2>Together App</h2>
+    <h2>Together</h2>
 
     <p>
       As requested, here is your new OTP code:
@@ -302,7 +302,7 @@ const resendOtp = async (email: string) => {
   `;
 
   // Send the OTP to user's email
-  await emailSender(user.email, html, "Together App - Your Verification Code");
+  await emailSender(user.email, html, "Together - Your Verification Code");
 
   // Update the user's profile with the new OTP and expiration
   const updatedUser = await prisma.user.update({
