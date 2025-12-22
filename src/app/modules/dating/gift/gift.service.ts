@@ -432,7 +432,7 @@ const sendGiftToFriends = async ({
       // Notification
       // -----------------------------
       const notifPayload: INotificationPayload = {
-        title: `You’ve Received Exciting Gift!`,
+        title: `Exciting Gifts Are Waiting for You!`,
         message: `You received a ${giftCategory} gift from ${sender?.firstName} ${sender?.lastName}!`,
         type: "GIFT",
         image: giftPopup?.giftCard?.image || "",
@@ -568,7 +568,7 @@ const sendMultipleGifts = async ({
 
     // 5. Notification
     const notifPayload: INotificationPayload = {
-      title: `You've Received Exciting Gifts!`,
+      title: `Exciting Gifts Are Waiting for You!`,
       message: `You received ${giftCardIds.length} ${purchasedGifts[0].giftCategory} gifts from ${user?.firstName} ${user?.lastName}!`,
       type: "GIFT",
       image: purchasedGifts[0].giftCard.image,
