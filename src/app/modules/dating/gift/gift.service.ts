@@ -432,9 +432,10 @@ const sendGiftToFriends = async ({
       // Notification
       // -----------------------------
       const notifPayload: INotificationPayload = {
-        title: `${sender?.firstName} ${sender?.lastName} sent you a gift!`,
+        title: `You’ve Received Exciting Gift!`,
         message: `You received a ${giftCategory} gift from ${sender?.firstName} ${sender?.lastName}!`,
         type: "GIFT",
+        image: giftPopup?.giftCard?.image || "",
         senderId,
         receiverId: receiver.id,
         followStatus: "REJECTED",
@@ -488,7 +489,11 @@ const sendMultipleGifts = async ({
         userId: senderId,
         giftCardId: { in: giftCardIds },
       },
-      select: { id: true, giftCardId: true, giftCategory: true },
+      select: { id: true, giftCardId: true, giftCategory: true , giftCard:{
+        select:{
+          image:true
+        }
+      }},
     });
 
     if (purchasedGifts.length < giftCardIds.length) {
@@ -523,17 +528,27 @@ const sendMultipleGifts = async ({
       where: { id: { in: selectedGifts.map((g) => g.id) } },
     });
 
+    let image: string  = ""
     // 4. Send all gifts to receiver
     for (const gift of selectedGifts) {
-      await tx.giftSend.create({
+      const giftSend = await tx.giftSend.create({
         data: {
           senderId,
           receiverId,
           giftCardId: gift.giftCardId,
           giftCategory: gift.giftCategory,
         },
+        select: {
+          id: true,
+          giftCard: {
+            select: {
+              image: true,
+            },
+          },
+        },
       });
 
+      image = giftSend?.giftCard?.image || ""
       // Popup info
       const giftPopup = await tx.giftCard.findUnique({
         where: { id: gift.giftCardId },
@@ -553,9 +568,10 @@ const sendMultipleGifts = async ({
 
     // 5. Notification
     const notifPayload: INotificationPayload = {
-      title: `${user?.firstName} ${user?.lastName} sent you gifts!`,
+      title: `You've Received Exciting Gifts!`,
       message: `You received ${giftCardIds.length} ${purchasedGifts[0].giftCategory} gifts from ${user?.firstName} ${user?.lastName}!`,
       type: "GIFT",
+      image: purchasedGifts[0].giftCard.image,
       senderId,
       receiverId,
       followStatus: "REJECTED",
