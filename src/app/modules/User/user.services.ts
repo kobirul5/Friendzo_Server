@@ -787,6 +787,18 @@ const checkUser = async (email: string) => {
     );
   }
 
+  if (user.isVerified === false) {
+    await prisma.user.delete({
+      where: {
+        id: user.id,
+      },
+    });
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `User not found with email: ${email}`
+    );
+  }
+
   return "User already exists with this email";
 };
 
