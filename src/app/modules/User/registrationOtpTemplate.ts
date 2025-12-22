@@ -3,7 +3,7 @@ export const registrationOtpTemplate = (otp: number) => `
   <div style="max-width:600px; margin:0 auto; background:#ffffff; padding:30px; border-radius:6px;">
     
     <h2 style="color:#222; text-align:center; margin-bottom:10px;">
-      Together App
+      Together
     </h2>
 
     <p style="font-size:15px; color:#555; text-align:center;">
@@ -11,7 +11,7 @@ export const registrationOtpTemplate = (otp: number) => `
     </p>
 
     <p style="font-size:16px; color:#333; margin-top:30px;">
-      Thank you for signing up with <strong>Together App</strong>.
+      Thank you for signing up with <strong>Together</strong>.
       Please use the following One-Time Password (OTP) to verify your email address:
     </p>
 
@@ -29,7 +29,7 @@ export const registrationOtpTemplate = (otp: number) => `
     <hr style="margin:30px 0; border:none; border-top:1px solid #eee;"/>
 
     <p style="font-size:12px; color:#999; text-align:center;">
-      © ${new Date().getFullYear()} Together App. All rights reserved.
+      © ${new Date().getFullYear()} Together. All rights reserved.
     </p>
   </div>
 </div>
