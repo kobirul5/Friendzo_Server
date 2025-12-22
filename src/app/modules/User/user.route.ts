@@ -15,7 +15,7 @@ router.post(
 router.put( 
   "/update-profile",
   auth(),
-  fileUploader.uploadSingle,
+  fileUploader.uploadMultipleImage,
   userController.updateProfile
 );
 router.put(

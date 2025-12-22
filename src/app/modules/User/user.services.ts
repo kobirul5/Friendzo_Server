@@ -17,6 +17,7 @@ import { registrationOtpTemplate } from "./registrationOtpTemplate";
 import { getRefferId } from "../../../helpars/generateRefferId";
 import { Gender, ModeType, RequestStatus, User } from "@prisma/client";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
+import { fileUploadService } from "../fileUpload/fileUpload.service";
 
 const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
   const { email, password, fcmToken, referredId } = payload;
@@ -127,7 +128,7 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
 const updateUserProfile = async (
   userId: string,
   updateData: Partial<User>,
-  file?: Express.Multer.File
+  files?: Express.Multer.File[]
 ) => {
   // Check if user exists
   const user = await prisma.user.findUnique({
@@ -216,15 +217,27 @@ const updateUserProfile = async (
     updateData.dob = dateOfBirthObject;
   }
 
-  // If file exists, upload and set profileImage url
-  if (file) {
-    const uploadedImageUrl = await fileUploader.uploadToDigitalOcean(file);
-    updateData.profileImage = uploadedImageUrl.Location;
+    let datingImageUrl: string[] = [];
+
+  // If updateData.datingImage is provided, use it as base (replace existing)
+  if (updateData.datingImage && updateData.datingImage.length > 0) {
+    datingImageUrl = [...updateData.datingImage];
+  } else {
+    // Otherwise, start with existing images
+    datingImageUrl = user.datingImage || [];
   }
 
-  let datingImageUrl = user.datingImage || [];
-  if (updateData.datingImage && updateData.datingImage.length > 0) {
-    datingImageUrl = [...datingImageUrl, ...updateData.datingImage];
+  // If files are uploaded, add them to the array
+  if (files && files.length > 0) {
+    const uploadedImageUrl = await fileUploadService.uploadImages(files);
+    datingImageUrl = [...datingImageUrl, ...uploadedImageUrl];
+  }
+
+  // Remove duplicates from the final array
+  datingImageUrl = [...new Set(datingImageUrl)];
+
+  // Set profileImage to first dating image if available
+  if (datingImageUrl.length > 0) {
     updateData.profileImage = datingImageUrl[0];
   }
 

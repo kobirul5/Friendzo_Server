@@ -15,12 +15,12 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const updateProfile = catchAsync(async (req: Request, res: Response) => {
+const updateProfile = catchAsync(async (req: any, res: Response) => {
   const userId = req.user.id;
   const updateData = JSON.parse(req.body.data);
-  const file = req.file;
+  const files = req.images as Express.Multer.File[];
 
-  const user = await userService.updateUserProfile(userId, updateData, file);
+  const user = await userService.updateUserProfile(userId, updateData, files);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
