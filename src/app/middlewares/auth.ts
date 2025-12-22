@@ -33,8 +33,14 @@ const auth = (...roles: string[]) => {
           id: id,
         },
       });
+
+
       if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
+      }
+
+      if(user.isVerified === false) {
+        throw new ApiError(httpStatus.FORBIDDEN, "Your account is not verified!");
       }
 
       if (user.status === UserStatus.BLOCKED) {

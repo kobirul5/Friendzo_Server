@@ -76,6 +76,13 @@ const loginUser = async (payload: {
     );
   }
 
+  if (userData.isVerified === false) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `User not verified with email ${payload.email} `
+    );
+  }
+
   if (!userData.password) {
     throw new ApiError(httpStatus.BAD_REQUEST, "User password is not set.");
   }
@@ -343,7 +350,8 @@ const verifyForgotPasswordOtp = async (payload: {
     where: { id: user.id },
     data: {
       otp: null, // Clear the OTP
-      expirationOtp: null, // Clear the OTP expiration
+      expirationOtp: null,
+      isVerified: true, // Clear the OTP expiration
     },
   });
 
