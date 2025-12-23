@@ -80,6 +80,7 @@ export const corsOptions = {
     "http://72.60.70.222:3002",
     "https://digital-animal3-dashboard.vercel.app",
     "https://digital-animal3-dashboard-44nouw4zn.vercel.app",
+    "https://togetheradmin.site/",
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
