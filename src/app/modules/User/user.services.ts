@@ -200,6 +200,7 @@ const updateUserProfile = async (
           )}.`
       );
     }
+    updateData.datingImage = updateData.interests;
   }
   const existingUser = await prisma.user.findUnique({
     where: { id: userId },
