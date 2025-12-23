@@ -18,7 +18,11 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
 const updateProfile = catchAsync(async (req: any, res: Response) => {
   const userId = req.user.id;
   const updateData = JSON.parse(req.body.data);
-  const files = req.images as Express.Multer.File[];
+  // Multer stores multiple images under `req.files.images`
+  const filesObj = req.files as
+    | { [fieldname: string]: Express.Multer.File[] }
+    | undefined;
+  const files = filesObj?.images;
 
   const user = await userService.updateUserProfile(userId, updateData, files);
   sendResponse(res, {

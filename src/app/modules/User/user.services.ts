@@ -17,7 +17,6 @@ import { registrationOtpTemplate } from "./registrationOtpTemplate";
 import { getRefferId } from "../../../helpars/generateRefferId";
 import { Gender, ModeType, RequestStatus, User } from "@prisma/client";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
-import { fileUploadService } from "../fileUpload/fileUpload.service";
 
 const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
   const { email, password, fcmToken, referredId } = payload;
@@ -221,21 +220,37 @@ const updateUserProfile = async (
     let datingImageUrl: string[] = [];
 
   // If updateData.datingImage is provided, use it as base (replace existing)
+  const previousDatingImages = user.datingImage || [];
+
+  // Start from existing unless caller explicitly provides new set
   if (updateData.datingImage && updateData.datingImage.length > 0) {
     datingImageUrl = [...updateData.datingImage];
   } else {
-    // Otherwise, start with existing images
-    datingImageUrl = user.datingImage || [];
+    datingImageUrl = [...previousDatingImages];
+    console.log("datingImageUrl", datingImageUrl);
   }
 
-  // If files are uploaded, add them to the array
+  // If files are uploaded, replace with freshly uploaded set
   if (files && files.length > 0) {
-    const uploadedImageUrl = await fileUploadService.uploadImages(files);
-    datingImageUrl = [...datingImageUrl, ...uploadedImageUrl];
+    const uploadedImages = await Promise.all(
+      files.map((file) => fileUploader.uploadToDigitalOcean(file))
+    );
+    const uploadedImageUrl = uploadedImages.map((img) => img.Location);
+    datingImageUrl = [...uploadedImageUrl];
   }
 
   // Remove duplicates from the final array
   datingImageUrl = [...new Set(datingImageUrl)];
+
+  // If we changed the set (provided datingImage or uploaded files), delete old ones
+  const replacingImages =
+    (updateData.datingImage && updateData.datingImage.length > 0) ||
+    (files && files.length > 0);
+  if (replacingImages && previousDatingImages.length > 0) {
+     deleteImageAndFile.deleteMultipleFileFromDigitalOcean(
+      previousDatingImages
+    );
+  }
 
   // Set profileImage to first dating image if available
   if (datingImageUrl.length > 0) {
