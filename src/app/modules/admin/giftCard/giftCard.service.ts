@@ -102,6 +102,10 @@ const deleteItemFromDb = async (id: string) => {
   if(giftParches){
     throw new ApiError(httpStatus.BAD_REQUEST, "This gift card has already been purchased by users and cannot be deleted.");
   }
+  const giftSend = await prisma.giftSend.findFirst({where:{giftCardId:id}});
+  if(giftSend){
+    throw new ApiError(httpStatus.BAD_REQUEST, "This gift card has already been purchased by users and cannot be deleted.");
+  }
 
 
   const giftCard = await prisma.giftCard.findUnique({ where: { id } });
