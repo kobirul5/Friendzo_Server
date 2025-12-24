@@ -383,12 +383,18 @@ model GiftCard {
   name         String?        @default("")
   gender       Gender         @default(HIM)
   category     GiftCategory
+  status       GiftCardStatus @default(ACTIVE)
   image        String
   price        Float
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   GiftPurchase GiftPurchase[]
   GiftSend     GiftSend[]
+}
+
+enum GiftCardStatus {
+  ACTIVE
+  DELETED
 }
 
 enum Gender {

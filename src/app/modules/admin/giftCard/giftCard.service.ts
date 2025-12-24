@@ -85,6 +85,7 @@ const createGiftCard = async ({ data, userId, imagesFile }: any) => {
   const giftCards = await prisma.giftCard.findMany({
     where: {
       category: { in: categories },
+      status: "ACTIVE"
     },
     orderBy: { createdAt: "desc" },
   });
@@ -98,26 +99,29 @@ const deleteItemFromDb = async (id: string) => {
     throw new ApiError(httpStatus.BAD_REQUEST,"Id is required");
   }
 
-  const giftParches = await prisma.giftPurchase.findFirst({where:{giftCardId:id}});
-  if(giftParches){
-    throw new ApiError(httpStatus.BAD_REQUEST, "This gift card has already been purchased by users and cannot be deleted.");
-  }
-  const giftSend = await prisma.giftSend.findFirst({where:{giftCardId:id}});
-  if(giftSend){
-    throw new ApiError(httpStatus.BAD_REQUEST, "This gift card has already been purchased by users and cannot be deleted.");
-  }
+  // const giftParches = await prisma.giftPurchase.findFirst({where:{giftCardId:id}});
+  // if(giftParches){
+  //   throw new ApiError(httpStatus.BAD_REQUEST, "This gift card has already been purchased by users and cannot be deleted.");
+  // }
+  // const giftSend = await prisma.giftSend.findFirst({where:{giftCardId:id}});
+  // if(giftSend){
+  //   throw new ApiError(httpStatus.BAD_REQUEST, "This gift card has already been purchased by users and cannot be deleted.");
+  // }
 
 
   const giftCard = await prisma.giftCard.findUnique({ where: { id } });
   if (!giftCard) {
     throw new ApiError(httpStatus.NOT_FOUND,"GiftCard not found");
   }
-  const result = await prisma.giftCard.delete({ where: { id } });
+  const result = await prisma.giftCard.update({
+    where: { id },
+    data: { status: "DELETED" },
+  })
   return result;
 };
 
 const getByIdFromDb = async (id: string) => {
-  const result = await prisma.giftCard.findUnique({ where: { id } });
+  const result = await prisma.giftCard.findUnique({ where: { id, status: "ACTIVE"} });
   if (!result) {
     throw new Error("GiftCard not found");
   }
@@ -127,11 +131,13 @@ const getByIdFromDb = async (id: string) => {
 const updateIntoDb = async (id: string, data: any) => {
   const transaction = await prisma.$transaction(async (prisma) => {
     const result = await prisma.giftCard.update({
-      where: { id },
+      where: { id, status: "ACTIVE"},
       data,
     });
     return result;
   });
+
+  
 
   return transaction;
 };

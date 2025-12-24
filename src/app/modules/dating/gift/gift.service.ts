@@ -112,6 +112,7 @@ const getGiftCardList = async ({
     where: {
       gender: gender,
       category: GiftCategory.ESSENTIAL,
+      status: "ACTIVE",
     },
     orderBy: { createdAt: "desc" },
   });
@@ -120,6 +121,7 @@ const getGiftCardList = async ({
     where: {
       gender: gender,
       category: GiftCategory.EXCLUSIVE,
+      status: "ACTIVE",
     },
     orderBy: { createdAt: "desc" },
   });
@@ -128,6 +130,7 @@ const getGiftCardList = async ({
     where: {
       gender: gender,
       category: GiftCategory.MAJESTIC,
+      status: "ACTIVE",
     },
     orderBy: { createdAt: "desc" },
   });
