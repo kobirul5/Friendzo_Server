@@ -417,6 +417,9 @@ const sendGiftToFriends = async ({
           giftCard: {
             select: {
               image: true,
+              name: true,
+              category: true,
+  
             },
           },
         },
@@ -435,7 +438,7 @@ const sendGiftToFriends = async ({
       // Notification
       // -----------------------------
       const notifPayload: INotificationPayload = {
-        title: `Exciting Gifts Are Waiting for You!`,
+        title: `Send you a ${giftCategory} ${giftPopup?.giftCard.name ? giftPopup?.giftCard.name : ""} gift`,
         message: `You received a ${giftCategory} gift from ${sender?.firstName} ${sender?.lastName}!`,
         type: "GIFT",
         image: giftPopup?.giftCard?.image || "",
@@ -546,6 +549,8 @@ const sendMultipleGifts = async ({
           giftCard: {
             select: {
               image: true,
+              name: true,
+              category: true,
             },
           },
         },
@@ -567,30 +572,34 @@ const sendMultipleGifts = async ({
           isSeen: false,
         },
       });
+    
+    
+    
+    
+      const notifPayload: INotificationPayload = {
+        title: `Send you a ${gift.giftCategory} ${gift.giftCard.name ? gift.giftCard.name : ""} gift`,
+        message: `You received a ${gift.giftCategory} gift from ${user?.firstName} ${user?.lastName}!`,
+        type: "GIFT",
+        image: purchasedGifts[0].giftCard.image,
+        senderId,
+        receiverId,
+        followStatus: "REJECTED",
+      };
+  
+      // Save notification
+      await notificationServices.saveNotification(notifPayload, receiver.id);
+  
+      // Push notification
+      if (receiver.fcmToken) {
+        await notificationServices.sendNotification(
+          receiver.fcmToken,
+          notifPayload,
+          receiver.id
+        );
+      }
     }
 
     // 5. Notification
-    const notifPayload: INotificationPayload = {
-      title: `Exciting Gifts Are Waiting for You!`,
-      message: `You received ${giftCardIds.length} ${purchasedGifts[0].giftCategory} gifts from ${user?.firstName} ${user?.lastName}!`,
-      type: "GIFT",
-      image: purchasedGifts[0].giftCard.image,
-      senderId,
-      receiverId,
-      followStatus: "REJECTED",
-    };
-
-    // Save notification
-    await notificationServices.saveNotification(notifPayload, receiver.id);
-
-    // Push notification
-    if (receiver.fcmToken) {
-      await notificationServices.sendNotification(
-        receiver.fcmToken,
-        notifPayload,
-        receiver.id
-      );
-    }
 
     return { message: "Gifts sent successfully!" };
   });
