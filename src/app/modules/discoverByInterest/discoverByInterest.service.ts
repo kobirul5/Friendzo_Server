@@ -194,75 +194,153 @@ const baseLng = getValidCoordinate(lng, currentUser.lng as number);
   return nearbyUsers;
 };
 
-const getTodaysBuzz = async (userId: string) => {
+// const getTodaysBuzz = async (userId: string) => {
+//   const todayStart = new Date();
+//   todayStart.setHours(0, 0, 0, 0);
+
+//   const todayEnd = new Date();
+//   todayEnd.setHours(23, 59, 59, 999);
+
+//   // Step 1: Fetch today's events
+//   const todaysEvents = await prisma.event.findMany({
+//     where: {
+//       createdAt: {
+//         gte: todayStart,
+//         // lte: todayEnd,
+//       },
+//     },
+//   });
+
+//   // Step 3: Fetch those users separately (without event relation)
+//   // const users = await prisma.user.findMany({
+//   //   where: {
+//   //   id: {
+//   //     not: userId,
+//   //   },
+//   //   lat: {
+//   //     not: null,
+//   //   },
+//   //   lng: {
+//   //     not: null,
+//   //   },
+//   //   role: {not: UserRole.ADMIN},
+//   // },
+//   //   select: {
+//   //     id: true,
+//   //     firstName: true,
+//   //     lastName: true,
+//   //     profileImage: true,
+//   //     email: true,
+//   //     lat: true,
+//   //     lng: true,
+//   //   },
+//   // });
+
+//   const allowedUsers = await prisma.user.findMany({
+//     where: {
+//       id: { not: userId },
+//       lat: { not: null },
+//       lng: { not: null },
+//       role: { not: UserRole.ADMIN },
+
+//       // OR: [
+//       //   // I follow them → accepted
+//       //   {
+//       //     followers: {
+//       //       some: {
+//       //         followerId: userId,
+//       //         requestStatus: "ACCEPTED",
+//       //       },
+//       //     },
+//       //   },
+//       //   // They follow me → accepted
+//       //   {
+//       //     following: {
+//       //       some: {
+//       //         followingId: userId,
+//       //         requestStatus: "ACCEPTED",
+//       //       },
+//       //     },
+//       //   },
+//       // ],
+//     },
+//     select: {
+//       id: true,
+//       firstName: true,
+//       lastName: true,
+//       profileImage: true,
+//       email: true,
+//       lat: true,
+//       lng: true,
+//     },
+//   });
+
+//   return {
+//     todaysEvents, // strip embedded user from event
+//     users: allowedUsers,
+//   };
+// };
+
+export const getTodaysBuzz = async (userId: string) => {
+
+  const MAX_DISTANCE_KM = 250;
+
+
+  // 1️⃣ Get current user location
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      lat: true,
+      lng: true,
+    },
+  });
+
+  if (!currentUser || currentUser.lat == null || currentUser.lng == null) {
+    throw new ApiError(400, "User location not found");
+  }
+
+  // 2️⃣ Today date range
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
 
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
 
-  // Step 1: Fetch today's events
+  // 3️⃣ Fetch today's events
   const todaysEvents = await prisma.event.findMany({
     where: {
       createdAt: {
         gte: todayStart,
-        lte: todayEnd,
+        // lte: todayEnd,
       },
+      lat: { not: null },
+      lng: { not: null },
     },
   });
 
-  // Step 3: Fetch those users separately (without event relation)
-  // const users = await prisma.user.findMany({
-  //   where: {
-  //   id: {
-  //     not: userId,
-  //   },
-  //   lat: {
-  //     not: null,
-  //   },
-  //   lng: {
-  //     not: null,
-  //   },
-  //   role: {not: UserRole.ADMIN},
-  // },
-  //   select: {
-  //     id: true,
-  //     firstName: true,
-  //     lastName: true,
-  //     profileImage: true,
-  //     email: true,
-  //     lat: true,
-  //     lng: true,
-  //   },
-  // });
+  // 4️⃣ Filter events within 250km
+  const filteredTodaysEvents = todaysEvents
+    .map((event) => {
+      const distanceInKm =
+        haversine(
+          { lat: currentUser.lat!, lng: currentUser.lng! },
+          { lat: event.lat!, lng: event.lng! }
+        ) / 1000;
 
+      return {
+        ...event,
+        distanceInKm,
+      };
+    })
+    .filter((event) => event.distanceInKm <= MAX_DISTANCE_KM);
+
+  // 5️⃣ Fetch allowed users
   const allowedUsers = await prisma.user.findMany({
     where: {
       id: { not: userId },
       lat: { not: null },
       lng: { not: null },
       role: { not: UserRole.ADMIN },
-
-      OR: [
-        // I follow them → accepted
-        {
-          followers: {
-            some: {
-              followerId: userId,
-              requestStatus: "ACCEPTED",
-            },
-          },
-        },
-        // They follow me → accepted
-        {
-          following: {
-            some: {
-              followingId: userId,
-              requestStatus: "ACCEPTED",
-            },
-          },
-        },
-      ],
     },
     select: {
       id: true,
@@ -275,11 +353,29 @@ const getTodaysBuzz = async (userId: string) => {
     },
   });
 
+  // 6️⃣ Filter users within 250km
+  const filteredUsers = allowedUsers
+    .map((user) => {
+      const distanceInKm =
+        haversine(
+          { lat: currentUser.lat!, lng: currentUser.lng! },
+          { lat: user.lat!, lng: user.lng! }
+        ) / 1000;
+
+      return {
+        ...user,
+        distanceInKm,
+      };
+    })
+    .filter((user) => user.distanceInKm <= MAX_DISTANCE_KM);
+
+  // 7️⃣ Final response
   return {
-    todaysEvents, // strip embedded user from event
-    users: allowedUsers,
+    todaysEvents: filteredTodaysEvents,
+    users: filteredUsers,
   };
 };
+
 
 // const getPeopleBySharedInterests = async ({userId, interest}: {userId: string, interest: string}) => {
 //   // 1️ Get current user's interests
