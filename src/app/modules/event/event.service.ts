@@ -1,6 +1,6 @@
-import { PrismaClient, Event as EventModel } from '@prisma/client';
-import ApiError from '../../../errors/ApiErrors';
-import { haversine } from '../../../shared/haversine';
+import { PrismaClient, Event as EventModel } from "@prisma/client";
+import ApiError from "../../../errors/ApiErrors";
+import { haversine } from "../../../shared/haversine";
 
 const prisma = new PrismaClient();
 
@@ -21,7 +21,7 @@ const createEvent = async (data: {
 const getEventByUser = async (userId: string): Promise<EventModel[]> => {
   return await prisma.event.findMany({
     where: { userId },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 };
 
@@ -35,7 +35,9 @@ const getEventById = async (id: string): Promise<EventModel | null> => {
 // Update event
 const updateEvent = async (
   id: string,
-  data: Partial<Pick<EventModel, 'image' | 'description' | 'address' | 'lat' | 'lng'>>
+  data: Partial<
+    Pick<EventModel, "image" | "description" | "address" | "lat" | "lng">
+  >
 ): Promise<EventModel> => {
   return await prisma.event.update({
     where: { id },
@@ -49,7 +51,6 @@ const deleteEvent = async (id: string): Promise<EventModel> => {
     where: { id },
   });
 };
-
 
 const getAllEvents = async (userId: string): Promise<any[]> => {
   const user = await prisma.user.findUnique({
@@ -74,26 +75,33 @@ const getAllEvents = async (userId: string): Promise<any[]> => {
     },
   });
 
-  
-  const eventsWithDistance = events.map((event) => {
-    let distanceInKm = null;
+  const eventsWithDistance = events
+    .map((event) => {
+      let distanceInKm = null;
 
-    if (user.lat != null && user.lng != null && event?.lat != null && event?.lng != null) {
-      distanceInKm = haversine(
-        { lat: user.lat, lng: user.lng },
-        { lat: event.lat, lng: event.lng }
-      );
-    }
+      if (
+        user.lat != null &&
+        user.lng != null &&
+        event.lat != null &&
+        event.lng != null
+      ) {
+        distanceInKm = haversine(
+          { lat: user.lat, lng: user.lng },
+          { lat: event.lat, lng: event.lng }
+        );
+      }
 
-    return {
-      ...event,
-      distanceInKm,
-    };
-  });
-
+      return {
+        ...event,
+        distanceInKm,
+      };
+    })
+    .filter(
+      (event) =>
+        event.distanceInKm !== null && event.distanceInKm <= 250
+    );
   return eventsWithDistance;
 };
-
 
 // Export all
 export const eventService = {
@@ -102,5 +110,5 @@ export const eventService = {
   getEventById,
   updateEvent,
   deleteEvent,
-  getAllEvents
+  getAllEvents,
 };
