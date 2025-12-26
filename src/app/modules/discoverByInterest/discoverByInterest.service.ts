@@ -318,6 +318,8 @@ export const getTodaysBuzz = async (userId: string) => {
     },
   });
 
+
+
   // 4️⃣ Filter events within 250km
   const filteredTodaysEvents = todaysEvents
     .map((event) => {
@@ -325,7 +327,7 @@ export const getTodaysBuzz = async (userId: string) => {
         haversine(
           { lat: currentUser.lat!, lng: currentUser.lng! },
           { lat: event.lat!, lng: event.lng! }
-        ) / 1000;
+        ) ; 
 
       return {
         ...event,
@@ -341,6 +343,26 @@ export const getTodaysBuzz = async (userId: string) => {
       lat: { not: null },
       lng: { not: null },
       role: { not: UserRole.ADMIN },
+       OR: [
+        // I follow them → accepted
+        {
+          followers: {
+            some: {
+              followerId: userId,
+              requestStatus: "ACCEPTED",
+            },
+          },
+        },
+        // They follow me → accepted
+        {
+          following: {
+            some: {
+              followingId: userId,
+              requestStatus: "ACCEPTED",
+            },
+          },
+        },
+      ],
     },
     select: {
       id: true,
