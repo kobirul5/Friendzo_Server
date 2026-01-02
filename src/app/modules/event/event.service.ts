@@ -27,9 +27,25 @@ const getEventByUser = async (userId: string): Promise<EventModel[]> => {
 
 // Get single event by ID
 const getEventById = async (id: string): Promise<EventModel | null> => {
-  return await prisma.event.findUnique({
+
+  const result = await prisma.event.findUniqueOrThrow({
     where: { id },
-  });
+    include:{
+      user:{
+        select:{
+          id: true,
+          firstName: true,
+          lastName: true,
+          profileImage: true,
+          email: true,
+        }
+      }
+    }
+  })
+
+
+
+  return result;
 };
 
 // Update event

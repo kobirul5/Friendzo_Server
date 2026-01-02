@@ -785,7 +785,8 @@ const getPeopleBySharedInterests = async ({
       interestPercentage: matchPercentage,
       distanceKm,
     };
-  });
+  })
+  // .filter((user) => user.distanceKm <= 500);
 
   // 6️⃣ Sort by highest match first
   usersWithMatchPercentage.sort((a, b) => {
