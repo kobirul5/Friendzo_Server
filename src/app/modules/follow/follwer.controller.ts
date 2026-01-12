@@ -93,11 +93,11 @@ const acceptOrRejectFollwershipRequest = catchAsync(async (req: Request, res: Re
   const {followId, modeType , status} = req.body;
 
   const result = await follwerService.acceptOrRejectFollwershipRequestService(userId, followId, modeType, status);
-
+ 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Request accepted or rejected successfully',
+    message: `Request ${status.toLowerCase()}  successfully`,
     data: result,
   });
 })
