@@ -171,7 +171,7 @@ const getMyFollowingService = async (userId: string) => {
   }
 
   const totalFollowing = await prisma.follow.count({
-    where: { 
+    where: {
       followerId: userId,
       requestStatus: RequestStatus.ACCEPTED,
     },
@@ -242,7 +242,7 @@ const unfollowUserSocialService = async (
   });
 
 
-    if(follow){
+  if (follow) {
     const notification = await prisma.notification.findFirst({
       where: {
         targetId: follow.id,
@@ -250,7 +250,7 @@ const unfollowUserSocialService = async (
       },
     })
 
-    if(notification){
+    if (notification) {
       await prisma.notification.deleteMany({
         where: {
           targetId: follow.id,
@@ -284,7 +284,7 @@ const unfollowUserDatingService = async (followId: string, userId: string) => {
     );
   }
 
-  
+
 
   // Delete the follow relation
   await prisma.follow.deleteMany({
@@ -293,7 +293,7 @@ const unfollowUserDatingService = async (followId: string, userId: string) => {
     },
   });
 
-    if(follow){
+  if (follow) {
     const notification = await prisma.notification.findFirst({
       where: {
         targetId: follow.id,
@@ -301,7 +301,7 @@ const unfollowUserDatingService = async (followId: string, userId: string) => {
       },
     })
 
-    if(notification){
+    if (notification) {
       await prisma.notification.deleteMany({
         where: {
           targetId: follow.id,
@@ -358,6 +358,30 @@ const acceptOrRejectFollwershipRequestService = async (
     where: { id: followId },
     data: { requestStatus: status },
   });
+
+  if (status === RequestStatus.ACCEPTED) {
+    const reverseFollow = await prisma.follow.findFirst({
+      where: {
+        followerId: userId,
+        followingId: follow.followerId,
+      },
+    });
+
+    if (reverseFollow) {
+      await prisma.follow.update({
+        where: { id: reverseFollow.id },
+        data: { requestStatus: RequestStatus.ACCEPTED },
+      });
+    } else {
+      await prisma.follow.create({
+        data: {
+          followerId: userId,
+          followingId: follow.followerId,
+          requestStatus: RequestStatus.ACCEPTED,
+        },
+      });
+    }
+  }
 
   if (status === RequestStatus.ACCEPTED) {
     let room = await prisma.room.findFirst({
@@ -568,10 +592,10 @@ const getMyAllFollwerRequest = async ({
     where: { id: userId },
     select: {
       followers: {
-        where: { 
+        where: {
           requestStatus: RequestStatus.PENDING,
           //  modeType 
-          },
+        },
         include: {
           follower: {
             select: {
@@ -615,8 +639,8 @@ const getMyAllFollwingRequest = async ({
     where: { id: userId },
     select: {
       following: {
-        where: { 
-          requestStatus: RequestStatus.PENDING, 
+        where: {
+          requestStatus: RequestStatus.PENDING,
           // modeType: modeType 
         },
         include: {
@@ -963,23 +987,23 @@ const unfriendUser = async ({
       },
     });
 
-      if(follow){
-    const notification = await prisma.notification.findFirst({
-      where: {
-        targetId: follow.id,
-        type: NotificationType.FOLLOW,
-      },
-    })
-
-    if(notification){
-      await prisma.notification.deleteMany({
+    if (follow) {
+      const notification = await prisma.notification.findFirst({
         where: {
           targetId: follow.id,
           type: NotificationType.FOLLOW,
         },
       })
+
+      if (notification) {
+        await prisma.notification.deleteMany({
+          where: {
+            targetId: follow.id,
+            type: NotificationType.FOLLOW,
+          },
+        })
+      }
     }
-  }
 
     return { message: "Follow request canceled (deleted)" };
   }
@@ -1050,6 +1074,30 @@ const acceptFollowerRequestNotification = async ({
       requestStatus: RequestStatus.ACCEPTED,
     },
   });
+
+  const reverseFollow = await prisma.follow.findFirst({
+    where: {
+      followerId: userId,
+      followingId: follow.followerId,
+    },
+  });
+
+  if (reverseFollow) {
+    await prisma.follow.update({
+      where: { id: reverseFollow.id },
+      data: { requestStatus: RequestStatus.ACCEPTED },
+    });
+  } else {
+    await prisma.follow.create({
+      data: {
+        followerId: userId,
+        followingId: follow.followerId,
+        requestStatus: RequestStatus.ACCEPTED,
+      },
+    });
+  }
+
+
 
   await prisma.notification.update({
     where: {
@@ -1125,6 +1173,30 @@ const acceptOrDeclineFollwerRequestByUserId = async ({
     data: { requestStatus: status },
   });
 
+  if (status === RequestStatus.ACCEPTED) {
+    const reverseFollow = await prisma.follow.findFirst({
+      where: {
+        followerId: userId,
+        followingId: followerId,
+      },
+    });
+
+    if (reverseFollow) {
+      await prisma.follow.update({
+        where: { id: reverseFollow.id },
+        data: { requestStatus: RequestStatus.ACCEPTED },
+      });
+    } else {
+      await prisma.follow.create({
+        data: {
+          followerId: userId,
+          followingId: followerId,
+          requestStatus: RequestStatus.ACCEPTED,
+        },
+      });
+    }
+  }
+
   // Notifications reference the related entity ID in `targetId` (see schema).
   // Use updateMany because multiple notifications may reference the same follow.
   await prisma.notification.updateMany({
@@ -1140,7 +1212,7 @@ const acceptOrDeclineFollwerRequestByUserId = async ({
   return result;
 };
 
-const unfollowUserByUserId = async ({userId, followerId}:{userId: string; followerId: string}) => {
+const unfollowUserByUserId = async ({ userId, followerId }: { userId: string; followerId: string }) => {
 
   const follow = await prisma.follow.findFirst({
     where: {
@@ -1153,7 +1225,7 @@ const unfollowUserByUserId = async ({userId, followerId}:{userId: string; follow
   //   throw new ApiError(httpStatus.NOT_FOUND, "Follow relationship not found");
   // }
 
-  if(follow){
+  if (follow) {
     const notification = await prisma.notification.findFirst({
       where: {
         targetId: follow.id,
@@ -1161,7 +1233,7 @@ const unfollowUserByUserId = async ({userId, followerId}:{userId: string; follow
       },
     })
 
-    if(notification){
+    if (notification) {
       await prisma.notification.deleteMany({
         where: {
           targetId: follow.id,
@@ -1170,11 +1242,11 @@ const unfollowUserByUserId = async ({userId, followerId}:{userId: string; follow
       })
     }
   }
-  
+
   const result = await prisma.follow.deleteMany({
     where: {
       followerId: userId,
-      followingId: followerId ,
+      followingId: followerId,
     },
   });
 
@@ -1198,7 +1270,7 @@ const unfollowUserByUserId = async ({userId, followerId}:{userId: string; follow
   return result;
 }
 
-const getSeeFollowerFollowing = async ({userId, targetId}:{userId: string; targetId: string}) => {
+const getSeeFollowerFollowing = async ({ userId, targetId }: { userId: string; targetId: string }) => {
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User are not authorized!");
@@ -1211,20 +1283,20 @@ const getSeeFollowerFollowing = async ({userId, targetId}:{userId: string; targe
     where: {
       id: targetId,
     },
-  select: {
-    followers:  {
-      select: {
-        follower: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            profileImage: true,
+    select: {
+      followers: {
+        select: {
+          follower: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              profileImage: true,
+            },
           },
-        },
+        }
       }
     }
-  }
   })
 
   if (!followData) {
@@ -1243,7 +1315,7 @@ const getSeeFollowerFollowing = async ({userId, targetId}:{userId: string; targe
 
   return followers
 }
-const getSeeFollowing = async ({userId, targetId}:{userId: string; targetId: string}) => {
+const getSeeFollowing = async ({ userId, targetId }: { userId: string; targetId: string }) => {
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User are not authorized!");
@@ -1256,20 +1328,20 @@ const getSeeFollowing = async ({userId, targetId}:{userId: string; targetId: str
     where: {
       id: targetId,
     },
-  select: {
-    following:  {
-      select: {
-        following: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            profileImage: true,
+    select: {
+      following: {
+        select: {
+          following: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              profileImage: true,
+            },
           },
-        },
-      }
-    },
-  }
+        }
+      },
+    }
   })
 
   if (!followData) {
@@ -1284,7 +1356,7 @@ const getSeeFollowing = async ({userId, targetId}:{userId: string; targetId: str
     ).values()
   );
 
-return following;
+  return following;
 
 }
 

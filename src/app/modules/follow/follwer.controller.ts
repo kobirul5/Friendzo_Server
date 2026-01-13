@@ -4,12 +4,12 @@ import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { Request, Response } from 'express';
 
-const createFollwer = catchAsync(async (req:Request, res:Response) => {
+const createFollwer = catchAsync(async (req: Request, res: Response) => {
 
-  const userId = req.user.id; 
+  const userId = req.user.id;
   const { followerId, modeType } = req.body;
 
-  const result = await follwerService.createFollowerAndFollowingService({userId, followerId, modeType});
+  const result = await follwerService.createFollowerAndFollowingService({ userId, followerId, modeType });
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
@@ -19,7 +19,7 @@ const createFollwer = catchAsync(async (req:Request, res:Response) => {
 });
 
 
- const getMyFollowersAndFollowingCount = catchAsync(async (req: Request, res: Response) => {
+const getMyFollowersAndFollowingCount = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
 
   const result = await follwerService.getMyNetworkCount(userId);
@@ -32,7 +32,7 @@ const createFollwer = catchAsync(async (req:Request, res:Response) => {
   });
 });
 
- const getMyAllFollwer = catchAsync(async (req: Request, res: Response) => {
+const getMyAllFollwer = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
 
   const result = await follwerService.getMyFollowerService(userId);
@@ -46,7 +46,7 @@ const createFollwer = catchAsync(async (req:Request, res:Response) => {
 });
 
 
- const getMyAllFollowing = catchAsync(async (req: Request, res: Response) => {
+const getMyAllFollowing = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
 
   const result = await follwerService.getMyFollowingService(userId);
@@ -61,8 +61,8 @@ const createFollwer = catchAsync(async (req:Request, res:Response) => {
 
 
 const unfollowUser = catchAsync(async (req: Request, res: Response) => {
-  const followerId = req.user.id; 
-  const {followingId} = req.body;
+  const followerId = req.user.id;
+  const { followingId } = req.body;
 
   const result = await follwerService.unfollowUserSocialService(followerId, followingId);
 
@@ -76,7 +76,7 @@ const unfollowUser = catchAsync(async (req: Request, res: Response) => {
 
 const unfollowDatingUser = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
-  const {followId }= req.body
+  const { followId } = req.body
   const result = await follwerService.unfollowUserDatingService(followId, userId);
 
   sendResponse(res, {
@@ -89,11 +89,11 @@ const unfollowDatingUser = catchAsync(async (req: Request, res: Response) => {
 
 
 const acceptOrRejectFollwershipRequest = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
-  const {followId, modeType , status} = req.body;
+  const userId = req.user.id;
+  const { followId, modeType, status } = req.body;
 
   const result = await follwerService.acceptOrRejectFollwershipRequestService(userId, followId, modeType, status);
- 
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -103,10 +103,10 @@ const acceptOrRejectFollwershipRequest = catchAsync(async (req: Request, res: Re
 })
 
 const getMyAllFriends = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
+  const userId = req.user.id;
   const { type } = req.params; // type can be 'all', 'mutual', etc.
   const search = req.query.search as string || '';
-  
+
   const result = await follwerService.getMyAllFriends(userId, type, search);
 
   sendResponse(res, {
@@ -119,10 +119,10 @@ const getMyAllFriends = catchAsync(async (req: Request, res: Response) => {
 
 
 const getMyAllFollwerRequest = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
+  const userId = req.user.id;
   const { type } = req.params;
 
-  const result = await follwerService.getMyAllFollwerRequest({userId, type});
+  const result = await follwerService.getMyAllFollwerRequest({ userId, type });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -133,10 +133,10 @@ const getMyAllFollwerRequest = catchAsync(async (req: Request, res: Response) =>
 });
 
 const getMyAllFollwingRequest = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
+  const userId = req.user.id;
   const { type } = req.params;
 
-  const result = await follwerService.getMyAllFollwingRequest({userId, type});
+  const result = await follwerService.getMyAllFollwingRequest({ userId, type });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -148,10 +148,10 @@ const getMyAllFollwingRequest = catchAsync(async (req: Request, res: Response) =
 
 
 const getAllSuggestedUsers = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
+  const userId = req.user.id;
   const { type } = req.params;
 
-  const result = await follwerService.getAllSuggestedUsers({userId, type});
+  const result = await follwerService.getAllSuggestedUsers({ userId, type });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -163,11 +163,11 @@ const getAllSuggestedUsers = catchAsync(async (req: Request, res: Response) => {
 
 // unfriend
 const unfriendUser = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
+  const userId = req.user.id;
   // const type = req.params.type
-  const {friendId} = req.body;
+  const { friendId } = req.body;
 
-  const result = await follwerService.unfriendUser({userId, friendId});
+  const result = await follwerService.unfriendUser({ userId, friendId });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -179,10 +179,10 @@ const unfriendUser = catchAsync(async (req: Request, res: Response) => {
 
 // accept follower request notification
 const acceptFollowerRequestNotification = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
-  const {targetId: followId, notificationId} = req.body;
+  const userId = req.user.id;
+  const { targetId: followId, notificationId } = req.body;
 
-  const result = await follwerService.acceptFollowerRequestNotification({userId, followId, notificationId});
+  const result = await follwerService.acceptFollowerRequestNotification({ userId, followId, notificationId });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -193,10 +193,10 @@ const acceptFollowerRequestNotification = catchAsync(async (req: Request, res: R
 })
 
 const acceptOrDeclineFollwerRequestByUserId = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
-  const {id: followerId, modeType, status} = req.body;
+  const userId = req.user.id;
+  const { id: followerId, modeType, status } = req.body;
 
-  const result = await follwerService.acceptOrDeclineFollwerRequestByUserId({userId, followerId, modeType, status});
+  const result = await follwerService.acceptOrDeclineFollwerRequestByUserId({ userId, followerId, modeType, status });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -207,10 +207,10 @@ const acceptOrDeclineFollwerRequestByUserId = catchAsync(async (req: Request, re
 })
 
 const unfollowUserBYUserId = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
-  const {userId: followerId} = req.body;
+  const userId = req.user.id;
+  const { userId: followerId } = req.body;
 
-  const result = await follwerService.unfollowUserByUserId({userId, followerId});
+  const result = await follwerService.unfollowUserByUserId({ userId, followerId });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -222,10 +222,10 @@ const unfollowUserBYUserId = catchAsync(async (req: Request, res: Response) => {
 
 
 const getSeeFollower = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
-  const {id: targetId} = req.params;
+  const userId = req.user.id;
+  const { id: targetId } = req.params;
 
-  const result = await follwerService.getSeeFollowerFollowing({userId, targetId});
+  const result = await follwerService.getSeeFollowerFollowing({ userId, targetId });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -235,10 +235,10 @@ const getSeeFollower = catchAsync(async (req: Request, res: Response) => {
   });
 })
 const getSeeFollowing = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id; 
-  const {id: targetId} = req.params;
+  const userId = req.user.id;
+  const { id: targetId } = req.params;
 
-  const result = await follwerService.getSeeFollowing({userId, targetId});
+  const result = await follwerService.getSeeFollowing({ userId, targetId });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
