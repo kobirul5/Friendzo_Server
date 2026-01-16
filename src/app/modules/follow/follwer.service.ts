@@ -373,6 +373,10 @@ const acceptOrRejectFollwershipRequestService = async (
         data: { requestStatus: RequestStatus.ACCEPTED },
       });
     } else {
+
+
+
+
       await prisma.follow.create({
         data: {
           followerId: userId,
@@ -409,6 +413,38 @@ const acceptOrRejectFollwershipRequestService = async (
     });
   }
 
+if (status === RequestStatus.CANCELED) {
+  await prisma.follow.deleteMany({
+    where: {
+      OR: [
+        {
+          followerId: userId,
+          followingId: follow.followerId,
+        },
+        {
+          followerId: follow.followerId,
+          followingId: userId,
+        },
+      ],
+    },
+  });
+
+  await prisma.room.deleteMany({
+    where: {
+      OR: [
+        {
+          senderId: userId,
+          receiverId: follow.followerId,
+        },
+        {
+          senderId: follow.followerId,
+          receiverId: userId,
+        },
+      ],
+    },
+  });
+}
+
   await prisma.notification.updateMany({
     where: {
       targetId: follow.id,
@@ -419,6 +455,7 @@ const acceptOrRejectFollwershipRequestService = async (
     },
   });
 
+ 
   return {
     message: `Follow request ${status.toLowerCase()} successfully`,
     follow: updatedFollow,
