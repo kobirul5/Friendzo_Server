@@ -199,7 +199,7 @@ const updateUserProfile = async (
           )}.`
       );
     }
-    updateData.datingInterests = updateData.interests
+    updateData.datingInterests = updateData.interests;
   }
   const existingUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -217,7 +217,7 @@ const updateUserProfile = async (
     updateData.dob = dateOfBirthObject;
   }
 
-    let datingImageUrl: string[] = [];
+  let datingImageUrl: string[] = [];
 
   // If updateData.datingImage is provided, use it as base (replace existing)
   const previousDatingImages = user.datingImage || [];
@@ -247,9 +247,7 @@ const updateUserProfile = async (
     (updateData.datingImage && updateData.datingImage.length > 0) ||
     (files && files.length > 0);
   if (replacingImages && previousDatingImages.length > 0) {
-     deleteImageAndFile.deleteMultipleFileFromDigitalOcean(
-      previousDatingImages
-    );
+    deleteImageAndFile.deleteMultipleFileFromDigitalOcean(previousDatingImages);
   }
 
   // Set profileImage to first dating image if available
@@ -387,7 +385,10 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
     where: { followingId: userId },
   });
   const followingsCount = await prisma.follow.count({
-    where: { followerId: userId, requestStatus: RequestStatus.ACCEPTED },
+    where: {
+      followerId: userId,
+      // requestStatus: RequestStatus.ACCEPTED,
+    },
   });
   const gifts = await getGifts(userId);
 
