@@ -8,6 +8,8 @@ import {
 } from "../../notification/notification.service";
 import stripe from "../../../../shared/stripe";
 import { ObjectId } from "mongodb";
+import emailSender from "../../../../shared/emailSender";
+import { subscriptionEmailTemplate } from "./subscriptionEmailTemplate";
 
 const createSubscriptionPlan = async (data: any, userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -299,7 +301,7 @@ const featureFieldMap: Record<string, string> = {
   coin: "totalCoins",
   priorityLikes: "priorityLikes",
 };
- const purchaseSubscription = async (data: any, userId: string) => {
+const purchaseSubscription = async (data: any, userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
 
@@ -431,6 +433,7 @@ const featureFieldMap: Record<string, string> = {
     );
   }
 };
+
 const purchaseSubscriptionStatic = async (data: any, userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
@@ -474,6 +477,33 @@ const purchaseSubscriptionStatic = async (data: any, userId: string) => {
       throw new ApiError(httpStatus.BAD_REQUEST, "Invalid plan type, please choose plan1, plan2, or plan3.");
   }
 
+  const planFeaturesMap: Record<string, { planLabel: string; features: string[] }> = {
+    plan1: {
+      planLabel: "Premium Access",
+      features: ["Boost visibility", "Priority likes"],
+    },
+    plan2: {
+      planLabel: "Pro Plan",
+      features: [
+        "Boost visibility",
+        "Priority likes",
+        "20 AI Messages",
+        "100 Coins",
+      ],
+    },
+    plan3: {
+      planLabel: "VIP Membership",
+      features: [
+        "Boost visibility",
+        "Priority likes",
+        "30 AI Messages",
+        "200 Coins",
+      ],
+    },
+  };
+
+  const planInfo = planFeaturesMap[planName.toLowerCase()];
+
   // Create subscription & update features
   const subscription = await prisma.$transaction(async (tx) => {
     // Create payment record
@@ -492,7 +522,7 @@ const purchaseSubscriptionStatic = async (data: any, userId: string) => {
     const newSubscription = await tx.subscription.create({
       data: {
         userId,
- // No specific plan ID for static plans
+        // No specific plan ID for static plans
         startedAt: new Date(),
         amount: planPrice,
         status: "ACTIVE",
@@ -533,7 +563,7 @@ const purchaseSubscriptionStatic = async (data: any, userId: string) => {
     return newSubscription;
   });
 
-  const userPlanDetails =  await prisma.user.findFirst({
+  const userPlanDetails = await prisma.user.findFirst({
     where: { id: userId },
     select: {
       boosts: true,
@@ -543,6 +573,19 @@ const purchaseSubscriptionStatic = async (data: any, userId: string) => {
     },
   });
 
+  // Send purchase confirmation email
+  if (user.email && planInfo) {
+    const emailHtml = subscriptionEmailTemplate(
+      planInfo.planLabel,
+      planPrice,
+      planInfo.features
+    );
+    emailSender(
+      user.email,
+      emailHtml,
+      `Subscription Purchased - ${planInfo.planLabel}`
+    );
+  }
 
   return { ...subscription, planDetails: userPlanDetails };
 };
