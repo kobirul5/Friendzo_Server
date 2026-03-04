@@ -66,49 +66,6 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-
-//  updateDatingProfile
-
-const updateDatingProfile = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-
-  // Parse JSON from form-data
-  const updateData = JSON.parse(req.body.data);
-
-  // Multiple files
-  const filesObj = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-
-  // Get array for field 'images'
-  const files = filesObj?.images; // array or undefined
-
-
-  const user = await userService.updateDatingProfile(userId, updateData, files);
-
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Dating profile updated successfully",
-    data: user,
-  });
-});
-
-// const deleteUserDocumentImage = catchAsync(async (req: Request, res: Response) => {
-//   const userId = req.params.id;
-//   const { imageUrl } = req.body;
-
-//   if (!imageUrl) {
-//     throw new ApiError(400, "Image URL is required");
-//   }
-
-//   const user = await userService.deleteUserDocumentImage(userId, imageUrl);
-
-//   res.status(200).json({
-//     success: true,
-//     message: "Image deleted successfully!",
-//     data: user,
-//   });
-// });
-
 const getReferralCode = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   console.log(userId);
@@ -119,27 +76,6 @@ const getReferralCode = catchAsync(async (req: Request, res: Response) => {
     data: user,
   });
 });
-
-// change dating mode
-const changeDatingMode = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-  const user = await userService.changeDatingMode({userId});
-  res.status(200).json({
-    success: true,
-    message: "Dating mode changed successfully!",
-    data: user,
-  });
-})
-
-const seeMode = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-  const user = await userService.seeMode({userId});
-  res.status(200).json({
-    success: true,
-    message: "Dating mode changed successfully!",
-    data: user,
-  });
-})
 
 const decreaseAiMessageCount = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
@@ -170,11 +106,7 @@ export const userController = {
   profileImageUpload,
   getUserProfile,
   getSingleUser,
-  updateDatingProfile,
   getReferralCode,
-  changeDatingMode,
-  seeMode,
   decreaseAiMessageCount,
   checkUser,
-  // deleteUserDocumentImage,
 };

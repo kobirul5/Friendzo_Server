@@ -1,6 +1,6 @@
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
-import { IUser, UpdateDatingProfileInput } from "./user.interface";
+import { IUser } from "./user.interface";
 import * as bcrypt from "bcrypt";
 import config from "../../../config";
 import httpStatus from "http-status";
@@ -15,7 +15,7 @@ import { jwtHelpers } from "../../../helpars/jwtHelpers";
 import emailSender from "../../../shared/emailSender";
 import { registrationOtpTemplate } from "./registrationOtpTemplate";
 import { getRefferId } from "../../../helpars/generateRefferId";
-import { Gender, ModeType, RequestStatus, User } from "@prisma/client";
+import { Gender, RequestStatus, User } from "@prisma/client";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
 
 const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
@@ -161,18 +161,6 @@ const updateUserProfile = async (
     );
   }
 
-  if (
-    updateData.interestedGender &&
-    updateData.interestedGender !== Gender.EVERYONE &&
-    updateData.interestedGender !== Gender.HIM &&
-    updateData.interestedGender !== Gender.HER
-  ) {
-    throw new ApiError(
-      400,
-      "Invalid gender. gender must be one of: HIM, HER, EVERYONE"
-    );
-  }
-
   if (updateData.email) {
     throw new ApiError(400, "Email cannot be updated");
   }
@@ -199,7 +187,7 @@ const updateUserProfile = async (
           )}.`
       );
     }
-    updateData.datingInterests = updateData.interests;
+    updateData.interests = updateData.interests;
   }
   const existingUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -217,42 +205,13 @@ const updateUserProfile = async (
     updateData.dob = dateOfBirthObject;
   }
 
-  let datingImageUrl: string[] = [];
-
-  // If updateData.datingImage is provided, use it as base (replace existing)
-  const previousDatingImages = user.datingImage || [];
-
-  // Start from existing unless caller explicitly provides new set
-  if (updateData.datingImage && updateData.datingImage.length > 0) {
-    datingImageUrl = [...updateData.datingImage];
-  } else {
-    datingImageUrl = [...previousDatingImages];
-    console.log("datingImageUrl", datingImageUrl);
-  }
-
-  // If files are uploaded, replace with freshly uploaded set
+  // If files are uploaded, upload them
   if (files && files.length > 0) {
     const uploadedImages = await Promise.all(
       files.map((file) => fileUploader.uploadToDigitalOcean(file))
     );
     const uploadedImageUrl = uploadedImages.map((img) => img.Location);
-    datingImageUrl = [...uploadedImageUrl];
-  }
-
-  // Remove duplicates from the final array
-  datingImageUrl = [...new Set(datingImageUrl)];
-
-  // If we changed the set (provided datingImage or uploaded files), delete old ones
-  const replacingImages =
-    (updateData.datingImage && updateData.datingImage.length > 0) ||
-    (files && files.length > 0);
-  if (replacingImages && previousDatingImages.length > 0) {
-    deleteImageAndFile.deleteMultipleFileFromDigitalOcean(previousDatingImages);
-  }
-
-  // Set profileImage to first dating image if available
-  if (datingImageUrl.length > 0) {
-    updateData.profileImage = datingImageUrl[0];
+    updateData.profileImage = uploadedImageUrl[0];
   }
 
   // Update user profile with only provided fields
@@ -260,7 +219,6 @@ const updateUserProfile = async (
     where: { id: userId },
     data: {
       ...updateData,
-      datingImage: datingImageUrl,
       updatedAt: new Date(),
     },
   });
@@ -268,12 +226,6 @@ const updateUserProfile = async (
   if (!updatedUser) {
     throw new ApiError(400, "Failed to update user profile");
   }
-
-  // if (file && existingUser?.profileImage && ) {
-  //   await deleteImageAndFile.deleteFileFromDigitalOcean(
-  //     existingUser.profileImage
-  //   );
-  // }
 
   return { ...updatedUser, password: undefined };
 };
@@ -352,11 +304,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       memories: true,
       event: true,
       interests: true,
-      datingInterests: true,
-      datingAbout: true,
-      datingImage: true,
-      interestedGender: true,
-      aiMessage: true, // string[]
+      aiMessage: true,
       managerRole: true,
     },
   });
@@ -366,15 +314,6 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
   const interestsDetails = await prisma.interest.findMany({
     where: {
       OR: user.interests.map((name) => ({
-        name: { equals: name, mode: "insensitive" },
-      })),
-    },
-    select: { id: true, name: true, image: true, category: true },
-  });
-
-  const datingInterestsDetails = await prisma.interest.findMany({
-    where: {
-      OR: user.datingInterests.map((name) => ({
         name: { equals: name, mode: "insensitive" },
       })),
     },
@@ -392,13 +331,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
   });
   const gifts = await getGifts(userId);
 
-  const requiredFields = [
-    user.datingAbout,
-    user.datingInterests?.length > 0,
-    user.datingImage?.length > 0,
-    user.interestedGender,
-  ];
-  const profileComplete = requiredFields.every(Boolean);
+  const profileComplete = user.about;
 
   // 6️⃣ Subscription check
   const activeSubscription = await prisma.subscription.findFirst({
@@ -408,8 +341,8 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       AND: [
         {
           OR: [
-            { endedAt: null }, // কোনো end date নাই মানে চলছে
-            { endedAt: { gte: new Date() } }, // end date আজ বা ভবিষ্যতে
+            { endedAt: null }, 
+            { endedAt: { gte: new Date() } }, 
           ],
         },
       ],
@@ -423,7 +356,6 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
     return {
       ...user,
       interestsDetails,
-      datingInterestsDetails,
       followersCount,
       followingsCount,
       gifts,
@@ -438,7 +370,6 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
   return {
     ...user,
     interestsDetails,
-    datingInterestsDetails,
     followersCount,
     followingsCount,
     gifts,
@@ -456,21 +387,6 @@ const isFriendOrFollow = async (
   requestStatus: string;
   userRequestStatus: string;
 }> => {
-  // Fetch user mode
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { isDatingMode: true },
-  });
-
-  if (!user)
-    return {
-      isFriend: false,
-      requestStatus: "NOTFOLLOW",
-      userRequestStatus: "NOTFOLLOW",
-    };
-
-  const modeType = user.isDatingMode ? "DATING" : "SOCIAL";
-
   // Check follows in both directions
   const follows = await prisma.follow.findMany({
     where: {
@@ -478,12 +394,10 @@ const isFriendOrFollow = async (
         {
           followerId: userId,
           followingId: friendId,
-          modeType,
         },
         {
           followerId: friendId,
           followingId: userId,
-          modeType,
         },
       ],
     },
@@ -502,52 +416,22 @@ const isFriendOrFollow = async (
     };
   }
 
-  if (modeType === "DATING") {
-    // For dating mode: must be mutual ACCEPTED
-    const userFollow = follows.find(
-      (f) => f.followerId === userId && f.followingId === friendId
-    );
-    const friendFollow = follows.find(
-      (f) => f.followerId === friendId && f.followingId === userId
-    );
-
-    if (
-      userFollow?.requestStatus === "ACCEPTED" &&
-      friendFollow?.requestStatus === "ACCEPTED"
-    ) {
-      return {
-        isFriend: true,
-        requestStatus: "ACCEPTED",
-        userRequestStatus: "NOTFOLLOW",
-      };
-    }
-
-    // Not mutual yet
+  // Social mode: one ACCEPTED follow is enough
+  const accepted = follows.find((f) => f.requestStatus === "ACCEPTED");
+  if (accepted) {
     return {
-      isFriend: false,
-      requestStatus:
-        userFollow?.requestStatus || friendFollow?.requestStatus || "NOTFOLLOW",
-      userRequestStatus:
-        userFollow?.requestStatus || friendFollow?.requestStatus || "NOTFOLLOW",
-    };
-  } else {
-    // Social mode: one ACCEPTED follow is enough
-    const accepted = follows.find((f) => f.requestStatus === "ACCEPTED");
-    if (accepted) {
-      return {
-        isFriend: true,
-        requestStatus: "ACCEPTED",
-        userRequestStatus: "NOTFOLLOW",
-      };
-    }
-    return {
-      isFriend: false,
-      requestStatus: follows[0]?.requestStatus || "NOTFOLLOW",
-      userRequestStatus:
-        follows.find((f) => f.followingId === userId)?.requestStatus ||
-        "NOTFOLLOW",
+      isFriend: true,
+      requestStatus: "ACCEPTED",
+      userRequestStatus: "NOTFOLLOW",
     };
   }
+  return {
+    isFriend: false,
+    requestStatus: follows[0]?.requestStatus || "NOTFOLLOW",
+    userRequestStatus:
+      follows.find((f) => f.followingId === userId)?.requestStatus ||
+      "NOTFOLLOW",
+  };
 };
 
 export const getGifts = async (userId: string) => {
@@ -609,111 +493,6 @@ export const getGifts = async (userId: string) => {
   };
 };
 
-//  update dating profile
-
-const updateDatingProfile = async (
-  userId: string,
-  updateData: UpdateDatingProfileInput,
-  files?: Express.Multer.File[]
-) => {
-  // 1. Check if user exists
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      datingImage: true,
-      datingInterests: true,
-    },
-  });
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  // 2. Prepare merged data
-  const mergedData: any = {};
-
-  if (updateData.interestedGender) {
-    mergedData.interestedGender = updateData.interestedGender;
-  }
-
-  if (updateData.datingAbout) {
-    mergedData.datingAbout = updateData.datingAbout;
-  }
-
-  // Validate datingInterests if provided
-  if (updateData.datingInterests && updateData.datingInterests.length > 0) {
-    const interests = await prisma.interest.findMany({
-      select: { name: true },
-    });
-    const CategoriesArray = interests.map((i) => i.name);
-
-    const invalidNames = updateData.datingInterests.filter(
-      (name) => !CategoriesArray.includes(name)
-    );
-
-    if (invalidNames.length > 0) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        `Invalid interest names: ${invalidNames.join(
-          ", "
-        )}. Must be one of: ${CategoriesArray.join(", ")}.`
-      );
-    }
-
-    mergedData.datingInterests = updateData.datingInterests;
-  }
-
-  // Image upload logic
-  if (files && files.length > 0) {
-    // 1. Delete old images from DigitalOcean (if exist)
-
-    // 2. Upload new images
-    const uploadedUrls: string[] = [];
-    for (const file of files) {
-      const uploaded = await fileUploader.uploadToDigitalOcean(file);
-      uploadedUrls.push(uploaded.Location);
-    }
-
-    // Replace with only new images
-    mergedData.datingImage = uploadedUrls;
-  }
-
-  // 3. Update user profile
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      ...mergedData,
-      updatedAt: new Date(),
-    },
-    select: {
-      id: true,
-      datingAbout: true,
-      datingInterests: true,
-      datingImage: true,
-      interestedGender: true,
-      updatedAt: true,
-    },
-  });
-
-  if (!updatedUser) {
-    // rollback if update fails
-    if (mergedData.datingImage && mergedData.datingImage.length > 0) {
-      await deleteImageAndFile.deleteFileFromDigitalOcean(
-        mergedData.datingImage
-      );
-    }
-    throw new ApiError(400, "Failed to update user profile");
-  }
-
-  if (user.datingImage && user.datingImage.length > 0) {
-    await deleteImageAndFile.deleteMultipleFileFromDigitalOcean(
-      user.datingImage
-    );
-  }
-
-  return updatedUser;
-};
-
 const getReferralCode = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -726,52 +505,6 @@ const getReferralCode = async (userId: string) => {
     },
   });
   return user;
-};
-
-const changeDatingMode = async ({ userId }: { userId: string }) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      isDatingMode: true,
-      firstName: true,
-    },
-  });
-
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  console.log("Current mode: ", user.firstName, user.isDatingMode, userId);
-
-  const userUpdate = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      isDatingMode: !user.isDatingMode,
-    },
-    select: {
-      id: true,
-      isDatingMode: true,
-    },
-  });
-  console.log("Updated mode:", userUpdate.isDatingMode);
-  return { isDatingMode: userUpdate.isDatingMode };
-};
-
-const seeMode = async ({ userId }: { userId: string }) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      isDatingMode: true,
-    },
-  });
-
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  return { isDatingMode: user.isDatingMode };
 };
 
 const decreaseAiMessageCount = async (userId: string) => {
@@ -838,11 +571,7 @@ export const userService = {
   updateUserProfile,
   getUserProfile,
   getSingleUser,
-  updateDatingProfile,
   getReferralCode,
-  changeDatingMode,
-  seeMode,
   decreaseAiMessageCount,
   checkUser,
-  // deleteUserDocumentImage,
 };

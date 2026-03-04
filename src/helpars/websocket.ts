@@ -169,12 +169,8 @@ export function setupWebSocket(server: Server) {
                 firstName: true,
                 lastName: true,
                 interests: true,
-                datingInterests: true,
                 about: true,
-                datingAbout: true,
-                isDatingMode: true,
                 gender: true,
-                interestedGender: true,
               },
             });
 

@@ -12,7 +12,7 @@ router.post(
   "/register", // Multer middleware for handling multiple files
   userController.createUser
 );
-router.put( 
+router.put(
   "/update-profile",
   auth(),
   fileUploader.uploadMultipleImage,
@@ -25,19 +25,7 @@ router.put(
   userController.profileImageUpload
 );
 
-router.put(
-  "/update-dating-profile",
-  auth(),
-  fileUploader.uploadMultipleImage,
-  userController.updateDatingProfile
-);
 router.get("/referral-code", auth(), userController.getReferralCode);
-
-router.get("/profile", auth(), userController.getUserProfile);
-
-router.get("/mode", auth(), userController.seeMode);
-
-router.put("/change-mode", auth(), userController.changeDatingMode);
 
 router.get("/:id", auth(), userController.getSingleUser);
 

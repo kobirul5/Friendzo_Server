@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
-import { ModeType, NotificationType, RequestStatus, UserStatus } from "@prisma/client";
+import { NotificationType, RequestStatus, UserStatus } from "@prisma/client";
 import {
   INotificationPayload,
   notificationServices,
@@ -10,20 +10,13 @@ import {
 const createFollowerAndFollowingService = async (payload: {
   userId: string;
   followerId: string;
-  modeType: ModeType;
+
 }) => {
-  const { userId, followerId, modeType } = payload;
+  const { userId, followerId } = payload;
 
   if (userId === followerId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "You cannot follow yourself");
   }
-
-  // if (modeType !== ModeType.DATING && modeType !== ModeType.SOCIAL) {
-  //   throw new ApiError(
-  //     httpStatus.BAD_REQUEST,
-  //     "Invalid mode type, it should be DATING or SOCIAL"
-  //   );
-  // }
 
   // check target user exists
   const targetUser = await prisma.user.findUnique({
@@ -37,13 +30,13 @@ const createFollowerAndFollowingService = async (payload: {
   // check already following
   const alreadyFollowing = await prisma.follow.findFirst({
     where: {
-      followerId: userId, // ✅ যে follow করছে
-      followingId: followerId, // ✅ যাকে follow করা হচ্ছে
-      // modeType,
+      followerId: userId, 
+      followingId: followerId, 
+     
     },
   });
 
-  // যদি আগে follow cancel করা থাকে → আবার pending করা হবে
+  
   if (
     alreadyFollowing &&
     alreadyFollowing.requestStatus === RequestStatus.CANCELED
@@ -75,7 +68,7 @@ const createFollowerAndFollowingService = async (payload: {
 
     return result;
   }
-  // যদি আগে থেকে follow করা থাকে
+  
   if (alreadyFollowing) {
     throw new ApiError(
       httpStatus.CONFLICT,
@@ -87,10 +80,10 @@ const createFollowerAndFollowingService = async (payload: {
 
   const follow = await prisma.follow.create({
     data: {
-      followerId: userId, // ✅ যে follow করছে
-      followingId: followerId, // ✅ যাকে follow করা হচ্ছে
-      // modeType,
-      requestStatus: RequestStatus.PENDING, // default pending
+      followerId: userId, 
+      followingId: followerId, 
+ 
+      requestStatus: RequestStatus.PENDING, 
     },
   });
 
@@ -317,7 +310,6 @@ const unfollowUserDatingService = async (followId: string, userId: string) => {
 const acceptOrRejectFollwershipRequestService = async (
   userId: string,
   followId: string,
-  modeType: ModeType,
   status: "ACCEPTED" | "CANCELED"
 ) => {
   // Validate status
@@ -539,10 +531,6 @@ const getMyAllFriends = async (
     );
   }
 
-  let modeType: ModeType | undefined = undefined;
-  if (type === "social") modeType = ModeType.SOCIAL;
-  else if (type === "dating") modeType = ModeType.DATING;
-
   const friends = await prisma.follow.findMany({
     where: {
       OR: [
@@ -618,13 +606,6 @@ const getMyAllFollwerRequest = async ({
     );
   }
 
-  let modeType: ModeType | undefined = undefined;
-  if (type === "social") {
-    modeType = ModeType.SOCIAL;
-  } else if (type === "dating") {
-    modeType = ModeType.DATING;
-  }
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -663,13 +644,6 @@ const getMyAllFollwingRequest = async ({
       httpStatus.BAD_REQUEST,
       "Invalid type. type should be social, dating, type muste be social or dating"
     );
-  }
-
-  let modeType: ModeType | undefined = undefined;
-  if (type === "social") {
-    modeType = ModeType.SOCIAL;
-  } else if (type === "dating") {
-    modeType = ModeType.DATING;
   }
 
   const user = await prisma.user.findUnique({
@@ -863,13 +837,10 @@ const getAllSuggestedUsers = async ({
     );
   }
 
-  const modeType: ModeType =
-    type === "social" ? ModeType.SOCIAL : ModeType.DATING;
-
   // 1️⃣ Get current user
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, datingInterests: true, lat: true, lng: true },
+    select: { id: true, interests: true, lat: true, lng: true },
   });
 
   if (!currentUser) {
@@ -905,12 +876,11 @@ const getAllSuggestedUsers = async ({
       lastName: true,
       profileImage: true,
       address: true,
-      isDatingMode: true,
-      datingInterests: true,
+      interests: true,
       createdAt: true,
       lat: true,
       lng: true,
-      boosts: true, // ✅ include boost for sorting
+      boosts: true,
     },
   });
 
@@ -922,8 +892,8 @@ const getAllSuggestedUsers = async ({
       let score = 0;
 
       // Interest match score
-      const commonInterests = user.datingInterests.filter((i) =>
-        currentUser.datingInterests.includes(i)
+      const commonInterests = (user.interests || []).filter((i: string) =>
+        (currentUser.interests || []).includes(i)
       );
       score += commonInterests.length * 10;
 
@@ -963,7 +933,7 @@ const getAllSuggestedUsers = async ({
     lastName: user.lastName,
     profileImage: user.profileImage,
     address: user.address,
-    datingInterests: user.datingInterests,
+    interests: user.interests,
   }));
 };
 
@@ -1176,12 +1146,10 @@ const acceptFollowerRequestNotification = async ({
 const acceptOrDeclineFollwerRequestByUserId = async ({
   userId,
   followerId,
-  modeType,
   status,
 }: {
   userId: string;
   followerId: string;
-  modeType: ModeType;
   status: "ACCEPTED" | "CANCELED";
 }) => {
   // Validate status

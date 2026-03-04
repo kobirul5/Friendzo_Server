@@ -14,21 +14,20 @@ const getPeopleBySharedInterests = async ({
     where: { id: userId },
     select: {
       id: true,
-      datingInterests: true,
+      interests: true,
       gender: true,
-      interestedGender: true,
     },
   });
 
-  // console.log(currentUser,"------------------")
+
   if (!currentUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found.");
   }
 
   const currentUserInterests = interest
     ? [interest]
-    : currentUser.datingInterests;
-console.log(currentUserInterests,"------------------")
+    : currentUser.interests;
+
   if (currentUserInterests && currentUserInterests.length > 0) {
     // Validate interests against fixed array
 
@@ -39,7 +38,7 @@ console.log(currentUserInterests,"------------------")
     const CategoriesArray = interests.map((interest) => interest.name);
 
     const invalidNames = currentUserInterests.filter(
-      (name) =>
+      (name: string) =>
         !CategoriesArray.includes(name as (typeof CategoriesArray)[number])
     );
 
@@ -54,7 +53,7 @@ console.log(currentUserInterests,"------------------")
     }
   }
 
-  console.log(currentUserInterests," currentUserInterests------------------")
+  
 
   if (!currentUserInterests || currentUserInterests.length === 0) {
     return []; // or throw an error if interests are required
@@ -64,9 +63,7 @@ console.log(currentUserInterests,"------------------")
   const matchedUsers = await prisma.user.findMany({
     where: {
       id: { not: userId },
-      isDatingMode: true,
-      // gender: currentUser.interestedGender,
-      datingInterests: {
+      interests: {
         hasSome: currentUserInterests,
       },
     },
@@ -78,18 +75,17 @@ console.log(currentUserInterests,"------------------")
       email: true,
       address: true,
       interests: true,
-      datingInterests: true,
       gender: true,
       dob: true,
       likesReceived: true,
     },
   });
 
-  console.log(matchedUsers," matchedUsers------------------")
+
 
   // 3️ Calculate shared interests percentage
   const usersWithMatchPercentage = matchedUsers.map((user) => {
-    const sharedCount = user.datingInterests.filter((i) =>
+    const sharedCount = user.interests.filter((i: string) =>
       currentUserInterests.includes(i)
     ).length;
 
@@ -106,7 +102,6 @@ console.log(currentUserInterests,"------------------")
       email: user.email,
       address: user.address,
       interests: user.interests,
-      datingInterests: user.datingInterests,
       gender: user.gender,
       dob: user.dob,
       // New fields

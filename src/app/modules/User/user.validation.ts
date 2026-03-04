@@ -30,16 +30,9 @@ const userUpdateSchema = z.object({
   profession: z.string().optional(),
 });
 
-const updateDatingProfileSchema = z.object({
-  interestedGender: z.string().optional(),
-  datingInterests: z.array(z.string()).optional(),
-  datingAbout: z.string().optional(),
-});
-
 
 export const UserValidation = {
   CreateUserValidationSchema,
   UserLoginValidationSchema,
   userUpdateSchema,
-  updateDatingProfileSchema,
 };

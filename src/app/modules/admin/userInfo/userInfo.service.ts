@@ -79,14 +79,12 @@ const dashboardStats = async (options: IGetAllOptions = {}, userId: string) => {
 
   const totalDatingUsers = await prisma.user.count({
     where: {
-      isDatingMode: true,
       status: UserStatus.ACTIVE,
     },
   });
 
   const totalSocialUsers = await prisma.user.count({
     where: {
-      isDatingMode: false,
       status: UserStatus.ACTIVE,
     },
   });
@@ -183,9 +181,6 @@ const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
     // status filter if provided
     ...(options.status ? { status: options.status } : {}),
 
-    // isDating filter if provided
-    ...(isDatingFilter !== undefined ? { isDatingMode: isDatingFilter } : {}),
-
     // search keyword filter
     ...(options.search
       ? {
@@ -211,8 +206,7 @@ const allUsers = async (options: IGetAllOptions = {}, userId: string) => {
       email: true,
       role: true,
       profileImage: true,
-      isDatingMode: true,
-      status: true, // include status in the response
+      status: true,
       createdAt: true,
     },
   });
