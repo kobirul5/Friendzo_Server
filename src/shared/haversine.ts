@@ -3,7 +3,7 @@ function toRad(value: number): number {
 }
 
 export function haversine(coord1: { lat: number, lng: number }, coord2: { lat: number, lng: number }): number {
-  const R = 6371; // Earth radius in KM
+  const R = 6371;
   const dLat = toRad(coord2.lat - coord1.lat);
   const dLon = toRad(coord2.lng - coord1.lng);
 

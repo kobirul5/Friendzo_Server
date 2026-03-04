@@ -7,8 +7,8 @@ const emailSender = async (email: string, html: string, subject: string) => {
     port: 587,
     secure: false,
     auth: {
-      user: "noreply@togetherapp.ai", // Use the email from config
-      pass: "i5{f)+JjW^GHnf{o%A", // Use the app password from config
+      user: "noreply@togetherapp.ai",
+      pass: "i5{f)+JjW^GHnf{o%A",
     },
   });
 

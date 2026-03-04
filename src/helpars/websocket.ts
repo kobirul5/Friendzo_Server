@@ -64,34 +64,6 @@ export function setupWebSocket(server: Server) {
               return;
             }
 
-            // const follow = await prisma.follow.findFirst({
-            //   where: {
-            //     OR: [
-            //       {
-            //         followerId: ws.userId,
-            //         followingId: receiverId,
-            //         requestStatus: "ACCEPTED",
-            //       },
-            //       {
-            //         followerId: receiverId,
-            //         followingId: ws.userId,
-            //         requestStatus: "ACCEPTED",
-            //       },
-            //     ],
-            //   },
-            // });
-
-            // if (!follow) {
-            //   ws.send(
-            //     JSON.stringify({
-            //       event: "error",
-            //       message:
-            //         "You cannot send messages until a follow request is accepted.",
-            //     })
-            //   );
-            //   return;
-            // }
-
             let room = await prisma.room.findFirst({
               where: {
                 OR: [
@@ -231,17 +203,15 @@ export function setupWebSocket(server: Server) {
                     orderBy: {
                       createdAt: "desc",
                     },
-                    take: 1, // ✅ Get only the latest message per room
+                    take: 1,
                   },
                 },
               });
 
-              // ✅ Extract the other user involved in each room
               const userIds = rooms.map((room) =>
                 room.senderId === ws.userId ? room.receiverId : room.senderId
               );
 
-              // ✅ Get profile data for those users
               const userInfos = await prisma.user.findMany({
                 where: {
                   id: {
@@ -256,7 +226,6 @@ export function setupWebSocket(server: Server) {
                 },
               });
 
-              // ✅ Combine latest message with corresponding user
               const userWithLastMessages = rooms.map((room) => {
                 const otherUserId =
                   room.senderId === ws.userId ? room.receiverId : room.senderId;
@@ -277,7 +246,6 @@ export function setupWebSocket(server: Server) {
                 },
               });
 
-              // ✅ Send to client
               ws.send(
                 JSON.stringify({
                   event: "messageList",

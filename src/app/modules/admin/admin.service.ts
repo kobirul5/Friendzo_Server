@@ -3,7 +3,6 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import { paginationHelper } from "../../../helpars/paginationHelper";
 import { IPaginationOptions } from "../../../interfaces/paginations";
-import e from "express";
 import { fileUploader } from "../../../helpars/fileUploader";
 
 const getTotalReportService = async (options: IPaginationOptions) => {

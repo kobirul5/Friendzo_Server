@@ -409,11 +409,9 @@ model GiftPurchase {
 model UserLike {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  // Je user like dicche
   user   User   @relation("UserLikesGiven", fields: [userId], references: [id], onDelete: Cascade)
   userId String @db.ObjectId
 
-  // Je user ke like kora hocche
   likedUser   User   @relation("UserLikesReceived", fields: [likedUserId], references: [id], onDelete: Cascade)
   likedUserId String @db.ObjectId
 

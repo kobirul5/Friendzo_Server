@@ -1,13 +1,11 @@
 import httpStatus from "http-status";
 import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
-import { UserRole } from "@prisma/client";
 import {
   INotificationPayload,
   notificationServices,
 } from "../../notification/notification.service";
 import stripe from "../../../../shared/stripe";
-import { ObjectId } from "mongodb";
 import emailSender from "../../../../shared/emailSender";
 import { subscriptionEmailTemplate } from "./subscriptionEmailTemplate";
 
@@ -15,15 +13,11 @@ const createSubscriptionPlan = async (data: any, userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
 
-  // if (user.role !== UserRole.ADMIN  && user.role !== UserRole.MANAGER) {
-  //   throw new ApiError(httpStatus.FORBIDDEN, "You don't have permission to create a subscription plan");
-  // }
-
   const existingPlan = await prisma.subscriptionPlan.findMany({
     where: {
       name: {
         equals: data.name,
-        mode: "insensitive", // case-insensitive comparison
+        mode: "insensitive",
       },
     },
   });
@@ -82,9 +76,6 @@ const updateSubscriptionPlan = async (data: any, userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
 
-  // if (user.role !== UserRole.ADMIN  && user.role !== UserRole.MANAGER) {
-  //   throw new ApiError(httpStatus.FORBIDDEN, "You don't have permission to update a subscription plan");
-  // }
 
   const {
     id,
@@ -123,15 +114,7 @@ const updateSubscriptionPlan = async (data: any, userId: string) => {
     }
   }
 
-  // Validate features: only accept key, value, isActive
-  // let sanitizedFeatures;
-  // if (features && Array.isArray(features)) {
-  //   sanitizedFeatures = features.map(f => ({
-  //     key: f.key,
-  //     value: f.value,
-  //     isActive: !!f.isActive, // force boolean
-  //   }));
-  // }
+
 
   const updatedPlan = await prisma.subscriptionPlan.update({
     where: { id },
@@ -145,9 +128,6 @@ const deleteSubscriptionPlan = async (id: string, userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
 
-  // if (user.role !== UserRole.ADMIN  && user.role !== UserRole.MANAGER) {
-  //   throw new ApiError(httpStatus.FORBIDDEN, "You don't have permission to delete a subscription plan");
-  // }
 
   const existingPlan = await prisma.subscriptionPlan.findUnique({
     where: { id },
@@ -159,141 +139,6 @@ const deleteSubscriptionPlan = async (id: string, userId: string) => {
 
   return;
 };
-
-// const purchaseSubscription = async (data: any, userId: string) => {
-//   const user = await prisma.user.findUnique({ where: { id: userId } });
-//   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
-
-//   const { planId, paymentMethod } = data;
-
-//   const plan = await prisma.subscriptionPlan.findUnique({
-//     where: { id: planId },
-//   });
-//   if (!plan)
-//     throw new ApiError(httpStatus.NOT_FOUND, "Subscription plan not found");
-
-//   // Generate transaction ID
-//   const transactionId = `sub_${Date.now()}`;
-
-//   const amountInCents = Math.round(plan.price * 100); // 5.5 → 550
-
-//   try {
-//     // Create Stripe PaymentIntent
-//     const paymentIntent = await stripe.paymentIntents.create({
-//       amount: amountInCents,
-//       currency: plan.currency,
-//       payment_method: paymentMethod,
-//       confirm: true,
-//       automatic_payment_methods: { enabled: true, allow_redirects: "never" },
-//       metadata: {
-//         transactionId,
-//         planId,
-//         userId,
-//         amount: plan.price.toString(),
-//       },
-//     });
-
-//     if (paymentIntent.status !== "succeeded") {
-//       throw new ApiError(
-//         httpStatus.BAD_REQUEST,
-//         "Payment failed. Please try again."
-//       );
-//     }
-
-//     // Payment succeeded → create subscription
-//     const subscription = await prisma.$transaction(async (tx) => {
-//       // Create payment record
-//       const payment = await tx.payment.create({
-//         data: {
-//           transactionId,
-//           amount: plan.price, // convert back to float
-//           status: "COMPLETED",
-//           senderId: userId,
-//           method: "CARD",
-//           paymentMethodId: paymentIntent.payment_method as string,
-//         },
-//       });
-
-//       // Create subscription
-//       const newSubscription = await tx.subscription.create({
-//         data: {
-//           userId,
-//           planId,
-//           startedAt: new Date(),
-//           amount: plan.price,
-//           endedAt: new Date(
-//             new Date().setMonth(
-//               new Date().getMonth() + (plan.interval === "MONTH" ? 1 : 12)
-//             )
-//           ),
-//           status: "ACTIVE",
-//         },
-//       });
-
-//       type Feature = { key: string; value: string; isActive: boolean };
-
-//       // features safe cast
-//       const featuresArray: Feature[] = Array.isArray(plan.features)
-//         ? (plan.features as Feature[])
-//         : [];
-
-//       // find aiMessage feature
-//       const aiFeature = Array.isArray(featuresArray)
-//         ? featuresArray.find((f) => f?.key === "aiMessage" && f?.isActive)
-//         : undefined;
-
-//       console.log("AI Feature:", aiFeature);
-
-//       if (aiFeature && aiFeature.value) {
-//         // only update if value exists
-//         await tx.user.update({
-//           where: { id: userId },
-//           data: {
-//             aiMessage: {
-//               increment: parseInt(aiFeature.value),
-//             },
-//           },
-//         });
-//       } else {
-//         console.log("No aiMessage feature found, skipping update.");
-//       }
-
-//       // Notification payload
-//       const notifPayload: INotificationPayload = {
-//         title: "Subscription Purchased",
-//         message: `You have successfully purchased the ${plan.name} plan!`,
-//         type: "PURCHASE",
-//         senderId: userId,
-//         receiverId: userId,
-//         targetId: transactionId,
-//         targetType: "SUBSCRIPTION",
-//         followStatus: "REJECTED",
-//       };
-
-//       // Save notification
-//       await notificationServices.saveNotification(notifPayload, userId);
-
-//       // Push notification if user has token
-//       if (user.fcmToken) {
-//         await notificationServices.sendNotification(
-//           user.fcmToken,
-//           notifPayload,
-//           userId
-//         );
-//       }
-
-//       return newSubscription;
-//     });
-
-//     return { ...subscription, planDetails: plan };
-//   } catch (error: any) {
-//     console.error("Subscription purchase error:", error);
-//     throw new ApiError(
-//       httpStatus.BAD_REQUEST,
-//       error.message || "Subscription purchase failed"
-//     );
-//   }
-// };
 
 const featureFieldMap: Record<string, string> = {
   aiMessage: "aiMessage",
@@ -540,26 +385,6 @@ const purchaseSubscriptionStatic = async (data: any, userId: string) => {
       },
     });
 
-    // (Optional) Send notification
-    // const notifPayload: INotificationPayload = {
-    //   title: "Subscription Purchased",
-    //   message: `You have successfully purchased the ${plan.name} plan!`,
-    //   type: "PURCHASE",
-    //   senderId: userId,
-    //   receiverId: userId,
-    //   targetId: transactionId,
-    //   targetType: "SUBSCRIPTION",
-    //   followStatus: "REJECTED",
-    // };
-    // await notificationServices.saveNotification(notifPayload, userId);
-    // if (user.fcmToken) {
-    //   await notificationServices.sendNotification(
-    //     user.fcmToken,
-    //     notifPayload,
-    //     userId
-    //   );
-    // }
-
     return newSubscription;
   });
 
@@ -589,39 +414,6 @@ const purchaseSubscriptionStatic = async (data: any, userId: string) => {
 
   return { ...subscription, planDetails: userPlanDetails };
 };
-
-
-// const getUserSubscriptions = async (userId: string) => {
-//   // check user first
-//   const user = await prisma.user.findUnique({ where: { id: userId } });
-//   if (!user) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
-//   }
-
-//   // Fetch directly from MongoDB to avoid Prisma type enforcement
-//   const raw = await prisma.$runCommandRaw({
-//     find: "Subscription",
-//     filter: { userId: new ObjectId(userId) },
-//     sort: { startedAt: -1 },
-//   });
-
-//   // Normalize amount field to always be a number
-//   let subscriptions: any[] = [];
-//   if (
-//     raw &&
-//     typeof raw === "object" &&
-//     raw.cursor &&
-//     typeof raw.cursor === "object" &&
-//     Array.isArray((raw.cursor as any).firstBatch)
-//   ) {
-//     subscriptions = (raw.cursor as any).firstBatch.map((sub: any) => ({
-//       ...sub,
-//       amount: sub.amount ?? 0, // replace null/undefined with 0
-//     }));
-//   }
-
-//   return subscriptions;
-// };
 
 const getUserSubscriptions = async (userId: string) => {
   // check user first
