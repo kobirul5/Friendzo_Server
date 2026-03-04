@@ -1,15 +1,15 @@
 import httpStatus from 'http-status';
-import { follwerService } from './follwer.service';
+import { followerService } from './follower.service';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { Request, Response } from 'express';
 
-const createFollwer = catchAsync(async (req: Request, res: Response) => {
+const createFollower = catchAsync(async (req: Request, res: Response) => {
 
   const userId = req.user.id;
   const { followerId } = req.body;
 
-  const result = await follwerService.createFollowerAndFollowingService({ userId, followerId });
+  const result = await followerService.createFollowerAndFollowingService({ userId, followerId });
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
@@ -22,7 +22,7 @@ const createFollwer = catchAsync(async (req: Request, res: Response) => {
 const getMyFollowersAndFollowingCount = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
 
-  const result = await follwerService.getMyNetworkCount(userId);
+  const result = await followerService.getMyNetworkCount(userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -32,15 +32,15 @@ const getMyFollowersAndFollowingCount = catchAsync(async (req: Request, res: Res
   });
 });
 
-const getMyAllFollwer = catchAsync(async (req: Request, res: Response) => {
+const getMyAllFollower = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
 
-  const result = await follwerService.getMyFollowerService(userId);
+  const result = await followerService.getMyFollowerService(userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: 'Followers  retrieved successfully',
+    message: 'Followers retrieved successfully',
     data: result,
   });
 });
@@ -49,7 +49,7 @@ const getMyAllFollwer = catchAsync(async (req: Request, res: Response) => {
 const getMyAllFollowing = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
 
-  const result = await follwerService.getMyFollowingService(userId);
+  const result = await followerService.getMyFollowingService(userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -64,7 +64,7 @@ const unfollowUser = catchAsync(async (req: Request, res: Response) => {
   const followerId = req.user.id;
   const { followingId } = req.body;
 
-  const result = await follwerService.unfollowUserSocialService(followerId, followingId);
+  const result = await followerService.unfollowUserSocialService(followerId, followingId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -77,7 +77,7 @@ const unfollowUser = catchAsync(async (req: Request, res: Response) => {
 const unfollowDatingUser = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const { followId } = req.body
-  const result = await follwerService.unfollowUserDatingService(followId, userId);
+  const result = await followerService.unfollowUserDatingService(followId, userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -88,16 +88,16 @@ const unfollowDatingUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 
-const acceptOrRejectFollwershipRequest = catchAsync(async (req: Request, res: Response) => {
+const acceptOrRejectFollowershipRequest = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const { followId, status } = req.body;
 
-  const result = await follwerService.acceptOrRejectFollwershipRequestService(userId, followId, status);
+  const result = await followerService.acceptOrRejectFollowershipRequestService(userId, followId, status);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: `Request ${status.toLowerCase()}  successfully`,
+    message: `Request ${status.toLowerCase()} successfully`,
     data: result,
   });
 })
@@ -107,7 +107,7 @@ const getMyAllFriends = catchAsync(async (req: Request, res: Response) => {
   const { type } = req.params; // type can be 'all', 'mutual', etc.
   const search = req.query.search as string || '';
 
-  const result = await follwerService.getMyAllFriends(userId, type, search);
+  const result = await followerService.getMyAllFriends(userId, type, search);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -118,11 +118,11 @@ const getMyAllFriends = catchAsync(async (req: Request, res: Response) => {
 });
 
 
-const getMyAllFollwerRequest = catchAsync(async (req: Request, res: Response) => {
+const getMyAllFollowerRequest = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const { type } = req.params;
 
-  const result = await follwerService.getMyAllFollwerRequest({ userId, type });
+  const result = await followerService.getMyAllFollowerRequest({ userId, type });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -132,11 +132,11 @@ const getMyAllFollwerRequest = catchAsync(async (req: Request, res: Response) =>
   });
 });
 
-const getMyAllFollwingRequest = catchAsync(async (req: Request, res: Response) => {
+const getMyAllFollowingRequest = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const { type } = req.params;
 
-  const result = await follwerService.getMyAllFollwingRequest({ userId, type });
+  const result = await followerService.getMyAllFollowingRequest({ userId, type });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -151,7 +151,7 @@ const getAllSuggestedUsers = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const { type } = req.params;
 
-  const result = await follwerService.getAllSuggestedUsers({ userId, type });
+  const result = await followerService.getAllSuggestedUsers({ userId, type });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -167,7 +167,7 @@ const unfriendUser = catchAsync(async (req: Request, res: Response) => {
   // const type = req.params.type
   const { friendId } = req.body;
 
-  const result = await follwerService.unfriendUser({ userId, friendId });
+  const result = await followerService.unfriendUser({ userId, friendId });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -177,26 +177,12 @@ const unfriendUser = catchAsync(async (req: Request, res: Response) => {
   });
 })
 
-// accept follower request notification
-const acceptFollowerRequestNotification = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-  const { targetId: followId, notificationId } = req.body;
 
-  const result = await follwerService.acceptFollowerRequestNotification({ userId, followId, notificationId });
-
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Request accepted successfully',
-    data: result,
-  });
-})
-
-const acceptOrDeclineFollwerRequestByUserId = catchAsync(async (req: Request, res: Response) => {
+const acceptOrDeclineFollowerRequestByUserId = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const { id: followerId, status } = req.body;
 
-  const result = await follwerService.acceptOrDeclineFollwerRequestByUserId({ userId, followerId, status });
+  const result = await followerService.acceptOrDeclineFollowerRequestByUserId({ userId, followerId, status });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -210,7 +196,7 @@ const unfollowUserBYUserId = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const { userId: followerId } = req.body;
 
-  const result = await follwerService.unfollowUserByUserId({ userId, followerId });
+  const result = await followerService.unfollowUserByUserId({ userId, followerId });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -221,50 +207,22 @@ const unfollowUserBYUserId = catchAsync(async (req: Request, res: Response) => {
 })
 
 
-const getSeeFollower = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-  const { id: targetId } = req.params;
-
-  const result = await follwerService.getSeeFollowerFollowing({ userId, targetId });
-
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Unfollowed successfully',
-    data: result,
-  });
-})
-const getSeeFollowing = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-  const { id: targetId } = req.params;
-
-  const result = await follwerService.getSeeFollowing({ userId, targetId });
-
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Unfollowed successfully',
-    data: result,
-  });
-})
 
 
 export const followerController = {
-  createFollwer,
+  createFollower,
   getMyFollowersAndFollowingCount,
   unfollowUser,
-  getMyAllFollwer,
+  getMyAllFollower,
   getMyAllFollowing,
-  acceptOrRejectFollwershipRequest,
+  acceptOrRejectFollowershipRequest,
   getMyAllFriends,
-  getMyAllFollwerRequest,
-  getMyAllFollwingRequest,
+  getMyAllFollowerRequest,
+  getMyAllFollowingRequest,
   unfollowDatingUser,
   getAllSuggestedUsers,
   unfriendUser,
-  acceptFollowerRequestNotification,
-  acceptOrDeclineFollwerRequestByUserId,
+  acceptOrDeclineFollowerRequestByUserId,
   unfollowUserBYUserId,
-  getSeeFollower,
-  getSeeFollowing
+
 };

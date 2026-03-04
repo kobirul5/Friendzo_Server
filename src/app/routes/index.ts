@@ -6,7 +6,7 @@ import { eventsRoutes } from "../modules/event/event.routes";
 import { likesRoutes } from "../modules/like/like.routes";
 import { commentRoutes } from "../modules/comment/comment.routes";
 import { profileRoutes } from "../modules/profile/profile.routes";
-import { follwerRoutes } from "../modules/follow/follwer.routes";
+import { followerRoutes } from "../modules/follow/follower.routes";
 import { adminRoutes } from "../modules/admin/admin.routes";
 import { reportRoutes } from "../modules/report/report.routes";
 import { blockRoutes } from "../modules/block/block.routes";
@@ -60,7 +60,7 @@ const moduleRoutes = [
   },
   {
     path: "/follow",
-    route: follwerRoutes,
+    route: followerRoutes,
   },
   {
     path: "/admin",
