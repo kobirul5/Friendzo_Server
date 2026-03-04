@@ -7,6 +7,13 @@ import { Request, Response } from "express";
 const createUser = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.createUserIntoDb(req.body);
 
+  res.cookie("accessToken", result.accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  });
+
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,

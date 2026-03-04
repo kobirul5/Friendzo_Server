@@ -8,9 +8,15 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 
 const loginUser = catchAsync(async (req: Request, res: Response) => {
-
   const result = await AuthServices.loginUser(req.body);
-  res.cookie("token", result.token, { httpOnly: true });
+
+  res.cookie("accessToken", result.token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  });
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -21,8 +27,13 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 
 
 const logoutUser = catchAsync(async (req: Request, res: Response) => {
-  // Clear the token cookie
-  res.clearCookie("token", {
+  // Clear the token cookies
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+  res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -79,38 +90,42 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
 // forgot password
 const forgotPassword = catchAsync(async (req: Request, res: Response) => {
 
-  const result= await AuthServices.forgotPassword(req.body);
+  const result = await AuthServices.forgotPassword(req.body);
 
   sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Check your email!",
-      data: result
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Check your email!",
+    data: result
   })
 });
 const resendOtp = catchAsync(async (req: Request, res: Response) => {
 
-  const result= await AuthServices.resendOtp(req.body.email);
+  const result = await AuthServices.resendOtp(req.body.email);
 
   sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Check your email!",
-      data: result
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Check your email!",
+    data: result
   })
 });
 const verifyForgotPasswordOtp = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthServices.verifyForgotPasswordOtp(req.body);
 
- 
-
-  const result= await AuthServices.verifyForgotPasswordOtp(req.body);
+  res.cookie("accessToken", result.token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  });
 
   sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "OTP verification successful",
-      data: result
-  })
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "OTP verification successful",
+    data: result,
+  });
 });
 
 
@@ -118,13 +133,13 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 
 
 
-  await AuthServices.resetPassword( req.body);
+  await AuthServices.resetPassword(req.body);
 
   sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Password Reset!",
-      data: null
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Password Reset!",
+    data: null
   })
 });
 
@@ -140,8 +155,14 @@ const socialLoginController = catchAsync(async (req: Request, res: Response) => 
   if (!result) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Social login failed");
   }
-  
-  res.cookie("token", result.token, { httpOnly: true });
+
+  res.cookie("accessToken", result.token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  });
+
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -173,5 +194,5 @@ export const AuthController = {
   verifyForgotPasswordOtp,
   socialLoginController,
   deleteAccount
- 
+
 };

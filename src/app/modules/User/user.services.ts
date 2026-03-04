@@ -61,6 +61,7 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
     data: {
       email,
       password: hashedPassword,
+      firstName: payload.firstName,
       role: "USER",
       status: "ACTIVE",
       fcmToken,
@@ -182,9 +183,9 @@ const updateUserProfile = async (
       throw new ApiError(
         httpStatus.BAD_REQUEST,
         `Invalid interest names: ${invalidNames.join(", ")}. ` +
-          `You must use one of the following names: ${CategoriesArray.join(
-            ", "
-          )}.`
+        `You must use one of the following names: ${CategoriesArray.join(
+          ", "
+        )}.`
       );
     }
     updateData.interests = updateData.interests;
@@ -340,8 +341,8 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       AND: [
         {
           OR: [
-            { endedAt: null }, 
-            { endedAt: { gte: new Date() } }, 
+            { endedAt: null },
+            { endedAt: { gte: new Date() } },
           ],
         },
       ],
