@@ -15,8 +15,7 @@ router.get("/my-subscriptions", auth(), subscriptionController.getUserSubscripti
 
 router.post(
   "/plan",
-  auth(),
-//   auth(UserRole.ADMIN, UserRole.MANAGER),
+  auth(UserRole.ADMIN),
   subscriptionController.createSubscriptionPlan
 );
 

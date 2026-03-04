@@ -6,16 +6,16 @@ import { UserRole } from '@prisma/client';
 const router = express.Router();
 
 
-router.get('/', auth(UserRole.ADMIN, UserRole.MANAGER), postsController.getPostsList);
+router.get('/', auth(UserRole.ADMIN), postsController.getPostsList);
 
-router.get('/:id', auth(UserRole.ADMIN, UserRole.MANAGER), postsController.getPostsById);
+router.get('/:id', auth(UserRole.ADMIN), postsController.getPostsById);
 
 router.put(
 '/:id',
-auth(UserRole.ADMIN, UserRole.MANAGER),
+auth(UserRole.ADMIN),
 postsController.updatePosts,
 );
 
-router.delete('/:id', auth(UserRole.ADMIN, UserRole.MANAGER), postsController.deletePosts);
+router.delete('/:id', auth(UserRole.ADMIN), postsController.deletePosts);
 
 export const postsRoutes = router;

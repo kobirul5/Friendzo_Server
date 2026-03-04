@@ -21,7 +21,6 @@ import { paymentsRoutes } from "../modules/payments/payments.routes";
 import { userInfoRoutes } from "../modules/admin/userInfo/userInfo.routes";
 import { postsRoutes } from "../modules/admin/posts/posts.routes";
 import { fileUploadRoutes } from "../modules/fileUpload/fileUpload.routes";
-import { managersRoutes } from "../modules/admin/managers/managers.routes";
 import path from "path";
 import { notificationsRoute } from "../modules/notification/notification.routes";
 import { subscriptionRoutes } from "../modules/admin/subscription/subscription.routes";
@@ -120,10 +119,6 @@ const moduleRoutes = [
   {
     path: "/file-uploads",
     route: fileUploadRoutes
-  },
-  {
-    path: "/managers",
-    route: managersRoutes
   },
   {
     path:"/notification",

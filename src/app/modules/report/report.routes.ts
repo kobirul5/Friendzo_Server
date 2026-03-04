@@ -20,12 +20,12 @@ auth(),
 reportController.createReportPost,
 );
 
-router.get('/user', auth(UserRole.ADMIN, UserRole.MANAGER), reportController.getReportedUsers);
-router.get('/post', auth(UserRole.ADMIN, UserRole.MANAGER), reportController.getReportedPosts);
+router.get('/user', auth(UserRole.ADMIN), reportController.getReportedUsers);
+router.get('/post', auth(UserRole.ADMIN), reportController.getReportedPosts);
 
 router.delete(
 '/:id',
-auth(UserRole.ADMIN, UserRole.MANAGER),
+auth(UserRole.ADMIN),
 reportController.deleteReport,
 );
 

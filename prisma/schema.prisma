@@ -86,7 +86,6 @@ model User {
   //  Notifications where this user is the sender
   notificationsSent Notification[] @relation("NotificationSender")
   ReportPost        ReportPost[]
-  managerRole       String[]       @default([])
   // Likes that this user has given to other users
   likesGiven        UserLike[]     @relation("UserLikesGiven")
   // Likes that this user has received from other users
@@ -183,7 +182,6 @@ enum UserRole {
   USER
   ADMIN
   SUPER_ADMIN
-  MANAGER
 }
 
 model EventLike {

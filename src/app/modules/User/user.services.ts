@@ -305,7 +305,6 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
       event: true,
       interests: true,
       aiMessage: true,
-      managerRole: true,
     },
   });
 

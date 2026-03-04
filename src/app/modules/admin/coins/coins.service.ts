@@ -2,8 +2,6 @@
 import httpStatus from 'http-status';
 import prisma from '../../../../shared/prisma';
 import ApiError from '../../../../errors/ApiErrors';
-import { fileUploader } from '../../../../helpars/fileUploader';
-import { deleteImageAndFile } from '../../../../helpars/fileDelete';
 
 
 

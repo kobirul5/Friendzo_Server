@@ -10,7 +10,7 @@ const router = express.Router();
 router.post(
   "/",
   fileUploader.uploadFile,
-  auth(UserRole.ADMIN, UserRole.MANAGER),
+  auth(UserRole.ADMIN),
   giftCardController.createGiftCard
 );
 

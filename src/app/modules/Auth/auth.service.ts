@@ -5,7 +5,6 @@ import prisma from "../../../shared/prisma";
 import * as bcrypt from "bcrypt";
 import ApiError from "../../../errors/ApiErrors";
 import emailSender from "../../../shared/emailSender";
-import { UserRole, UserStatus } from "@prisma/client";
 import httpStatus from "http-status";
 import crypto from "crypto";
 import {
@@ -13,50 +12,6 @@ import {
   getFacebookUser,
 } from "../../../shared/socilaAuthHelper";
 import { getRefferId } from "../../../helpars/generateRefferId";
-
-// user login
-// const loginUser = async (payload: { email: string; password: string ; role: string; fcmToken?: string }) => {
-//   const userData = await prisma.user.findFirst({
-//     where: {
-//       email: payload.email,
-//       role: payload.role as UserRole,
-
-//     },
-//   });
-
-//   if (!userData) {
-//   throw new ApiError(
-//     httpStatus.NOT_FOUND,
-//     `User not found with email ${payload.email} and role ${payload.role}`
-//   );
-// }
-
-//   if (!userData?.email) {
-//     throw new ApiError(
-//       httpStatus.NOT_FOUND,
-//       "User not found! with this email " + payload.email
-//     );
-//   }
-//   const isCorrectPassword: boolean = await bcrypt.compare(
-//     payload.password,
-//     userData.password
-//   );
-
-//   if (!isCorrectPassword) {
-//     throw new ApiError(httpStatus.BAD_REQUEST, "Password incorrect!");
-//   }
-//   const accessToken = jwtHelpers.generateToken(
-//     {
-//       id: userData.id,
-//       email: userData.email,
-//       role: userData.role,
-//     },
-//     config.jwt.jwt_secret as Secret,
-//     config.jwt.expires_in as string
-//   );
-
-//   return { token: accessToken , role: userData.role };
-// };
 
 const loginUser = async (payload: {
   email: string;
@@ -349,9 +304,9 @@ const verifyForgotPasswordOtp = async (payload: {
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      otp: null, // Clear the OTP
+      otp: null,
       expirationOtp: null,
-      isVerified: true, // Clear the OTP expiration
+      isVerified: true, 
     },
   });
 
@@ -387,9 +342,9 @@ const resetPassword = async (payload: { password: string; email: string }) => {
   await prisma.user.update({
     where: { email: payload.email },
     data: {
-      password: hashedPassword, // Update with the hashed password
-      otp: null, // Clear the OTP
-      expirationOtp: null, // Clear OTP expiration
+      password: hashedPassword, 
+      otp: null, 
+      expirationOtp: null,
     },
   });
 

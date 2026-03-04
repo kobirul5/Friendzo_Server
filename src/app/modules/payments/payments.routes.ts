@@ -20,6 +20,6 @@ router.post(
   paymentsController.createCoinPurchase
 );
 
-router.get("/", auth(UserRole.ADMIN, UserRole.MANAGER), paymentsController.getPaymentList);
+router.get("/", auth(UserRole.ADMIN), paymentsController.getPaymentList);
 
 export const paymentsRoutes = router;
