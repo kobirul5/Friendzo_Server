@@ -14,8 +14,7 @@ router.delete("/unfollow", auth(), followerController.unfollowUser);
 router.delete("/unfollow-user", auth(), followerController.unfollowUserBYUserId);
 router.delete("/unfollow-dating", auth(), followerController.unfollowDatingUser);
 
-//
-router.put("/accept-request-notification", auth(), followerController.acceptFollowerRequestNotification);
+// router.put("/accept-request-notification", auth(), followerController.acceptFollowerRequestNotification);
 router.put("/accept-or-decline", auth(), followerController.acceptOrDeclineFollowerRequestByUserId);
 
 router.post("/accept-or-reject", auth(), followerController.acceptOrRejectFollowershipRequest);
@@ -24,8 +23,8 @@ router.get("/follower-request/:type", auth(), followerController.getMyAllFollowe
 router.get("/following-request/:type", auth(), followerController.getMyAllFollowingRequest);
 router.get("/suggested-user/:type", auth(), followerController.getAllSuggestedUsers);
 router.put("/unfriend", auth(), followerController.unfriendUser);
-router.get("/see-follower/:id", auth(), followerController.getSeeFollower);
-router.get("/see-following/:id", auth(), followerController.getSeeFollowing);
+// router.get("/see-follower/:id", auth(), followerController.getSeeFollower);
+// router.get("/see-following/:id", auth(), followerController.getSeeFollowing);
 
 
 export const followerRoutes = router;
