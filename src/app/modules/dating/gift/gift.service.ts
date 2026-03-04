@@ -2,10 +2,6 @@ import httpStatus from "http-status";
 import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
 import { Gender, GiftCategory } from "@prisma/client";
-import {
-  INotificationPayload,
-  notificationServices,
-} from "../../notification/notification.service";
 
 const buyGiftCard = async ({ data, userId }: any) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -54,32 +50,6 @@ const buyGiftCard = async ({ data, userId }: any) => {
       giftCard: true,
     },
   });
-
-  // -----------------------------
-  // Notification
-  // -----------------------------
-  const notifPayload: INotificationPayload = {
-    title: "Gift Card Purchased!",
-    message: `You successfully purchased a ${giftCard.category} gift card!`,
-    type: "PURCHASE",
-    senderId: userId,
-    receiverId: userId, // self notification
-    targetId: result.giftCard.id,
-    targetType: "GIFT_CARD",
-    followStatus: "REJECTED",
-  };
-
-  // Save notification to DB
-  await notificationServices.saveNotification(notifPayload, userId);
-
-  // Push notification if token exists
-  if (updatedUser.fcmToken) {
-    await notificationServices.sendNotification(
-      updatedUser.fcmToken,
-      notifPayload,
-      userId
-    );
-  }
 
   return result;
 };
@@ -323,31 +293,6 @@ const sendGiftToFriends = async ({
           isSeen: false, // default false (to show popup once)
         },
       });
-
-      // -----------------------------
-      // Notification
-      // -----------------------------
-      const notifPayload: INotificationPayload = {
-        title: `Send you an ${giftCategory} ${giftPopup?.giftCard.name ? giftPopup?.giftCard.name : ""} gift`,
-        message: `You received a ${giftCategory} gift from ${sender?.firstName} ${sender?.lastName}!`,
-        type: "GIFT",
-        image: giftPopup?.giftCard?.image || "",
-        senderId,
-        receiverId: receiver.id,
-        followStatus: "REJECTED",
-      };
-
-      // Save to DB
-      await notificationServices.saveNotification(notifPayload, receiver.id);
-
-      // Push notification if token exists
-      if (receiver.fcmToken) {
-        await notificationServices.sendNotification(
-          receiver.fcmToken,
-          notifPayload,
-          receiver.id
-        );
-      }
     }
 
     return { message: "Gifts sent successfully!" };
@@ -462,34 +407,9 @@ const sendMultipleGifts = async ({
           isSeen: false,
         },
       });
-    
-    
-    
-    
-      const notifPayload: INotificationPayload = {
-        title: `Send you an ${gift.giftCategory} ${gift.giftCard.name ? gift.giftCard.name : ""} gift`,
-        message: `You received a ${gift.giftCategory} gift from ${user?.firstName} ${user?.lastName}!`,
-        type: "GIFT",
-        image: purchasedGifts[0].giftCard.image,
-        senderId,
-        receiverId,
-        followStatus: "REJECTED",
-      };
-  
-      // Save notification
-      await notificationServices.saveNotification(notifPayload, receiver.id);
-  
-      // Push notification
-      if (receiver.fcmToken) {
-        await notificationServices.sendNotification(
-          receiver.fcmToken,
-          notifPayload,
-          receiver.id
-        );
-      }
-    }
 
-    // 5. Notification
+      image = giftSend?.giftCard?.image || ""
+    }
 
     return { message: "Gifts sent successfully!" };
   });

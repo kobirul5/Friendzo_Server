@@ -1,11 +1,6 @@
 import dayjs from "dayjs";
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
-import {
-  INotificationPayload,
-  notificationServices,
-} from "../notification/notification.service";
-import { NotificationType } from "@prisma/client";
 
 const createEventLikeService = async (userId: string, eventId: string) => {
   const user = await prisma.user.findUnique({
@@ -78,34 +73,6 @@ const createMemoryLikeService = async (userId: string, memoryId: string) => {
     },
   });
 
-  //notification
-
-  if (memory) {
-    const notifPayload: INotificationPayload = {
-      title: "New Memory Like",
-      message: "Someone liked your memory",
-      type: NotificationType.LIKE,
-      senderId: userId,
-      image: memory.image,
-      receiverId: memory.userId,
-      targetId: memoryId,
-      targetType: "MEMORY",
-      followStatus: "REJECTED", // not needed for memory like
-    };
-
-    // notification save
-    await notificationServices.saveNotification(notifPayload, memory.userId);
-
-    // fcm token  push , try-catch safe
-    if (memory?.user?.fcmToken) {
-      await notificationServices.sendNotification(
-        memory.user.fcmToken,
-        notifPayload,
-        memory.userId
-      );
-    }
-  }
-
   return like;
 };
 
@@ -145,30 +112,6 @@ const createUserLikeService = async (userId: string, likedUserId: string) => {
       likedUserId,
     },
   });
-
-  // // Notification payload
-  const notifPayload: INotificationPayload = {
-    title: "New User Like",
-    message: "Someone liked you",
-    type: NotificationType.LIKE,
-    senderId: userId,
-    receiverId: likedUserId,
-    targetId: likedUserId,
-    targetType: "USER",
-    followStatus: "REJECTED", // not needed for user like
-  };
-
-  // // Save notification
-  await notificationServices.saveNotification(notifPayload, likedUserId);
-
-  // // FCM push notification (if token exists)
-  if (likedUser.fcmToken) {
-    await notificationServices.sendNotification(
-      likedUser.fcmToken,
-      notifPayload,
-      likedUserId
-    );
-  }
 
   return like;
 };

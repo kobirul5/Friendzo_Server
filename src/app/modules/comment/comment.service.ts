@@ -2,7 +2,6 @@
 import httpStatus from 'http-status';
 import prisma from '../../../shared/prisma';
 import ApiError from '../../../errors/ApiErrors';
-import { INotificationPayload, notificationServices } from '../notification/notification.service';
 
 
 const createCommentService = async (
@@ -30,31 +29,6 @@ const createCommentService = async (
       memoryId,
     },
   });
-
-
-  const notifPayload: INotificationPayload = {
-    title: "New Comment",
-    message: `${user?.firstName + " " + user?.lastName || "Someone"} commented on your memory`,
-    type: 'COMMENT',
-    senderId: userId,
-    image: memory.image || '',
-    receiverId: memory.userId,
-    targetId: memoryId,
-    targetType: "MEMORY",
-    followStatus: 'REJECTED',
-  };
-
-  // notification save db
-  await notificationServices.saveNotification(notifPayload, memory.userId);
-
-  //  push notification 
-  if (memory.user.fcmToken) {
-    await notificationServices.sendNotification(
-      memory.user.fcmToken,
-      notifPayload,
-      memory.userId
-    );
-  }
 
   return comment;
 };

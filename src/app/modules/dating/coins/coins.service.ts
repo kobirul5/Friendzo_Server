@@ -2,7 +2,6 @@
 import httpStatus from 'http-status';
 import ApiError from '../../../../errors/ApiErrors';
 import prisma from '../../../../shared/prisma';
-import { INotificationPayload, notificationServices } from '../../notification/notification.service';
 import { RequestStatus } from '@prisma/client';
 
 const getCoinList = async ({userId}: any) => { 
@@ -74,31 +73,6 @@ const createGiftCoin = async ({
           totalCoin: coinAmount,
         },
       });
-
-      // -----------------------------
-      // Notification
-      // -----------------------------
-      const notifPayload: INotificationPayload = {
-        title: "You received  coins!",
-        message: `${sender.firstName || "Someone"} gifted you ${coinAmount} coins`,
-        type: 'GIFT',
-        senderId: userId,
-        receiverId: recipient.id,
-        // targetType: RequestStatus.REJECTED,
-        followStatus: RequestStatus.ACCEPTED,
-      };
-
-      // Save to DB
-      await notificationServices.saveNotification(notifPayload, recipient.id);
-
-      // Push notification if token exists
-      if (recipient.fcmToken) {
-        await notificationServices.sendNotification(
-          recipient.fcmToken,
-          notifPayload,
-          recipient.id
-        );
-      }
     }
 
     return { success: true, totalCoinsDeducted: totalCost };

@@ -1,10 +1,7 @@
 import httpStatus from "http-status";
 import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
-import {
-  INotificationPayload,
-  notificationServices,
-} from "../../notification/notification.service";
+
 import stripe from "../../../../shared/stripe";
 import emailSender from "../../../../shared/emailSender";
 import { subscriptionEmailTemplate } from "./subscriptionEmailTemplate";
@@ -242,28 +239,6 @@ const purchaseSubscription = async (data: any, userId: string) => {
 
           console.log(`✅ ${feature.key} incremented by ${incrementValue}`);
         }
-      }
-
-      // Send notification
-      const notifPayload: INotificationPayload = {
-        title: "Subscription Purchased",
-        message: `You have successfully purchased the ${plan.name} plan!`,
-        type: "PURCHASE",
-        senderId: userId,
-        receiverId: userId,
-        targetId: transactionId,
-        targetType: "SUBSCRIPTION",
-        followStatus: "REJECTED",
-      };
-
-      await notificationServices.saveNotification(notifPayload, userId);
-
-      if (user.fcmToken) {
-        await notificationServices.sendNotification(
-          user.fcmToken,
-          notifPayload,
-          userId
-        );
       }
 
       return newSubscription;

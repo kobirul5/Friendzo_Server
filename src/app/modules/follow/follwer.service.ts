@@ -1,11 +1,7 @@
 import httpStatus from "http-status";
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
-import { NotificationType, RequestStatus, UserStatus } from "@prisma/client";
-import {
-  INotificationPayload,
-  notificationServices,
-} from "../notification/notification.service";
+import { RequestStatus, UserStatus } from "@prisma/client";
 
 const createFollowerAndFollowingService = async (payload: {
   userId: string;
@@ -46,26 +42,6 @@ const createFollowerAndFollowingService = async (payload: {
       data: { requestStatus: RequestStatus.PENDING },
     });
 
-    const notifPayload: INotificationPayload = {
-      title: "New Follow Request",
-      message: "Someone sent you a follow request",
-      type: "FOLLOW",
-      senderId: userId,
-      receiverId: followerId,
-      targetId: alreadyFollowing?.id,
-      followStatus: RequestStatus.PENDING,
-    };
-
-    await notificationServices.saveNotification(notifPayload, followerId);
-
-    if (targetUser?.fcmToken) {
-      await notificationServices?.sendNotification(
-        targetUser?.fcmToken,
-        notifPayload,
-        followerId
-      );
-    }
-
     return result;
   }
   
@@ -86,28 +62,6 @@ const createFollowerAndFollowingService = async (payload: {
       requestStatus: RequestStatus.PENDING, 
     },
   });
-
-  const notifPayload: INotificationPayload = {
-    title: "New Follow Request",
-    message: "Someone sent you a follow request",
-    type: "FOLLOW",
-    senderId: userId,
-    receiverId: followerId,
-    targetId: follow?.id,
-    followStatus: RequestStatus.PENDING,
-  };
-
-  // ✅ সবসময় save হবে
-  await notificationServices.saveNotification(notifPayload, followerId);
-
-  // ✅ শুধু token থাকলে push যাবে
-  if (targetUser?.fcmToken) {
-    await notificationServices?.sendNotification(
-      targetUser?.fcmToken,
-      notifPayload,
-      followerId
-    );
-  }
 
   return follow;
 };
@@ -236,24 +190,6 @@ const unfollowUserSocialService = async (
 
 
   if (follow) {
-    const notification = await prisma.notification.findFirst({
-      where: {
-        targetId: follow.id,
-        type: NotificationType.FOLLOW,
-      },
-    })
-
-    if (notification) {
-      await prisma.notification.deleteMany({
-        where: {
-          targetId: follow.id,
-          type: NotificationType.FOLLOW,
-        },
-      })
-    }
-  }
-
-
   return { unfollowed: true };
 };
 
@@ -287,24 +223,6 @@ const unfollowUserDatingService = async (followId: string, userId: string) => {
   });
 
   if (follow) {
-    const notification = await prisma.notification.findFirst({
-      where: {
-        targetId: follow.id,
-        type: NotificationType.FOLLOW,
-      },
-    })
-
-    if (notification) {
-      await prisma.notification.deleteMany({
-        where: {
-          targetId: follow.id,
-          type: NotificationType.FOLLOW,
-        },
-      })
-    }
-  }
-
-  return { unfollowed: true };
 };
 
 const acceptOrRejectFollwershipRequestService = async (
@@ -437,17 +355,6 @@ if (status === RequestStatus.CANCELED) {
   });
 }
 
-  await prisma.notification.updateMany({
-    where: {
-      targetId: follow.id,
-      type: NotificationType.FOLLOW,
-    },
-    data: {
-      followStatus: status,
-    },
-  });
-
- 
   return {
     message: `Follow request ${status.toLowerCase()} successfully`,
     follow: updatedFollow,
@@ -995,23 +902,6 @@ const unfriendUser = async ({
     });
 
     if (follow) {
-      const notification = await prisma.notification.findFirst({
-        where: {
-          targetId: follow.id,
-          type: NotificationType.FOLLOW,
-        },
-      })
-
-      if (notification) {
-        await prisma.notification.deleteMany({
-          where: {
-            targetId: follow.id,
-            type: NotificationType.FOLLOW,
-          },
-        })
-      }
-    }
-
     return { message: "Follow request canceled (deleted)" };
   }
 
@@ -1020,130 +910,6 @@ const unfriendUser = async ({
 
 };
 
-// accept notification
-const acceptFollowerRequestNotification = async ({
-  userId,
-  followId,
-  notificationId,
-}: {
-  userId: string;
-  followId: string;
-  notificationId: string;
-}) => {
-  const user = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
-
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-  }
-
-  const follow = await prisma.follow.findUnique({
-    where: {
-      id: followId,
-    },
-  });
-
-  if (!follow) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Follow not found");
-  }
-
-  if (follow.followingId !== userId) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "You are not authorized to accept this request"
-    );
-  }
-  const notification = await prisma.notification.findUnique({
-    where: {
-      id: notificationId,
-    },
-  });
-
-  if (!notification) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Notification not found");
-  }
-
-  if (notification.receiverId !== userId) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "You are not authorized to accept this request"
-    );
-  }
-
-  const result = await prisma.follow.update({
-    where: {
-      id: followId,
-    },
-    data: {
-      requestStatus: RequestStatus.ACCEPTED,
-    },
-  });
-
-  const reverseFollow = await prisma.follow.findFirst({
-    where: {
-      followerId: userId,
-      followingId: follow.followerId,
-    },
-  });
-
-  if (reverseFollow) {
-    await prisma.follow.update({
-      where: { id: reverseFollow.id },
-      data: { requestStatus: RequestStatus.ACCEPTED },
-    });
-  } else {
-    await prisma.follow.create({
-      data: {
-        followerId: userId,
-        followingId: follow.followerId,
-        requestStatus: RequestStatus.ACCEPTED,
-      },
-    });
-  }
-
-
-
-  await prisma.notification.update({
-    where: {
-      id: notificationId,
-    },
-    data: {
-      followStatus: RequestStatus.ACCEPTED,
-    },
-  });
-
-  // ✅ Auto Message send
-  let room = await prisma.room.findFirst({
-    where: {
-      OR: [
-        { senderId: userId, receiverId: follow.followerId },
-        { senderId: follow.followerId, receiverId: userId },
-      ],
-    },
-  });
-
-  if (!room) {
-    room = await prisma.room.create({
-      data: { senderId: userId, receiverId: follow.followerId },
-    });
-  }
-
-  const autoMessage = await prisma.chat.create({
-    data: {
-      senderId: userId,
-      receiverId: follow.followerId,
-      roomId: room.id,
-      message: `Hi , Thanks for following! Your request has been accepted.`,
-    },
-  });
-
-  return result;
-};
-
-const acceptOrDeclineFollwerRequestByUserId = async ({
   userId,
   followerId,
   status,
@@ -1202,19 +968,6 @@ const acceptOrDeclineFollwerRequestByUserId = async ({
     }
   }
 
-  // Notifications reference the related entity ID in `targetId` (see schema).
-  // Use updateMany because multiple notifications may reference the same follow.
-  await prisma.notification.updateMany({
-    where: {
-      targetId: follow.id,
-      type: NotificationType.FOLLOW,
-    },
-    data: {
-      followStatus: status,
-    },
-  });
-
-  return result;
 };
 
 const unfollowUserByUserId = async ({ userId, followerId }: { userId: string; followerId: string }) => {
@@ -1231,23 +984,6 @@ const unfollowUserByUserId = async ({ userId, followerId }: { userId: string; fo
   // }
 
   if (follow) {
-    const notification = await prisma.notification.findFirst({
-      where: {
-        targetId: follow.id,
-        type: NotificationType.FOLLOW,
-      },
-    })
-
-    if (notification) {
-      await prisma.notification.deleteMany({
-        where: {
-          targetId: follow.id,
-          type: NotificationType.FOLLOW,
-        },
-      })
-    }
-  }
-
   const result = await prisma.follow.deleteMany({
     where: {
       followerId: userId,
@@ -1378,7 +1114,6 @@ export const follwerService = {
   getMyAllFollwingRequest,
   getAllSuggestedUsers,
   unfriendUser,
-  acceptFollowerRequestNotification,
   acceptOrDeclineFollwerRequestByUserId,
   unfollowUserByUserId,
   getSeeFollowerFollowing,

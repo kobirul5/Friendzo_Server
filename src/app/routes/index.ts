@@ -22,7 +22,6 @@ import { userInfoRoutes } from "../modules/admin/userInfo/userInfo.routes";
 import { postsRoutes } from "../modules/admin/posts/posts.routes";
 import { fileUploadRoutes } from "../modules/fileUpload/fileUpload.routes";
 import path from "path";
-import { notificationsRoute } from "../modules/notification/notification.routes";
 import { subscriptionRoutes } from "../modules/admin/subscription/subscription.routes";
 
 
@@ -119,10 +118,6 @@ const moduleRoutes = [
   {
     path: "/file-uploads",
     route: fileUploadRoutes
-  },
-  {
-    path:"/notification",
-    route: notificationsRoute
   },
   {
     path: "/subscription",
