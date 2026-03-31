@@ -1,5 +1,15 @@
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { v2 as cloudinary } from "cloudinary";
+import dotenv from "dotenv";
 import config from "../config/index";
+
+dotenv.config();
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // DigitalOcean Spaces Config
 const s3 = new S3Client({
@@ -13,6 +23,34 @@ const s3 = new S3Client({
 });
 
 async function deleteFileFromDigitalOcean(imageUrl: string): Promise<boolean> {
+  if (imageUrl.includes("res.cloudinary.com")) {
+    try {
+      const url = new URL(imageUrl);
+      const uploadIndex = url.pathname.indexOf("/upload/");
+
+      if (uploadIndex === -1) {
+        return false;
+      }
+
+      const assetPath = url.pathname.slice(uploadIndex + "/upload/".length);
+      const normalizedPath = assetPath.replace(/^v\d+\//, "");
+      const publicId = normalizedPath.replace(/\.[^/.]+$/, "");
+
+      if (!publicId) {
+        return false;
+      }
+
+      const result = await cloudinary.uploader.destroy(publicId, {
+        resource_type: "image",
+      });
+
+      return result.result === "ok" || result.result === "not found";
+    } catch (err: any) {
+      console.error("Cloudinary delete failed:", err.message || err);
+      return false;
+    }
+  }
+
   try {
     const bucketName = process.env.DO_SPACE_BUCKET!;
 

@@ -6,21 +6,18 @@ import {
   ObjectCannedACL,
 } from "@aws-sdk/client-s3";
 import { v2 as cloudinary } from "cloudinary";
-// import { CloudinaryStorage } from "multer-storage-cloudinary";
 import streamifier from "streamifier";
 import dotenv from "dotenv";
 
 
 dotenv.config();
 
-// Configure DigitalOcean Spaces
 const s3Client = new S3Client({
   region: "us-east-1",
   endpoint: process.env.DO_SPACE_ENDPOINT,
   credentials: {
     accessKeyId: process.env.DO_SPACE_ACCESS_KEY || "",
     secretAccessKey: process.env.DO_SPACE_SECRET_KEY || "",
-    
   },
 });
 
@@ -58,7 +55,16 @@ const updateProfile = upload.fields([
   { name: "banner", maxCount: 1 },
 ]);
 
-//  Fixed Cloudinary Upload (Now supports buffer)
+const ensureCloudinaryConfig = () => {
+  if (
+    !process.env.CLOUDINARY_CLOUD_NAME ||
+    !process.env.CLOUDINARY_API_KEY ||
+    !process.env.CLOUDINARY_API_SECRET
+  ) {
+    throw new Error("Cloudinary configuration missing in environment variables.");
+  }
+};
+
 const uploadToCloudinary = async (
   file: Express.Multer.File
 ): Promise<{ Location: string; public_id: string }> => {
@@ -66,13 +72,21 @@ const uploadToCloudinary = async (
     throw new Error("File is required for uploading.");
   }
 
+  ensureCloudinaryConfig();
+
+  const originalNameWithoutExtension = file.originalname.replace(/\.[^/.]+$/, "");
+  const sanitizedFileName = originalNameWithoutExtension
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zA-Z0-9_-]/g, "");
+
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
-        folder: "uploads",
-        resource_type: "auto", // Supports images, videos, etc.
+        folder: "friendzo",
+        public_id: `${Date.now()}_${sanitizedFileName || "upload"}`,
+        resource_type: "auto",
         use_filename: true,
-        unique_filename: false,
+        unique_filename: true,
       },
       (error, result) => {
         if (error) {
@@ -80,15 +94,13 @@ const uploadToCloudinary = async (
           return reject(error);
         }
 
-        //  Explicitly return `Location` and `public_id`
         resolve({
-          Location: result?.secure_url || "", // Cloudinary URL
+          Location: result?.secure_url || "",
           public_id: result?.public_id || "",
         });
       }
     );
 
-    // Convert buffer to stream and upload
     streamifier.createReadStream(file.buffer).pipe(uploadStream);
   });
 };
@@ -177,7 +189,6 @@ export const fileUploader = {
   uploadMultipleImage,
   updateProfile,
   uploadFile,
-  // cloudinaryUpload,
-  uploadToDigitalOcean,
+  uploadToDigitalOcean: uploadToCloudinary,
   uploadToCloudinary,
 };
