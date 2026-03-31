@@ -31,12 +31,12 @@ const loginUser = async (payload: {
     );
   }
 
-  if (userData.isVerified === false) {
-    throw new ApiError(
-      httpStatus.NOT_FOUND,
-      `User not verified with email ${payload.email} `
-    );
-  }
+  // if (userData.isVerified === false) {
+  //   throw new ApiError(
+  //     httpStatus.NOT_FOUND,
+  //     `User not verified with email ${payload.email} `
+  //   );
+  // }
 
   if (!userData.password) {
     throw new ApiError(httpStatus.BAD_REQUEST, "User password is not set.");
@@ -63,6 +63,7 @@ const loginUser = async (payload: {
       id: userData.id,
       email: userData.email,
       role: userData.role,
+      isVerified: userData.isVerified,
     },
     config.jwt.jwt_secret as Secret,
     config.jwt.expires_in as string
@@ -84,6 +85,7 @@ const loginUser = async (payload: {
     token: accessToken,
     role: userData.role,
     id: userData.id,
+    isVerified: userData.isVerified,
     isProfileComplete: profileComplete,
   };
 };

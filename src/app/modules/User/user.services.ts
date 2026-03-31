@@ -106,7 +106,12 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
 
   // Generate JWT token
   const token = jwtHelpers.generateToken(
-    { id: newUser.id, email: newUser.email, role: newUser.role },
+    {
+      id: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+      isVerified: false,
+    },
     config.jwt.jwt_secret as Secret,
     config.jwt.expires_in!
   );
