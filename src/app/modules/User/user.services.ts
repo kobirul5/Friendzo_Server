@@ -19,7 +19,8 @@ import { Gender, RequestStatus, User } from "@prisma/client";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
 
 const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
-  const { email, password, fcmToken, referredId } = payload;
+  const { password, fcmToken, referredId } = payload;
+  const email = payload.email?.toLowerCase().trim();
 
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({ where: { email } });

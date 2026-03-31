@@ -27,23 +27,42 @@ const loginUser = async (payload: {
   if (!userData) {
     throw new ApiError(
       httpStatus.NOT_FOUND,
-      `User not found with email ${payload.email} `
+      `User not found with email ${payload.email} `,
     );
   }
 
-  // if (userData.isVerified === false) {
-  //   throw new ApiError(
-  //     httpStatus.NOT_FOUND,
-  //     `User not verified with email ${payload.email} `
-  //   );
-  // }
+  if (!userData.isVerified) {
+    const otp = Number(crypto.randomInt(1000, 9999));
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+    const html = `
+    <div style="font-family: Arial, sans-serif; background:#f5f7fa; padding:40px;">
+      <div style="max-width:600px; background:#fff; margin:auto; padding:30px; border-radius:6px;">
+        <h2>Together</h2>
+        <p>Your verification code for login is:</p>
+        <div style="font-size:28px; font-weight:bold; margin:20px 0;">${otp}</div>
+        <p style="font-size:14px;">This code will expire in 10 minutes.</p>
+      </div>
+    </div>`;
+
+    await emailSender(
+      userData.email,
+      html,
+      "Together - Login Verification Code",
+    );
+
+    await prisma.user.update({
+      where: { id: userData.id },
+      data: { otp, expirationOtp: otpExpires },
+    });
+  }
 
   if (!userData.password) {
     throw new ApiError(httpStatus.BAD_REQUEST, "User password is not set.");
   }
   const isCorrectPassword = await bcrypt.compare(
     payload.password,
-    userData.password
+    userData.password,
   );
 
   if (!isCorrectPassword) {
@@ -66,7 +85,7 @@ const loginUser = async (payload: {
       isVerified: userData.isVerified,
     },
     config.jwt.jwt_secret as Secret,
-    config.jwt.expires_in as string
+    config.jwt.expires_in as string,
   );
 
   const requiredFields = [
@@ -85,6 +104,7 @@ const loginUser = async (payload: {
     token: accessToken,
     role: userData.role,
     id: userData.id,
+    email: userData.email,
     isVerified: userData.isVerified,
     isProfileComplete: profileComplete,
   };
@@ -94,7 +114,7 @@ const loginUser = async (payload: {
 const getMyProfile = async (userToken: string) => {
   const decodedToken = jwtHelpers.verifyToken(
     userToken,
-    config.jwt.jwt_secret!
+    config.jwt.jwt_secret!,
   );
 
   const userProfile = await prisma.user.findUnique({
@@ -122,11 +142,11 @@ const getMyProfile = async (userToken: string) => {
 const changePassword = async (
   userToken: string,
   newPassword: string,
-  oldPassword: string
+  oldPassword: string,
 ) => {
   const decodedToken = jwtHelpers.verifyToken(
     userToken,
-    config.jwt.jwt_secret!
+    config.jwt.jwt_secret!,
   );
 
   const user = await prisma.user.findUnique({
@@ -207,7 +227,7 @@ const forgotPassword = async (payload: { email: string }) => {
   await emailSender(
     userData.email,
     html,
-    "Together - Password Reset Verification"
+    "Together - Password Reset Verification",
   );
 
   // Update the user's OTP and expiration in the database
@@ -284,13 +304,25 @@ const verifyForgotPasswordOtp = async (payload: {
   email: string;
   otp: number;
 }) => {
-  // Check if the user exists
+  const normalizedEmail = payload.email.toLowerCase().trim();
+  console.log("DEBUG: BACKEND RECEIVED EMAIL (NORMALIZED):", normalizedEmail);
+
+  if (!normalizedEmail) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Email is missing in verification request",
+    );
+  }
+
   const user = await prisma.user.findUnique({
-    where: { email: payload.email },
+    where: { email: normalizedEmail },
   });
 
   if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "This user is not found!");
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `This user was not found: ${normalizedEmail}`,
+    );
   }
 
   // Check if the OTP is valid and not expired
@@ -308,7 +340,7 @@ const verifyForgotPasswordOtp = async (payload: {
     data: {
       otp: null,
       expirationOtp: null,
-      isVerified: true, 
+      isVerified: true,
     },
   });
 
@@ -318,12 +350,13 @@ const verifyForgotPasswordOtp = async (payload: {
       id: user.id,
       email: user.email,
       role: user.role,
+      isVerified: true,
     },
     config.jwt.jwt_secret as Secret,
-    config.jwt.expires_in as string
+    config.jwt.expires_in as string,
   );
 
-  return {token};
+  return { token };
 };
 
 // reset password
@@ -344,8 +377,8 @@ const resetPassword = async (payload: { password: string; email: string }) => {
   await prisma.user.update({
     where: { email: payload.email },
     data: {
-      password: hashedPassword, 
-      otp: null, 
+      password: hashedPassword,
+      otp: null,
       expirationOtp: null,
     },
   });
@@ -355,7 +388,7 @@ const resetPassword = async (payload: { password: string; email: string }) => {
 
 const socialLogin = async (
   provider: "google" | "facebook",
-  accessToken: string
+  accessToken: string,
 ) => {
   let userData;
 
@@ -406,7 +439,7 @@ const socialLogin = async (
       role: user.role,
     },
     config.jwt.jwt_secret as Secret,
-    config.jwt.expires_in as string
+    config.jwt.expires_in as string,
   );
 
   return { token, user };
