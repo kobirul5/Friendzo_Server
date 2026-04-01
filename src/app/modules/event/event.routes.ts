@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.post('/', authMiddleware(),fileUploader.uploadFile,  eventController.createEvent);
 router.get('/', authMiddleware(), eventController.getUserEvent);
+router.get('/paginated', authMiddleware(), eventController.getPaginatedEvents);
 router.get('/all-events', authMiddleware(), eventController.getAllEvents);
 router.get('/:id', authMiddleware(), eventController.getSingleEvent);
 router.patch('/:id', authMiddleware(), eventController.updateEvent);

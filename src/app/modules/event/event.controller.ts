@@ -118,12 +118,27 @@ const getAllEvents = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getPaginatedEvents = catchAsync(async (req: Request, res: Response) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 6;
+  const result = await eventService.getPaginatedEvents({ page, limit });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Paginated events fetched successfully",
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
 export const eventController = {
     createEvent,
     getUserEvent,
     getSingleEvent,
     updateEvent,
     deleteEvent,
-    getAllEvents
+    getAllEvents,
+    getPaginatedEvents
 }
 

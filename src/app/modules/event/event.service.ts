@@ -1,6 +1,8 @@
 import { PrismaClient, Event as EventModel } from "@prisma/client";
 import ApiError from "../../../errors/ApiErrors";
 import { haversine } from "../../../shared/haversine";
+import { paginationHelper } from "../../../helpars/paginationHelper";
+import { IPaginationOptions } from "../../../interfaces/paginations";
 
 const prisma = new PrismaClient();
 
@@ -119,6 +121,42 @@ const getAllEvents = async (userId: string): Promise<any[]> => {
   return eventsWithDistance;
 };
 
+const getPaginatedEvents = async (options: IPaginationOptions): Promise<{
+  meta: { page: number; limit: number; total: number };
+  data: any[];
+}> => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+
+  const total = await prisma.event.count();
+  const events = await prisma.event.findMany({
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          profileImage: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    skip,
+    take: limit,
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: events,
+  };
+};
+
 // Export all
 export const eventService = {
   createEvent,
@@ -127,4 +165,5 @@ export const eventService = {
   updateEvent,
   deleteEvent,
   getAllEvents,
+  getPaginatedEvents,
 };
