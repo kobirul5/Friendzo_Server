@@ -104,10 +104,9 @@ const acceptOrRejectFollowershipRequest = catchAsync(async (req: Request, res: R
 
 const getMyAllFriends = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
-  const { type } = req.params; // type can be 'all', 'mutual', etc.
   const search = req.query.search as string || '';
 
-  const result = await followerService.getMyAllFriends(userId, type, search);
+  const result = await followerService.getMyAllFriends(userId, search);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

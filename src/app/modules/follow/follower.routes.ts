@@ -18,7 +18,7 @@ router.delete("/unfollow-dating", auth(), followerController.unfollowDatingUser)
 router.put("/accept-or-decline", auth(), followerController.acceptOrDeclineFollowerRequestByUserId);
 
 router.post("/accept-or-reject", auth(), followerController.acceptOrRejectFollowershipRequest);
-router.get("/friends/:type", auth(), followerController.getMyAllFriends);
+router.get("/friends", auth(), followerController.getMyAllFriends);
 router.get("/follower-request/:type", auth(), followerController.getMyAllFollowerRequest);
 router.get("/following-request/:type", auth(), followerController.getMyAllFollowingRequest);
 router.get("/suggested-user/:type", auth(), followerController.getAllSuggestedUsers);

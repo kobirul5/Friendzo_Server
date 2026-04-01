@@ -337,15 +337,9 @@ const acceptOrRejectFollowershipRequestService = async (
 
 const getMyAllFriends = async (
   userId: string,
-  type: string,
   search?: string,
 ) => {
-  if (!["social", "dating", "all"].includes(type)) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Invalid type. type should be social, dating or all",
-    );
-  }
+
 
   const friends = await prisma.follow.findMany({
     where: {
