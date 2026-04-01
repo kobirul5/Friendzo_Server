@@ -60,16 +60,21 @@ const getPeopleBySharedInterestsController = catchAsync(
   async (req: Request, res: Response) => {
     const userId = req.user?.id;
     const interest = req.query.interest as string;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
     const result = await discoverByInterestService.getPeopleBySharedInterests({
       userId,
       interest,
+      options: { page, limit },
     });
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
       message: "People with shared interests retrieved successfully.",
-      data: result,
+      meta: result.meta,
+      data: result.data,
     });
   }
 );
