@@ -1,5 +1,6 @@
 
 import ApiError from "../../../errors/ApiErrors";
+import httpStatus from "http-status";
 import prisma from "../../../shared/prisma";
 
 const shareMemoryThorwChat = async ({
