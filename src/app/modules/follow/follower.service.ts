@@ -158,7 +158,7 @@ const getMyFollowingService = async (userId: string) => {
   };
 };
 
-const unfollowUserSocialService = async (
+const unfollowUserService = async (
   followerId: string,
   followingId: string,
 ) => {
@@ -183,7 +183,7 @@ const unfollowUserSocialService = async (
 
   return { unfollowed: true };
 };
-const unfollowUserDatingService = async (followId: string, userId: string) => {
+const unfollowByFollowIdService = async (followId: string, userId: string) => {
   // Check if follow relation exists
   const follow = await prisma.follow.findFirst({
     where: {
@@ -384,7 +384,7 @@ const getMyAllFriends = async (
         friend.blockedUsers.length === 0 && friend.blockedByUsers.length === 0,
     );
 
-  // Apply search in JS (simpler & avoids TypeScript Prisma type issues)
+  // Apply search in JS for simpler filtering
   if (search) {
     const lowerSearch = search.toLowerCase();
     rawFriends = rawFriends.filter(
@@ -403,25 +403,15 @@ const getMyAllFriends = async (
 
 const getMyAllFollowerRequest = async ({
   userId,
-  type,
 }: {
   userId: string;
-  type: string;
 }) => {
-  if (type !== "social" && type !== "dating") {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Invalid type. type should be social, dating, type must be social or dating",
-    );
-  }
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       followers: {
         where: {
           requestStatus: RequestStatus.PENDING,
-          //  modeType
         },
         include: {
           follower: {
@@ -443,25 +433,15 @@ const getMyAllFollowerRequest = async ({
 
 const getMyAllFollowingRequest = async ({
   userId,
-  type,
 }: {
   userId: string;
-  type: string;
 }) => {
-  if (type !== "social" && type !== "dating") {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Invalid type. type should be social, dating, type must be social or dating",
-    );
-  }
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       following: {
         where: {
           requestStatus: RequestStatus.PENDING,
-          // modeType: modeType
         },
         include: {
           following: {
@@ -481,42 +461,14 @@ const getMyAllFollowingRequest = async ({
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  // const follwingRequests = await prisma.follow.findMany({
-  //   where: {
-  //     followingId: userId,
-  //     requestStatus: RequestStatus.PENDING,
-  //     modeType,
-  //   },
-  //   include: {
-  //     follower: {
-  //       select: {
-  //         id: true,
-  //         firstName: true,
-  //         lastName: true,
-  //         profileImage: true,
-  //         address: true,
-  //       },
-  //     },
-  //   },
-  // });
-
   return user.following;
 };
 
 const getAllSuggestedUsers = async ({
   userId,
-  type,
 }: {
   userId: string;
-  type: string;
 }) => {
-  if (type !== "social" && type !== "dating") {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      'Invalid type. Type must be "social" or "dating"',
-    );
-  }
-
   // 1️⃣ Get current user
   const currentUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -692,7 +644,6 @@ const acceptOrDeclineFollowerRequestByUserId = async ({
     where: {
       followerId: followerId,
       followingId: userId,
-      // modeType: modeType,
       requestStatus: RequestStatus.PENDING,
     },
   });
@@ -860,8 +811,8 @@ const getSeeFollowing = async ({
 
 export const followerService = {
   createFollowerAndFollowingService,
-  unfollowUserSocialService,
-  unfollowUserDatingService,
+  unfollowUserService,
+  unfollowByFollowIdService,
   getMyFollowerService,
   getMyNetworkCount,
   getMyFollowingService,
