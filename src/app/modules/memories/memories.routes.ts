@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.post('/', authMiddleware(),fileUploader.uploadFile,  memoriesController.createMemory);
 router.get('/', authMiddleware(), memoriesController.getUserMemories);
+router.get('/paginated', authMiddleware(), memoriesController.getPaginatedMemories);
 router.get('/all-memories', authMiddleware(), memoriesController.getUserMemoriesAllUsers);
 router.get('/:id', authMiddleware(), memoriesController.getSingleMemory);
 router.patch('/:id', authMiddleware(), memoriesController.updateMemory);

@@ -120,12 +120,28 @@ const getUserMemoriesAllUsers = catchAsync(async (req: Request, res: Response) =
   });
 })
 
+const getPaginatedMemories = catchAsync(async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 6;
+  const result = await memoriesService.getPaginatedMemories(userId, { page, limit });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Paginated memories fetched successfully",
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
 export const memoriesController = {
     createMemory,
     getUserMemories,
     getSingleMemory,
     updateMemory,
     deleteMemory,
-    getUserMemoriesAllUsers
+    getUserMemoriesAllUsers,
+    getPaginatedMemories
 }
 

@@ -1,6 +1,8 @@
 import { PrismaClient, Memory } from "@prisma/client";
 import ApiError from "../../../errors/ApiErrors";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
+import { paginationHelper } from "../../../helpars/paginationHelper";
+import { IPaginationOptions } from "../../../interfaces/paginations";
 
 const prisma = new PrismaClient();
 
@@ -135,6 +137,26 @@ const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
   return formattedMemories;
 };
 
+const getPaginatedMemories = async (
+  userId: string,
+  options: IPaginationOptions
+): Promise<{
+  meta: { page: number; limit: number; total: number };
+  data: any[];
+}> => {
+  const { page, limit, skip } = paginationHelper.calculatePagination(options);
+  const memories = await getMemoriesAllUsers(userId);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total: memories.length,
+    },
+    data: memories.slice(skip, skip + limit),
+  };
+};
+
 // Export all
 export const memoriesService = {
   createMemory,
@@ -143,4 +165,5 @@ export const memoriesService = {
   updateMemory,
   deleteMemory,
   getMemoriesAllUsers,
+  getPaginatedMemories,
 };
