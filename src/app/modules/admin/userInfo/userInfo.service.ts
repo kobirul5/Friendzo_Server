@@ -269,7 +269,7 @@ const getByIdFromDb = async (id: string) => {
         name: { equals: name, mode: "insensitive" },
       })),
     },
-    select: { id: true, name: true, image: true, category: true },
+    select: { id: true, name: true, image: true },
   });
 
   const followrsCount = await prisma.follow.count({

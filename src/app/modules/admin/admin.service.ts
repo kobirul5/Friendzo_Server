@@ -195,25 +195,42 @@ const getDailyReportService = async () => {
 
 const createInterestService = async (interestData: {
   name: string;
-  image?: string;
-  category: string;
+  file?: Express.Multer.File;
 }) => {
-  // Check if interest with the same category already exists
-
   const existingInterest = await prisma.interest.findFirst({
-    where: { category: interestData.category },
-    select: { id: true, image: true, name: true, category: true },
+    where: {
+      name: interestData.name,
+    },
+    select: { id: true, image: true, name: true },
   });
 
   if (existingInterest) {
-    throw new ApiError(400, "Interest with the same category already exists");
+    throw new ApiError(400, "Interest with the same name already exists");
+  }
+
+  if (!interestData.file) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Image file is required");
+  }
+
+  let uploadedFile;
+  try {
+    uploadedFile = await fileUploader.uploadToDigitalOcean(interestData.file);
+  } catch (error) {
+    console.error("File upload failed:", error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "File upload failed");
+  }
+
+  if (!uploadedFile?.Location) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to get file URL"
+    );
   }
 
   const interest = await prisma.interest.create({
     data: {
       name: interestData.name,
-      image: interestData.image,
-      category: interestData.category as any, // Cast to enum type
+      image: uploadedFile.Location,
     },
   });
   return interest;
@@ -298,46 +315,92 @@ const updateInterestService = async (
   interestId: string,
   updateData: {
     name?: string;
-    file: Express.Multer.File;
+    file?: Express.Multer.File;
     category?: string;
   }
 ) => {
-  console.log("Update data received in service:", updateData);
   const interest = await prisma.interest.findUnique({
     where: { id: interestId },
   });
   if (!interest) throw new ApiError(404, "Interest not found");
 
-  if (!updateData.file) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "No image file provided");
+  const payload: { name?: string; category?: string; image?: string } = {};
+
+  if (updateData.name && updateData.name !== interest.name) {
+    const existingByName = await prisma.interest.findFirst({
+      where: {
+        name: updateData.name,
+        id: { not: interestId },
+      },
+    });
+
+    if (existingByName) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Interest with the same name already exists");
+    }
+
+    payload.name = updateData.name;
   }
 
-  let uploadedFile;
-  try {
-    uploadedFile = await fileUploader.uploadToDigitalOcean(updateData.file);
-  } catch (error) {
-    console.error("File upload failed:", error);
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "File upload failed");
+  if (updateData.name && updateData.name !== interest.name) {
+    const existingByName = await prisma.interest.findFirst({
+      where: {
+        name: updateData.name,
+        id: { not: interestId },
+      },
+    });
+
+    if (existingByName) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Interest with the same name already exists");
+    }
+
+    payload.name = updateData.name;
   }
 
-  if (!uploadedFile?.Location) {
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to get file URL"
-    );
+  if (updateData.file) {
+    let uploadedFile;
+    try {
+      uploadedFile = await fileUploader.uploadToDigitalOcean(updateData.file);
+    } catch (error) {
+      console.error("File upload failed:", error);
+      throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "File upload failed");
+    }
+
+    if (!uploadedFile?.Location) {
+      throw new ApiError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        "Failed to get file URL"
+      );
+    }
+
+    payload.image = uploadedFile.Location;
   }
 
-  console.log("Uploaded file URL:", uploadedFile.Location);
+  if (Object.keys(payload).length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "No interest data provided for update");
+  }
 
   const updatedInterest = await prisma.interest.update({
     where: { id: interestId },
-    data: {
-      // ...updateData,
-      image: uploadedFile.Location,
-    },
+    data: payload,
   });
 
   return updatedInterest;
+};
+
+const deleteInterestService = async (interestId: string) => {
+  const interest = await prisma.interest.findUnique({
+    where: { id: interestId },
+  });
+
+  if (!interest) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Interest not found");
+  }
+
+  await prisma.interest.delete({
+    where: { id: interestId },
+  });
+
+  return null;
 };
 
 export const adminService = {
@@ -352,4 +415,7 @@ export const adminService = {
   getConversationService,
   getSingleConversationService,
   updateInterestService,
+  deleteInterestService,
 };
+
+

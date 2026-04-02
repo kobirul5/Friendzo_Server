@@ -99,24 +99,6 @@ model Interest {
   id       String  @id @default(auto()) @map("_id") @db.ObjectId
   name     String  @unique
   image    String? @default("")
-  category String  @unique
-}
-
-enum InterestCategory {
-  TRAVEL
-  MOVIES
-  MUSIC
-  FOOTBALL
-  PETS_LOVE
-  GARDENING
-  WRITING
-  COOKING
-  NATURE
-  FASHION
-  DEBATE
-  SCIENCE
-  MEDITATION
-  GAMING
 }
 
 model Memory {

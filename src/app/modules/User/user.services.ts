@@ -323,7 +323,7 @@ const getSingleUser = async (userId: string, currentUserId?: string) => {
         name: { equals: name, mode: "insensitive" },
       })),
     },
-    select: { id: true, name: true, image: true, category: true },
+    select: { id: true, name: true, image: true },
   });
 
   const followersCount = await prisma.follow.count({

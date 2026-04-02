@@ -71,7 +71,11 @@ const getDailyReport = catchAsync(async (req, res) => {
 
 
 const createInterest = catchAsync(async (req, res) => {
-  const result = await adminService.createInterestService(req.body);
+  const file = req.file as Express.Multer.File | undefined;
+  const result = await adminService.createInterestService({
+    name: req.body.name,
+    file,
+  });
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,
@@ -116,12 +120,26 @@ const getSingleConversationService = catchAsync(async (req, res) => {
 // update interest
 const updateInterest = catchAsync(async (req, res) => {
   const { interestId } = req.params;
-   const file = req.file as Express.Multer.File;
-  const result = await adminService.updateInterestService(interestId, { ...req.body.data, file });  
+  const file = req.file as Express.Multer.File | undefined;
+  const result = await adminService.updateInterestService(interestId, {
+    name: req.body.name,
+    file,
+  });
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Interest updated successfully',
+    data: result,
+  });
+});
+
+const deleteInterest = catchAsync(async (req, res) => {
+  const { interestId } = req.params;
+  const result = await adminService.deleteInterestService(interestId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Interest deleted successfully',
     data: result,
   });
 });
@@ -137,5 +155,6 @@ export const adminController = {
   getInterests,
   getConversation,
   getSingleConversationService,
-  updateInterest
+  updateInterest,
+  deleteInterest
 };

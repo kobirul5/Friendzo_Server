@@ -35,9 +35,10 @@ router.get(
 router.post(
   "/interest",
   auth(UserRole.ADMIN),
+  fileUploader.uploadFile,
   adminController.createInterest
 );
-router.get("/interest", adminController.getInterests);
+router.get("/interest", auth(UserRole.ADMIN), adminController.getInterests);
 
 //
 router.get(
@@ -52,9 +53,14 @@ router.get(
 );
 router.put(
   "/interest/:interestId",
-  auth(),
+  auth(UserRole.ADMIN),
     fileUploader.uploadFile, 
   adminController.updateInterest
+);
+router.delete(
+  "/interest/:interestId",
+  auth(UserRole.ADMIN),
+  adminController.deleteInterest
 );
 
 export const adminRoutes = router;
