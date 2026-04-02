@@ -81,7 +81,7 @@ const getNearbyPeople = async ({
   minDistance?: number;
   maxDistance?: number;
   search?: string;
-  gender?: string;
+  gender?: Gender;
 }) => {
   // console.log(radiusKm, "from service");
   // 1️ Check user exists
@@ -157,16 +157,7 @@ const baseLng = getValidCoordinate(lng, currentUser.lng as number);
 
     // 7️ Apply radius filter (old support)
   let nearbyUsers = usersWithDistance;
-  // if (radiusKm) {
-  //   nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= radiusKm);
-  // }
-  // if (!radiusKm) {
-  //   nearbyUsers = nearbyUsers.filter((u) => u.distanceInKm <= 5000);
-  // }
-  // console.log(radiusKm)
-
-
-  // 8️ Apply distance range filter (new support)
+  
   if (minDistance !== undefined && maxDistance !== undefined) {
     nearbyUsers = nearbyUsers.filter(
       (u) => u.distanceInKm >= minDistance && u.distanceInKm <= maxDistance

@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
 import { fileUploader } from "../../../../helpars/fileUploader";
-import { Gender, GiftCategory } from "@prisma/client";
+import { GiftCategory } from "@prisma/client";
 import { IGetGiftCardList } from "./giftCard.interface";
 import { deleteImageAndFile } from "../../../../helpars/fileDelete";
 
@@ -31,22 +31,12 @@ const createGiftCard = async ({ data, userId, imagesFile }: any) => {
     );
   }
 
-  if (
-    data.gender !== Gender.HIM &&
-    data.gender !== Gender.HER &&
-    data.gender !== Gender.EVERYONE
-  ) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Invalid gender. gender must be one of: HIM, HER, EVERYONE"
-    );
-  }
-
   // Only take  image
   const uploaded = await fileUploader.uploadToDigitalOcean(imagesFile);
+  const { gender: _gender, ...restData } = data;
 
   const dataToSave: any = {
-    ...data,
+    ...restData,
     price: parseFloat(data.price),
     image: uploaded.Location, // single string
   };
@@ -129,10 +119,12 @@ const getByIdFromDb = async (id: string) => {
 };
 
 const updateIntoDb = async (id: string, data: any) => {
+  const { gender: _gender, ...restData } = data;
+
   const transaction = await prisma.$transaction(async (prisma) => {
     const result = await prisma.giftCard.update({
       where: { id, status: "ACTIVE"},
-      data,
+      data: restData,
     });
     return result;
   });

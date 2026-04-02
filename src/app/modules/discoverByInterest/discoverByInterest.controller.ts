@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import { discoverByInterestService } from "./discoverByInterest.service";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
+import { Gender } from "@prisma/client";
 
 const getNearbyPeopleController = catchAsync(
   async (req: Request, res: Response) => {
@@ -13,7 +14,7 @@ const getNearbyPeopleController = catchAsync(
     const lng = parseFloat(req.query.lng as string);
     const radiusKm = parseFloat(req.query.radiusKm as string); // default to 10km if not provided
     const search = req.query.search as string;
-    const gender = req.query.gender as string;
+    const gender = req.query.gender as Gender;
 
     console.log(radiusKm);
     // maxDistance

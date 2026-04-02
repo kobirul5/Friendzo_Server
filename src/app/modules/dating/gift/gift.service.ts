@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
-import { Gender, GiftCategory } from "@prisma/client";
+import { GiftCategory } from "@prisma/client";
 
 const buyGiftCard = async ({ data, userId }: any) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -56,31 +56,15 @@ const buyGiftCard = async ({ data, userId }: any) => {
 
 const getGiftCardList = async ({
   userId,
-  gender,
 }: {
   userId: string;
-  gender: Gender;
 }) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user)
     throw new ApiError(httpStatus.NOT_FOUND, "Unauthorized!, User not found!");
-  if (!gender) {
-    gender = Gender.EVERYONE;
-  }
-
-  if (
-    gender !== Gender.HIM &&
-    gender !== Gender.HER &&
-    gender !== Gender.EVERYONE
-  )
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Invalid gender. gender must be one of: HIM, HER, EVERYONE"
-    );
 
   const Essential = await prisma.giftCard.findMany({
     where: {
-      gender: gender,
       category: GiftCategory.ESSENTIAL,
       status: "ACTIVE",
     },
@@ -89,7 +73,6 @@ const getGiftCardList = async ({
 
   const Exclusive = await prisma.giftCard.findMany({
     where: {
-      gender: gender,
       category: GiftCategory.EXCLUSIVE,
       status: "ACTIVE",
     },
@@ -98,7 +81,6 @@ const getGiftCardList = async ({
 
   const Majestic = await prisma.giftCard.findMany({
     where: {
-      gender: gender,
       category: GiftCategory.MAJESTIC,
       status: "ACTIVE",
     },
@@ -424,4 +406,3 @@ export const giftService = {
   sendGiftToFriends,
   sendMultipleGifts,
 };
-

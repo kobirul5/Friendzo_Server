@@ -156,17 +156,6 @@ const updateUserProfile = async (
     throw new ApiError(400, "Password cannot be updated");
   }
 
-  if (
-    updateData.gender &&
-    updateData.gender !== Gender.EVERYONE &&
-    updateData.gender !== Gender.HIM &&
-    updateData.gender !== Gender.HER
-  ) {
-    throw new ApiError(
-      400,
-      "Invalid gender. gender must be one of: HIM, HER, EVERYONE"
-    );
-  }
 
   if (updateData.email) {
     throw new ApiError(400, "Email cannot be updated");

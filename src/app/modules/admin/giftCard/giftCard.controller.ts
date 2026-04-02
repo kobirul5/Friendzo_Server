@@ -3,7 +3,6 @@ import httpStatus from "http-status";
 import { giftCardService } from "./giftCard.service";
 import catchAsync from "../../../../shared/catchAsync";
 import sendResponse from "../../../../shared/sendResponse";
-import { Gender } from "@prisma/client";
 import { GiftCardType } from "./giftCard.interface";
 
 const createGiftCard = catchAsync(async (req, res) => {
