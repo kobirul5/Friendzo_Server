@@ -40,6 +40,16 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+// ─── Health check endpoint (used by keep-alive cron) ───────────────────────────
+app.get("/api/v1/health", (req: Request, res: Response) => {
+  res.status(httpStatus.OK).json({
+    success: true,
+    message: "OK",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.use("/api/v1", router);
 
 app.use(GlobalErrorHandler);
