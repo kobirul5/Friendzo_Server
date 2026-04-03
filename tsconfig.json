@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "moduleResolution": "node",
+    "moduleResolution": "node10",
+    "ignoreDeprecations": "6.0",
     "rootDir": "./src",
     "outDir": "dist",
     "esModuleInterop": true,
@@ -15,3 +16,21 @@
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }
+
+// {
+//   "compilerOptions": {
+//     "target": "ES2020",
+//     "module": "commonjs",
+//     "moduleResolution": "node",
+//     "rootDir": "./src",
+//     "outDir": "dist",
+//     "esModuleInterop": true,
+//     "forceConsistentCasingInFileNames": true,
+//     "strict": true,
+//     "skipLibCheck": true,
+//     "types": ["node"],
+//     "typeRoots": ["./node_modules/@types", "./src/types"]
+//   },
+//   "include": ["src"],
+//   "exclude": ["node_modules", "dist"]
+// }

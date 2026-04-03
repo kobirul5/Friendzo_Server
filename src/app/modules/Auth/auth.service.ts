@@ -408,14 +408,7 @@ const socialLogin = async (
     where: { email: userData.email },
   });
 
-  // Generate unique referral code for the new user
-  let newReferralCode = getRefferId();
-  // Ensure uniqueness in DB
-  while (
-    await prisma.user.findUnique({ where: { referralCode: newReferralCode } })
-  ) {
-    newReferralCode = getRefferId();
-  }
+ 
 
   // If user not found, create one
   if (!user) {
@@ -425,7 +418,6 @@ const socialLogin = async (
         firstName: userData.name || "",
         profileImage: userData.picture?.data?.url || userData.picture || "",
         isVerified: true,
-        referralCode: newReferralCode,
         status: "ACTIVE",
         role: "USER",
       },

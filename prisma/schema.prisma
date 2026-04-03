@@ -24,7 +24,6 @@ model User {
   address      String?    @default("")
 
   // 🔑 Referral fields
-  referralCode String  @unique
   referredBy   String? @db.ObjectId
   referrer     User?   @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
   referrals    User[]  @relation("UserReferrals")
@@ -33,7 +32,7 @@ model User {
   isFaceVerified Boolean   @default(false)
   otp            Int?
   expirationOtp  DateTime?
-  gender Gender @default(MALE)
+  gender         Gender?   @default(MALE)
   totalCoins     Float     @default(0)
   interests      String[]  @default([])
   //subscription

@@ -18,10 +18,9 @@ import { getRefferId } from "../../../helpars/generateRefferId";
 import { Gender, RequestStatus, User } from "@prisma/client";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
 
-const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
-  const { password, fcmToken, referredId } = payload;
+const createUserIntoDb = async (payload: IUser) => {
+  const { password, fcmToken } = payload;
   const email = payload.email?.toLowerCase().trim();
-
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
@@ -36,28 +35,11 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Password is required");
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Generate unique referral code for the new user
-  let newReferralCode = getRefferId();
-  // Ensure uniqueness in DB
-  while (
-    await prisma.user.findUnique({ where: { referralCode: newReferralCode } })
-  ) {
-    newReferralCode = getRefferId();
-  }
+  // Generate OTP
+  const otp = Number(crypto.randomInt(1000, 9999));
+  const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
-  // Handle referral if a referral code was provided
-  let referredByUserId: string | undefined;
-  if (referredId) {
-    const referrer = await prisma.user.findUnique({
-      where: { referralCode: referredId },
-    });
-    if (!referrer) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid referral code");
-    }
-    referredByUserId = referrer.id;
-  }
-
-  // Create the new user
+  // Create the new user with OTP in a single query
   const newUser = await prisma.user.create({
     data: {
       email,
@@ -66,44 +48,17 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
       role: "USER",
       status: "ACTIVE",
       fcmToken,
-      referralCode: newReferralCode,
-      referredBy: referredByUserId,
+      otp,
+      expirationOtp: otpExpires,
     },
   });
 
-  if (!newUser)
-    throw new ApiError(httpStatus.BAD_REQUEST, "Failed to create user");
-
-  if (referredId) {
-    await prisma.user.update({
-      where: { id: referredByUserId },
-      data: {
-        totalCoins: { increment: 20 },
-      },
-    });
-
-    await prisma.user.update({
-      where: { id: newUser.id },
-      data: {
-        totalCoins: { increment: 20 },
-      },
-    });
-  }
-
-  // Generate OTP
-  const otp = Number(crypto.randomInt(1000, 9999));
-  const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
-
-  await prisma.user.update({
-    where: { id: newUser.id },
-    data: { otp, expirationOtp: otpExpires },
-  });
-
-  await emailSender(
+  // Send OTP email asynchronously without blocking the response
+  emailSender(
     newUser.email,
     registrationOtpTemplate(otp),
-    "Together App - Verify Your Email Address"
-  );
+    " Friendzo - Verify Your Email Address"
+  ).catch((err) => console.error("OTP email failed:", err));
 
   // Generate JWT token
   const token = jwtHelpers.generateToken(
@@ -124,7 +79,6 @@ const createUserIntoDb = async (payload: IUser & { referredId?: string }) => {
       email: newUser.email,
       role: newUser.role,
       status: newUser.status,
-      referralCode: newUser.referralCode,
       referredBy: newUser.referredBy || null,
     },
     accessToken: token,
@@ -144,9 +98,7 @@ const updateUserProfile = async (
     throw new ApiError(404, "User not found");
   }
 
-  if (updateData.referralCode) {
-    throw new ApiError(400, "Referral code cannot be updated");
-  }
+
 
   if (updateData.referredBy) {
     throw new ApiError(400, "Referred by cannot be updated");
@@ -160,6 +112,8 @@ const updateUserProfile = async (
   if (updateData.email) {
     throw new ApiError(400, "Email cannot be updated");
   }
+
+
   if (updateData.interests && updateData.interests.length > 0) {
     // Validate interests against fixed array
 

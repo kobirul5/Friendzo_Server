@@ -22,8 +22,11 @@ const auth = (...roles: string[]) => {
         throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized!");
       }
 
+      // Handle both "Bearer <token>" and raw token formats
+      const actualToken = token.startsWith("Bearer ") ? token.slice(7) : token;
+
       const verifiedUser = jwtHelpers.verifyToken(
-        token,
+        actualToken,
         config.jwt.jwt_secret as Secret
       );
       const { id, role, iat } = verifiedUser;
