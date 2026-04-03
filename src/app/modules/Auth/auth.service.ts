@@ -11,7 +11,6 @@ import {
   getGoogleUser,
   getFacebookUser,
 } from "../../../shared/socilaAuthHelper";
-import { getRefferId } from "../../../helpars/generateRefferId";
 
 const loginUser = async (payload: {
   email: string;

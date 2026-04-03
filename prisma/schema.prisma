@@ -23,10 +23,6 @@ model User {
   age          Int?
   address      String?    @default("")
 
-  // 🔑 Referral fields
-  referredBy   String? @db.ObjectId
-  referrer     User?   @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  referrals    User[]  @relation("UserReferrals")
 
   isVerified     Boolean   @default(false)
   isFaceVerified Boolean   @default(false)
@@ -370,7 +366,6 @@ enum Gender {
   MALE
   FEMALE
   OTHER
-  ""
 }
 
 model GiftPurchase {

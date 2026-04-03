@@ -4,18 +4,13 @@ import { IUser } from "./user.interface";
 import * as bcrypt from "bcrypt";
 import config from "../../../config";
 import httpStatus from "http-status";
-import { Request } from "express";
 import { fileUploader } from "../../../helpars/fileUploader";
-import { string } from "zod";
 import crypto from "crypto";
-import jwt, { Secret } from "jsonwebtoken";
-// import emailSender from "../../../shared/emailSender";
-import { json } from "stream/consumers";
+import { Secret } from "jsonwebtoken";
 import { jwtHelpers } from "../../../helpars/jwtHelpers";
 import emailSender from "../../../shared/emailSender";
 import { registrationOtpTemplate } from "./registrationOtpTemplate";
-import { getRefferId } from "../../../helpars/generateRefferId";
-import { Gender, RequestStatus, User } from "@prisma/client";
+import { User } from "@prisma/client";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
 
 const createUserIntoDb = async (payload: IUser) => {
@@ -79,7 +74,6 @@ const createUserIntoDb = async (payload: IUser) => {
       email: newUser.email,
       role: newUser.role,
       status: newUser.status,
-      referredBy: newUser.referredBy || null,
     },
     accessToken: token,
   };
@@ -96,12 +90,6 @@ const updateUserProfile = async (
   });
   if (!user) {
     throw new ApiError(404, "User not found");
-  }
-
-
-
-  if (updateData.referredBy) {
-    throw new ApiError(400, "Referred by cannot be updated");
   }
 
   if (updateData.password) {
