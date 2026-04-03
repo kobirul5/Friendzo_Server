@@ -109,14 +109,17 @@ const deleteMemory = catchAsync(async (req: Request, res: Response) => {
 
 const getUserMemoriesAllUsers = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 6;
 
-  const memories = await memoriesService.getMemoriesAllUsers(userId);
+  const result = await memoriesService.getMemoriesAllUsers(userId, { page, limit });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Memories fetched successfully',
-    data: memories,
+    meta: result.meta,
+    data: result.data,
   });
 })
 

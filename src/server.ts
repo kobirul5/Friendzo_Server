@@ -32,7 +32,7 @@ async function startServer() {
     await prisma.$connect();
     console.log("Prisma connected successfully!");
 
-    await initiateSuperAdmin();
+    // await initiateSuperAdmin();
 
     server = app.listen(config.port, () => {
       console.log(

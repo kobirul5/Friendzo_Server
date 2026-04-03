@@ -72,7 +72,13 @@ const deleteMemory = async ({ id, userId }: { id: string; userId: string }) => {
   return null;
 };
 
-const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
+const getMemoriesAllUsers = async (
+  userId: string,
+  options?: IPaginationOptions
+): Promise<{
+  meta?: { page: number; limit: number; total: number };
+  data: any[];
+}> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
@@ -81,7 +87,16 @@ const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
     throw new ApiError(404, "User not authorized");
   }
 
+  const { page = 1, limit = 6, skip } = options
+    ? paginationHelper.calculatePagination(options)
+    : { page: 1, limit: 6, skip: 0 };
+
+  // Get total count for pagination
+  const total = await prisma.memory.count();
+
   const memories = await prisma.memory.findMany({
+    skip,
+    take: limit,
     orderBy: { createdAt: "desc" },
     include: {
       user: {
@@ -106,6 +121,7 @@ const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
       },
     },
   });
+
   const formattedMemories = memories.map((memory) => {
     const totalLikes = memory._count.MemoryLike;
     const totalComments = memory._count.Comment;
@@ -133,8 +149,14 @@ const getMemoriesAllUsers = async (userId: string): Promise<any[]> => {
     return bBoosted - aBoosted; // boosted first
   });
 
-
-  return formattedMemories;
+  if (options) {
+    return {
+      meta: { page, limit, total },
+      data: formattedMemories,
+    };
+  } else {
+    return { data: formattedMemories };
+  }
 };
 
 const getPaginatedMemories = async (
@@ -144,17 +166,8 @@ const getPaginatedMemories = async (
   meta: { page: number; limit: number; total: number };
   data: any[];
 }> => {
-  const { page, limit, skip } = paginationHelper.calculatePagination(options);
-  const memories = await getMemoriesAllUsers(userId);
-
-  return {
-    meta: {
-      page,
-      limit,
-      total: memories.length,
-    },
-    data: memories.slice(skip, skip + limit),
-  };
+  const result = await getMemoriesAllUsers(userId, options);
+  return result as { meta: { page: number; limit: number; total: number }; data: any[] };
 };
 
 // Export all
