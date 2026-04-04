@@ -430,19 +430,6 @@ export const getGifts = async (userId: string) => {
   };
 };
 
-const getReferralCode = async (userId: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      referralCode: true,
-    },
-  });
-  return user;
-};
 
 const decreaseAiMessageCount = async (userId: string) => {
   const user = await prisma.user.findUnique({
@@ -508,7 +495,6 @@ export const userService = {
   updateUserProfile,
   getUserProfile,
   getSingleUser,
-  getReferralCode,
   decreaseAiMessageCount,
   checkUser,
 };

@@ -73,16 +73,6 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getReferralCode = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-  console.log(userId);
-  const user = await userService.getReferralCode(userId);
-  res.status(200).json({
-    success: true,
-    message: "Referral code retrieved successfully!",
-    data: user,
-  });
-});
 
 const decreaseAiMessageCount = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
@@ -113,7 +103,6 @@ export const userController = {
   profileImageUpload,
   getUserProfile,
   getSingleUser,
-  getReferralCode,
   decreaseAiMessageCount,
   checkUser,
 };

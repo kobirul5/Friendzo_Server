@@ -25,8 +25,6 @@ router.put(
   userController.profileImageUpload
 );
 
-router.get("/referral-code", auth(), userController.getReferralCode);
-
 router.get("/:id", auth(), userController.getSingleUser);
 
 router.put("/decrease-ai-message-count", auth(), userController.decreaseAiMessageCount);
