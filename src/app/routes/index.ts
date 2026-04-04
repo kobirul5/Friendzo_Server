@@ -16,12 +16,10 @@ import { findByInterestRoutes } from "../modules/dating/findByInterest/findByInt
 import { giftCardRoutes } from "../modules/admin/giftCard/giftCard.routes";
 import { coinsRoutes } from "../modules/admin/coins/coins.routes";
 import { datingGiftRoutes} from "../modules/dating/gift/gift.routes";
-import { datingCoinsRoutes } from "../modules/dating/coins/coins.routes";
 import { paymentsRoutes } from "../modules/payments/payments.routes";
 import { userInfoRoutes } from "../modules/admin/userInfo/userInfo.routes";
 import { postsRoutes } from "../modules/admin/posts/posts.routes";
 import { fileUploadRoutes } from "../modules/fileUpload/fileUpload.routes";
-import path from "path";
 import { subscriptionRoutes } from "../modules/admin/subscription/subscription.routes";
 
 
@@ -99,8 +97,8 @@ const moduleRoutes = [
     route: coinsRoutes
   },
   {
-    path: "/dating-coins",
-    route: datingCoinsRoutes
+    path: "/coins",
+    route: coinsRoutes
   },
   {
     path: "/payment",

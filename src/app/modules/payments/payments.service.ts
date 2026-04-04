@@ -75,16 +75,20 @@ const createCoinPurchase = async ({
       });
 
       // Update user coin balance
-     const updatedUser = await tx.user.update({
+      const updatedUser = await tx.user.update({
         where: { id: userId },
         data: {
           totalCoins: {
             increment: parseInt(coinPackage.coinAmount),
           },
         },
+        select: {
+          id: true,
+          totalCoins: true,
+        },
       });
 
-      return payment;
+      return { payment, user: updatedUser };
     });
 
     return result;
