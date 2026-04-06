@@ -2,21 +2,21 @@
 import cron from "node-cron";
 import prisma from "../shared/prisma";
 
-// ─── Keep-Alive: Ping own server every 10 min to prevent Render free-tier sleep ───
+//  Keep-Alive: Ping own server every 10 min to prevent Render free-tier sleep 
 const SELF_URL = process.env.SERVER_URL || "http://localhost:5000/api/v1/health";
 
 const keepAlive = () => {
   cron.schedule("*/10 * * * *", async () => {
     try {
       const res = await fetch(SELF_URL);
-      console.log(`🏓 Keep-alive ping → ${res.status} ${res.statusText}`);
+      console.log(` Keep-alive ping → ${res.status} ${res.statusText}`);
     } catch (error) {
-      console.warn("⚠️  Keep-alive ping failed:", error);
+      console.warn("  Keep-alive ping failed:", error);
     }
   });
 };
 
-// ─── Daily: Decrement boost & priorityLikes ────────────────────────────────────
+//  Daily: Decrement boost & priorityLikes 
 export const startCronJobs = () => {
   // self-ping
   keepAlive();
