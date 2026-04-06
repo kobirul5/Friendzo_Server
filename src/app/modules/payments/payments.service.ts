@@ -6,12 +6,11 @@ import stripe from "../../../shared/stripe";
 import { PaymentStatus, Prisma, User } from "@prisma/client";
 
 const createCoinPurchase = async ({
-  paymentMethod,
   coinId,
   userId,
   currency = "USD",
 }: {
-  paymentMethod: string;
+  paymentMethod?: string;
   coinId: string;
   userId: string;
   currency?: string;
@@ -35,30 +34,31 @@ const createCoinPurchase = async ({
   }
 
   try {
-    // Stripe PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(coinPackage.price * 100), // cents
-      currency,
-      payment_method: paymentMethod,
-      confirm: true,
-      automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+    // Stripe Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency,
+            product_data: {
+              name: `${coinPackage.coinAmount} Coins Package`,
+            },
+            unit_amount: Math.round(coinPackage.price * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/store/coins`,
       metadata: {
         transactionId,
         coinId,
         userId,
         coinAmount: coinPackage.coinAmount,
-        amount: coinPackage.price.toString(),
       },
     });
-
-    // Final transaction
-
-    if (paymentIntent.status !== "succeeded") {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        "Payment failed. Please try again."
-      );
-    }
 
     const result = await prisma.$transaction(async (tx) => {
       // Create payment record
@@ -70,7 +70,7 @@ const createCoinPurchase = async ({
           status: PaymentStatus.COMPLETED,
           senderId: userId,
           method: "CARD",
-          paymentMethodId: paymentIntent.payment_method as string,
+          paymentMethodId: session.id, // Save session ID
         },
       });
 
@@ -88,7 +88,7 @@ const createCoinPurchase = async ({
         },
       });
 
-      return { payment, user: updatedUser };
+      return { payment, user: updatedUser, url: session.url };
     });
 
     return result;
@@ -302,29 +302,29 @@ const createCoinPurchasePaymentHandleFromApp = async ({
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
 
-
-  
-  const result = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      totalCoins: {
-        increment: coinAmount,
+  const result = await prisma.$transaction(async (tx) => {
+    const updatedUser = await tx.user.update({
+      where: { id: userId },
+      data: {
+        totalCoins: {
+          increment: coinAmount,
+        },
       },
-    },
+    });
+
+    await tx.payment.create({
+      data: {
+        transactionId,
+        amount: totalAmount,
+        status: PaymentStatus.COMPLETED,
+        senderId: userId,
+        method: "CARD",
+        paymentMethodId: "APP_PURCHASE",
+      },
+    });
+
+    return updatedUser;
   });
-
-
-  const payment = await prisma.payment.create({
-    data: {
-      transactionId,
-      amount: totalAmount,
-      status: PaymentStatus.COMPLETED,
-      senderId: userId,
-      method: "CARD",
-      paymentMethodId: "APP_PURCHASE",
-    },
-  })
-
 
   return result;
 }
