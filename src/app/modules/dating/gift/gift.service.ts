@@ -261,7 +261,7 @@ const sendGiftToFriends = async ({
               image: true,
               name: true,
               category: true,
-  
+
             },
           },
         },
@@ -273,6 +273,102 @@ const sendGiftToFriends = async ({
           giftImage: giftPopup?.giftCard?.image || "",
           type: "GIFT",
           isSeen: false, // default false (to show popup once)
+        },
+      });
+    }
+
+    return { message: "Gifts sent successfully!" };
+  });
+
+  return result;
+};
+
+// Send gift with coins (direct purchase and send)
+const sendGiftWithCoins = async ({
+  senderId,
+  receiverIds,
+  giftCardId,
+}: SendGiftInput) => {
+  const result = await prisma.$transaction(async (tx) => {
+    // 1. Get sender
+    const sender = await tx.user.findUnique({
+      where: { id: senderId },
+      select: { firstName: true, lastName: true, totalCoins: true },
+    });
+
+    if (!sender) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    if (receiverIds.length === 0) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "No friends selected to send gift"
+      );
+    }
+
+    // 2. Get gift card details
+    const giftCard = await tx.giftCard.findUnique({
+      where: { id: giftCardId },
+      select: { id: true, name: true, category: true, price: true, image: true },
+    });
+
+    if (!giftCard) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Gift card not found");
+    }
+
+    // 3. Check if sender has enough coins
+    const totalCost = giftCard.price * receiverIds.length;
+    if (sender.totalCoins < totalCost) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        `Not enough coins. You need ${totalCost} coins but have ${sender.totalCoins} coins`
+      );
+    }
+
+    // 4. Verify all receivers exist
+    const receiverUsers = await tx.user.findMany({
+      where: { id: { in: receiverIds } },
+      select: { id: true, firstName: true, lastName: true, fcmToken: true },
+    });
+
+    if (receiverUsers.length !== receiverIds.length) {
+      const foundIds = receiverUsers.map((u) => u.id);
+      const missing = receiverIds.filter((id) => !foundIds.includes(id));
+      throw new ApiError(
+        httpStatus.NOT_FOUND,
+        `Receiver(s) not found: ${missing.join(", ")}`
+      );
+    }
+
+    // 5. Deduct coins from sender
+    await tx.user.update({
+      where: { id: senderId },
+      data: { totalCoins: { decrement: totalCost } },
+    });
+
+    // 6. Create GiftSend records & notifications for each receiver
+    for (let i = 0; i < receiverUsers.length; i++) {
+      const receiver = receiverUsers[i];
+
+      // Create GiftSend record
+      await tx.giftSend.create({
+        data: {
+          senderId,
+          receiverId: receiver.id,
+          giftCardId,
+          giftCategory: giftCard.category,
+        },
+      });
+
+      // Create popup notification
+      await tx.gitPopUp.create({
+        data: {
+          senderId,
+          receiverId: receiver.id,
+          giftImage: giftCard.image || "",
+          type: "GIFT",
+          isSeen: false,
         },
       });
     }
@@ -405,4 +501,5 @@ export const giftService = {
   getMyPurchasesAndReceivedGifts,
   sendGiftToFriends,
   sendMultipleGifts,
+  sendGiftWithCoins,
 };

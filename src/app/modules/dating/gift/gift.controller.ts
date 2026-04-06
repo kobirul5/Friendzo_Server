@@ -85,10 +85,36 @@ const sendMultipleGifts = catchAsync(async (req, res) => {
 
 })
 
+const sendGiftWithCoins = catchAsync(async (req, res) => {
+  const senderId = req.user.id;
+  const { receiverIds, giftCardId } = req.body;
+
+  console.log("=== SEND GIFT WITH COINS CONTROLLER ===");
+  console.log("senderId:", senderId);
+  console.log("receiverIds:", receiverIds);
+  console.log("giftCardId:", giftCardId);
+
+  const result = await giftService.sendGiftWithCoins({
+    senderId,
+    receiverIds,
+    giftCardId,
+  });
+
+  console.log("Result:", result);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Gifts sent successfully with coins",
+    data: result,
+  });
+});
+
 export const giftController = {
   buyGiftCard,
   getGiftCardList,
   getMyPurchasesAndReceivedGifts,
   sendGiftToFriends,
-  sendMultipleGifts
+  sendMultipleGifts,
+  sendGiftWithCoins,
 };
