@@ -270,6 +270,79 @@ export function setupWebSocket(server: Server) {
             break;
           }
 
+          case "allFriends": {
+            try {
+              if (!ws.userId) return;
+
+              // ✅ Get all accepted friends
+              const friends = await prisma.follow.findMany({
+                where: {
+                  OR: [
+                    { followerId: ws.userId },
+                    { followingId: ws.userId },
+                  ],
+                  requestStatus: "ACCEPTED",
+                },
+              });
+
+              // Collect all friend user IDs
+              const friendUserIds = friends.map((f) =>
+                f.followerId === ws.userId ? f.followingId : f.followerId
+              );
+
+              // Get user details
+              const userInfos = await prisma.user.findMany({
+                where: {
+                  id: { in: friendUserIds },
+                },
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  profileImage: true,
+                },
+              });
+
+              // Build list with online status
+              const allFriends = userInfos.map((user) => ({
+                user: {
+                  id: user.id,
+                  firstName: user.firstName,
+                  lastName: user.lastName,
+                  profileImage: user.profileImage,
+                },
+                isOnline: onlineUsers.has(user.id),
+              }));
+
+              // ✅ Sort: online users first
+              allFriends.sort((a, b) => {
+                if (a.isOnline && !b.isOnline) return -1;
+                if (!a.isOnline && b.isOnline) return 1;
+                return 0;
+              });
+
+              ws.send(
+                JSON.stringify({
+                  event: "allFriends",
+                  data: {
+                    friends: allFriends,
+                    totalCount: allFriends.length,
+                    onlineCount: allFriends.filter((f) => f.isOnline).length,
+                  },
+                })
+              );
+            } catch (error) {
+              console.error("Error fetching all friends:", error);
+              ws.send(
+                JSON.stringify({
+                  event: "error",
+                  message: "Failed to fetch friends list",
+                })
+              );
+            }
+            break;
+          }
+
           //
           case "giftPopup": {
             if (!ws.userId) {
