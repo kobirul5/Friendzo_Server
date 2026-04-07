@@ -26,7 +26,7 @@ const createEvent = catchAsync(async (req: any, res: Response) => {
 
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
-    success: true,
+    success: true, 
     message: 'Event created successfully',
     data: event,
   });
@@ -101,21 +101,11 @@ const deleteEvent = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getAllEvents = catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-  const result = await eventService.getAllEvents(userId);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Events fetched successfully',
-    data: result,
-  });
-});
-
-const getPaginatedEvents = catchAsync(async (req: Request, res: Response) => {
+const getPaginatedEvents = catchAsync(async (req: any, res: Response) => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 6;
-  const result = await eventService.getPaginatedEvents({ page, limit });
+  const userId = req.user?.id;
+  const result = await eventService.getPaginatedEvents({ page, limit }, userId);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -126,6 +116,31 @@ const getPaginatedEvents = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const toggleLike = catchAsync(async (req: any, res: Response) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  const result = await eventService.toggleEventLike(id, userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: result.liked ? "Event liked successfully" : "Event unliked successfully",
+    data: result,
+  });
+});
+
+const getAllEvents = catchAsync(async (req: any, res: Response) => {
+  const userId = req.user.id;
+  const result = await eventService.getAllEventsWithLikes(userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Events fetched successfully',
+    data: result,
+  });
+});
+
 export const eventController = {
     createEvent,
     getUserEvent,
@@ -133,6 +148,7 @@ export const eventController = {
     updateEvent,
     deleteEvent,
     getAllEvents,
-    getPaginatedEvents
+    getPaginatedEvents,
+    toggleLike,
 }
 

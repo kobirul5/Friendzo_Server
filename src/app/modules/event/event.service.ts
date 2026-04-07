@@ -23,7 +23,7 @@ const createEvent = async (payload: {
   userId: string;
 }): Promise<EventModel> => {
   const { file, data, userId } = payload;
-
+  console.log("Received data for event creation:", data);
   if (!file) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Image file is required.");
   }
@@ -104,7 +104,7 @@ const updateEvent = async (
     data: Partial<{
       title: string;
       description: string;
-      startAt: string;
+      startedAt: string;
       address: string;
       lat: string;
       lng: string;
@@ -122,7 +122,7 @@ const updateEvent = async (
   if (data.title !== undefined) updateData.title = data.title;
   if (data.description !== undefined) updateData.description = data.description;
   if (data.address !== undefined) updateData.address = data.address;
-  if (data.startAt !== undefined) updateData.startAt = new Date(data.startAt);
+  if (data.startedAt !== undefined) updateData.startedAt = new Date(data.startedAt);
 
   if (data.lat !== undefined) {
     const lat = parseFloat(data.lat);
@@ -210,7 +210,7 @@ const getAllEvents = async (userId: string): Promise<any[]> => {
   return eventsWithDistance;
 };
 
-const getPaginatedEvents = async (options: IPaginationOptions): Promise<{
+const getPaginatedEvents = async (options: IPaginationOptions, currentUserId?: string): Promise<{
   meta: { page: number; limit: number; total: number };
   data: any[];
 }> => {
@@ -228,6 +228,9 @@ const getPaginatedEvents = async (options: IPaginationOptions): Promise<{
           profileImage: true,
         },
       },
+      _count: {
+        select: { EventLike: true },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -236,14 +239,119 @@ const getPaginatedEvents = async (options: IPaginationOptions): Promise<{
     take: limit,
   });
 
+  // Add like count and user's like status
+  const eventsWithLikes = await Promise.all(
+    events.map(async (event) => {
+      let isLiked = false;
+      if (currentUserId) {
+        const like = await prisma.eventLike.findFirst({
+          where: { eventId: event.id, userId: currentUserId },
+        });
+        isLiked = !!like;
+      }
+
+      return {
+        ...event,
+        likeCount: event._count.EventLike,
+        isLiked,
+      };
+    })
+  );
+
   return {
     meta: {
       page,
       limit,
       total,
     },
-    data: events,
+    data: eventsWithLikes,
   };
+};
+
+// Toggle event like
+const toggleEventLike = async (eventId: string, userId: string) => {
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  if (!event) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Event not found");
+  }
+
+  const existingLike = await prisma.eventLike.findFirst({
+    where: { eventId, userId },
+  });
+
+  if (existingLike) {
+    // Unlike
+    await prisma.eventLike.delete({ where: { id: existingLike.id } });
+    const likeCount = await prisma.eventLike.count({ where: { eventId } });
+    return { liked: false, likeCount };
+  } else {
+    // Like
+    await prisma.eventLike.create({ data: { eventId, userId } });
+    const likeCount = await prisma.eventLike.count({ where: { eventId } });
+    return { liked: true, likeCount };
+  }
+};
+
+// Get all events
+const getAllEventsWithLikes = async (userId: string): Promise<any[]> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User Not authorized");
+  }
+
+  const events = await prisma.event.findMany({
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          profileImage: true,
+        },
+      },
+      _count: {
+        select: { EventLike: true },
+      },
+    },
+  });
+
+  const eventsWithDistanceAndLikes = await Promise.all(
+    events.map(async (event) => {
+      let distanceInKm = null;
+
+      if (
+        user.lat != null &&
+        user.lng != null &&
+        event.lat != null &&
+        event.lng != null
+      ) {
+        distanceInKm = haversine(
+          { lat: user.lat, lng: user.lng },
+          { lat: event.lat, lng: event.lng }
+        );
+      }
+
+      const isLiked = await prisma.eventLike.findFirst({
+        where: { eventId: event.id, userId },
+      });
+
+      return {
+        ...event,
+        distanceInKm,
+        likeCount: event._count.EventLike,
+        isLiked: !!isLiked,
+      };
+    })
+  );
+
+  // Filter after Promise.all resolves
+  return eventsWithDistanceAndLikes.filter(
+    (event) => event.distanceInKm !== null && event.distanceInKm <= 250
+  );
 };
 
 // Export all
@@ -255,4 +363,6 @@ export const eventService = {
   deleteEvent,
   getAllEvents,
   getPaginatedEvents,
+  toggleEventLike,
+  getAllEventsWithLikes,
 };
