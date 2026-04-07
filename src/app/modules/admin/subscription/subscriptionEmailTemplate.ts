@@ -13,7 +13,7 @@ export const subscriptionEmailTemplate = (planName: string, planPrice: number, f
         <div style="padding: 40px;">
           <h2 style="color: #2D3E50; font-size: 20px;">Hello,</h2>
           <p style="font-size: 16px; line-height: 1.6; color: #555;">
-            Thank you for choosing <strong>Together</strong>! Your subscription to the <strong>${planName}</strong> has been successfully processed.
+            Thank you for choosing <strong>Friendzo</strong>! Your subscription to the <strong>${planName}</strong> has been successfully processed.
           </p>
           
           <div style="background-color: #f9fafb; border-radius: 8px; padding: 25px; margin: 30px 0;">
@@ -32,13 +32,13 @@ export const subscriptionEmailTemplate = (planName: string, planPrice: number, f
           </p>
           
           <div style="text-align: center; margin-top: 40px;">
-            <a href="https://togetherapp.ai" style="background-color: #E21D48; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Explore Together</a>
+            <a href="https://friendzo.ai" style="background-color: #E21D48; color: #ffffff; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Explore Friendzo</a>
           </div>
         </div>
         
         <!-- Footer -->
         <div style="background-color: #f9fafb; padding: 25px; text-align: center; border-top: 1px solid #eef2f3;">
-          <p style="font-size: 13px; color: #999; margin: 0;">&copy; ${new Date().getFullYear()} Together. All rights reserved.</p>
+          <p style="font-size: 13px; color: #999; margin: 0;">&copy; ${new Date().getFullYear()} Friendzo. All rights reserved.</p>
           <p style="font-size: 13px; color: #999; margin: 5px 0 0;">Need help? Contact our support team.</p>
         </div>
       </div>

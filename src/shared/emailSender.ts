@@ -7,13 +7,13 @@ const emailSender = async (email: string, html: string, subject: string) => {
     port: 587,
     secure: false,
     auth: {
-      user: "noreply@togetherapp.ai",
+      user: "noreply@friendzo.ai",
       pass: "i5{f)+JjW^GHnf{o%A",
     },
   });
 
   const info = await transporter.sendMail({
-    from: "Togetherapp Team <" + config.emailSender.email + ">",
+    from: "Friendzo Team <" + config.emailSender.email + ">",
     to: email,
     subject: subject,
     html,

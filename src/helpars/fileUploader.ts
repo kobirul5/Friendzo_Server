@@ -32,15 +32,6 @@ cloudinary.config({
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// ✅ Fixed Cloudinary Storage
-// const cloudinaryStorage = new CloudinaryStorage({
-//   cloudinary,
-//   params: {
-//     public_id: (req, file) => `${Date.now()}_${file.originalname}`,
-//   },
-// });
-
-// const cloudinaryUpload = multer({ storage: cloudinaryStorage });
 
 // Upload single image
 const uploadSingle = upload.single("profileImage");
@@ -105,40 +96,9 @@ const uploadToCloudinary = async (
   });
 };
 
-//  Unchanged: DigitalOcean Upload
-// const uploadToDigitalOcean = async (file: Express.Multer.File) => {
-//   if (!file) {
-//     throw new Error("File is required for uploading.");
-//   }
-
-//   try {
-//     const Key = `togetherapps/${Date.now()}_${uuidv4()}_${file.originalname}`;
-//     const uploadParams = {
-//       Bucket: process.env.DO_SPACE_BUCKET || "",
-//       Key,
-//       Body: file.buffer, // Use buffer instead of file path
-//       ACL: "public-read" as ObjectCannedACL,
-//       ContentType: file.mimetype,
-//     };
-
-//     // Upload file to DigitalOcean Spaces
-//     await s3Client.send(new PutObjectCommand(uploadParams));
-
-//     // Format the URL
-//     const fileURL = `${process.env.DO_SPACE_ENDPOINT}/${process.env.DO_SPACE_BUCKET}/${Key}`;
-//     return {
-//       Location: fileURL,
-//       Bucket: process.env.DO_SPACE_BUCKET || "",
-//       Key,
-//     };
-//   } catch (error) {
-//     console.error("Error uploading file to DigitalOcean:", error);
-//     throw error;
-//   }
-// };
 
 
-// ✅ Unchanged: DigitalOcean Upload
+// Unchanged: DigitalOcean Upload
 const uploadToDigitalOcean = async (
   file: Express.Multer.File,
 ) => {
@@ -157,19 +117,19 @@ const uploadToDigitalOcean = async (
     // Replace spaces with underscores in the original file name
     const sanitizedFileName = file.originalname.replace(/\s+/g, "_");
 
-    const Key = `togetherapps/${Date.now()}_${uuidv4()}_${sanitizedFileName}`;
+    const Key = `friendzo/${Date.now()}_${uuidv4()}_${sanitizedFileName}`;
 
     const uploadParams = {
       Bucket: bucketName,
       Key,
-      Body: file.buffer, // ✅ Using buffer from multer
+      Body: file.buffer, // Using buffer from multer
       ACL: "public-read" as ObjectCannedACL,
       ContentType: file.mimetype,
     };
 
     await s3Client.send(new PutObjectCommand(uploadParams));
 
-    const fileURL = `${cdnEndpoint}/${Key}`; // ✅ Proper template literal usage
+    const fileURL = `${cdnEndpoint}/${Key}`; //  Proper template literal usage
 
     return {
       Location: fileURL,
