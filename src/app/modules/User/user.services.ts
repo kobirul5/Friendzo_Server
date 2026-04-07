@@ -364,10 +364,8 @@ const isFriendOrFollow = async (
   }
   return {
     isFriend: false,
-    requestStatus: follows[0]?.requestStatus || "NOTFOLLOW",
-    userRequestStatus:
-      follows.find((f) => f.followingId === userId)?.requestStatus ||
-      "NOTFOLLOW",
+    requestStatus: follows.find((f) => f.followerId === userId)?.requestStatus || "NOTFOLLOW",
+    userRequestStatus: follows.find((f) => f.followingId === userId)?.requestStatus || "NOTFOLLOW",
   };
 };
 

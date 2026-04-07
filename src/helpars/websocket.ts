@@ -277,7 +277,7 @@ export function setupWebSocket(server: Server) {
               return;
             }
 
-            //  ইউজারের জন্য সব অদেখা popup নিয়ে আসি
+            //  
             const unseenPopups = await prisma.gitPopUp.findMany({
               where: {
                 receiverId: ws.userId,
