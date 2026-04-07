@@ -1,44 +1,26 @@
 import { Request, Response } from 'express';
-
-
-
 import httpStatus from 'http-status';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { eventService } from './event.service';
-import { fileUploader } from '../../../helpars/fileUploader';
 import ApiError from '../../../errors/ApiErrors';
 
- const createEvent = catchAsync(async (req: any, res: Response) => {
+const createEvent = catchAsync(async (req: any, res: Response) => {
   const userId = req.user.id;
   const file = req.file;
 
-  if (!file) {
-    throw new Error("Image file is required.");
-  }
-
-  // Step 1: Parse form-data 'data' field
   let parsedData;
   try {
     parsedData = JSON.parse(req.body.data);
   } catch (error) {
-    throw new Error("Invalid JSON in 'data' field.");
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid JSON in 'data' field.");
   }
 
-  const { description, startedAt, address, lat, lng } = parsedData;
+  const { title, description, startedAt, address, lat, lng } = parsedData;
 
-  // Step 2: Upload image to DigitalOcean Spaces
-  const uploadedFile = await fileUploader.uploadToDigitalOcean(file);
-  const imageUrl = uploadedFile.Location;
-
-  // Step 3: Save memory
-  const memory = await eventService.createEvent({
-    image: imageUrl,
-    description,
-    address,
-    createdAt: new Date(startedAt),
-    lat: parseFloat(lat),
-    lng: parseFloat(lng),
+  const event = await eventService.createEvent({
+    file,
+    data: { title, description, startedAt, address, lat, lng },
     userId,
   });
 
@@ -46,7 +28,7 @@ import ApiError from '../../../errors/ApiErrors';
     statusCode: httpStatus.CREATED,
     success: true,
     message: 'Event created successfully',
-    data: memory,
+    data: event,
   });
 });
 

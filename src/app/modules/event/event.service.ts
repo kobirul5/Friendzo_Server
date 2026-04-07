@@ -1,22 +1,68 @@
 import { PrismaClient, Event as EventModel } from "@prisma/client";
+import httpStatus from "http-status";
 import ApiError from "../../../errors/ApiErrors";
 import { haversine } from "../../../shared/haversine";
 import { paginationHelper } from "../../../helpars/paginationHelper";
 import { IPaginationOptions } from "../../../interfaces/paginations";
+import { fileUploader } from "../../../helpars/fileUploader";
+import { deleteImageAndFile } from "../../../helpars/fileDelete";
 
 const prisma = new PrismaClient();
 
 // Create Event
-const createEvent = async (data: {
-  image: string;
-  description: string;
-  address?: string;
-  createdAt: Date;
-  lat: number;
-  lng: number;
+const createEvent = async (payload: {
+  file: Express.Multer.File;
+  data: {
+    title: string;
+    description: string;
+    startedAt: Date;
+    address?: string;
+    lat: string;
+    lng: string;
+  };
   userId: string;
 }): Promise<EventModel> => {
-  return await prisma.event.create({ data });
+  const { file, data, userId } = payload;
+
+  if (!file) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Image file is required.");
+  }
+
+  if (!data.description || !data.startedAt) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Missing required fields: description, startedAt");
+  }
+
+  const lat = parseFloat(data.lat);
+  const lng = parseFloat(data.lng);
+
+  if (isNaN(lat) || isNaN(lng)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid coordinates: lat and lng must be valid numbers");
+  }
+
+  // Upload image to DigitalOcean
+  const uploadedFile = await fileUploader.uploadToDigitalOcean(file);
+  const imageUrl = uploadedFile.Location;
+
+  try {
+    const event = await prisma.event.create({
+      data: {
+        title: data.title,
+        image: imageUrl,
+        description: data.description,
+        address: data.address,
+        startAt: new Date(data.startedAt),
+        lat,
+        lng,
+        userId,
+      },
+    });
+
+    return event;
+  } catch (error) {
+    // Rollback: delete uploaded image if event creation fails
+    await deleteImageAndFile.deleteFileFromDigitalOcean(imageUrl);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to create event");
+  }
 };
 
 // Get all events by user

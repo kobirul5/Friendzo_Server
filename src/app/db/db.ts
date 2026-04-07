@@ -21,6 +21,7 @@ export const initiateSuperAdmin = async () => {
       role: UserRole.ADMIN,
       lat: 23.8103,
       lng: 90.4125,
+      isVerified: true,
     };
  
     const isExistUser = await prisma.user.findFirst({

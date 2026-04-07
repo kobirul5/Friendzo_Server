@@ -116,10 +116,12 @@ model Memory {
 model Event {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   image       String
+  title       String
   description String
   address     String?
   lat         Float?   @default(0.0)
   lng         Float?   @default(0.0)
+  startAt     DateTime
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
