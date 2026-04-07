@@ -15,7 +15,7 @@ const createEvent = async (payload: {
   data: {
     title: string;
     description: string;
-    startedAt: Date;
+    startedAt : string;
     address?: string;
     lat: string;
     lng: string;
@@ -28,8 +28,8 @@ const createEvent = async (payload: {
     throw new ApiError(httpStatus.BAD_REQUEST, "Image file is required.");
   }
 
-  if (!data.description || !data.startedAt) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Missing required fields: description, startedAt");
+  if (!data.title || !data.description || !data.startedAt ) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Missing required fields: title, description, startedAt");
   }
 
   const lat = parseFloat(data.lat);
@@ -50,7 +50,7 @@ const createEvent = async (payload: {
         image: imageUrl,
         description: data.description,
         address: data.address,
-        startAt: new Date(data.startedAt),
+        startedAt : new Date(data.startedAt ),
         lat,
         lng,
         userId,
@@ -99,13 +99,56 @@ const getEventById = async (id: string): Promise<EventModel | null> => {
 // Update event
 const updateEvent = async (
   id: string,
-  data: Partial<
-    Pick<EventModel, "image" | "description" | "address" | "lat" | "lng">
-  >
+  payload: {
+    file?: Express.Multer.File;
+    data: Partial<{
+      title: string;
+      description: string;
+      startAt: string;
+      address: string;
+      lat: string;
+      lng: string;
+    }>;
+  }
 ): Promise<EventModel> => {
+  const existingEvent = await prisma.event.findUnique({ where: { id } });
+  if (!existingEvent) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Event not found");
+  }
+
+  const { file, data } = payload;
+  const updateData: any = {};
+
+  if (data.title !== undefined) updateData.title = data.title;
+  if (data.description !== undefined) updateData.description = data.description;
+  if (data.address !== undefined) updateData.address = data.address;
+  if (data.startAt !== undefined) updateData.startAt = new Date(data.startAt);
+
+  if (data.lat !== undefined) {
+    const lat = parseFloat(data.lat);
+    if (!isNaN(lat)) updateData.lat = lat;
+  }
+  if (data.lng !== undefined) {
+    const lng = parseFloat(data.lng);
+    if (!isNaN(lng)) updateData.lng = lng;
+  }
+
+  // Handle image update
+  if (file) {
+    const uploadedFile = await fileUploader.uploadToDigitalOcean(file);
+    updateData.image = uploadedFile.Location;
+
+    // Delete old image
+    await deleteImageAndFile.deleteFileFromDigitalOcean(existingEvent.image);
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "No valid fields to update");
+  }
+
   return await prisma.event.update({
     where: { id },
-    data,
+    data: updateData,
   });
 };
 

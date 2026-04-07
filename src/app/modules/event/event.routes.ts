@@ -11,7 +11,7 @@ router.get('/', authMiddleware(), eventController.getUserEvent);
 router.get('/paginated', authMiddleware(), eventController.getPaginatedEvents);
 router.get('/all-events', authMiddleware(), eventController.getAllEvents);
 router.get('/:id', authMiddleware(), eventController.getSingleEvent);
-router.patch('/:id', authMiddleware(), eventController.updateEvent);
+router.patch('/:id', authMiddleware(), fileUploader.uploadFile, eventController.updateEvent);
 router.delete('/:id', authMiddleware(), eventController.deleteEvent);
 
 

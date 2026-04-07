@@ -16,11 +16,11 @@ const createEvent = catchAsync(async (req: any, res: Response) => {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid JSON in 'data' field.");
   }
 
-  const { title, description, startedAt, address, lat, lng } = parsedData;
+  const { title, description, startedAt , address, lat, lng } = parsedData;
 
   const event = await eventService.createEvent({
     file,
-    data: { title, description, startedAt, address, lat, lng },
+    data: { title, description, startedAt , address, lat, lng },
     userId,
   });
 
@@ -64,9 +64,21 @@ const getSingleEvent = catchAsync(async (req: Request, res: Response) => {
 });
 
 
- const updateEvent = catchAsync(async (req: Request, res: Response) => {
+const updateEvent = catchAsync(async (req: any, res: Response) => {
   const { id } = req.params;
-  const updated = await eventService.updateEvent(id, req.body);
+  const file = req.file;
+
+  let parsedData;
+  try {
+    parsedData = JSON.parse(req.body.data);
+  } catch (error) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid JSON in 'data' field.");
+  }
+
+  const updated = await eventService.updateEvent(id, {
+    file,
+    data: parsedData,
+  });
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
