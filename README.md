@@ -1,71 +1,151 @@
-# Friendzo Backend: Scalable Social API
+# Friendzo Backend
 
-A robust, high-performance Node.js/Express API designed for the Friendzo ecosystem. It powers everything from real-time chats to complex financial transactions and geospatial discovery.
+Friendzo Backend is the Express + TypeScript API that powers the Friendzo platform. It handles authentication, social activity, messaging, payments, media uploads, admin tools, and scheduled maintenance jobs.
 
----
+## What this API does
 
-## 🛠️ Core Stack
+- Authenticates users with JWT access and refresh tokens.
+- Stores social data in MongoDB through Prisma.
+- Serves memories, events, likes, comments, follows, profiles, and discovery data.
+- Supports chat, file uploads, and real-time communication.
+- Handles coins, gift cards, gifts, payments, and subscription-related flows.
+- Provides admin modules for moderation, users, posts, reports, interests, and pricing.
+- Runs background cron jobs for platform maintenance.
 
-- **Framework**: Express.js with TypeScript.
-- **ORM**: [Prisma](https://www.prisma.io/) optimized for **MongoDB**.
-- **Real-time**: [Socket.io](https://socket.io/) for bidirectional communication.
-- **Auth**: JWT (Access/Refresh Tokens) and Bcrypt (Hashing).
-- **Storage**: Bi-provider support for **Cloudinary** (Images) and **DigitalOcean Spaces** (Large Files).
-- **Payments**: [Stripe](https://stripe.com/) for secure subscription and coin purchases.
+## Tech Stack
 
----
+- Express.js
+- TypeScript
+- Prisma ORM
+- MongoDB
+- Socket.io
+- JWT authentication
+- Bcrypt password hashing
+- Stripe payments
+- Cloudinary and DigitalOcean Spaces for file storage
+- Nodemailer for email flows
+- Firebase Admin for push notification support
+- node-cron for scheduled jobs
 
-## 📂 Core Modules & Features
+## Main Modules
 
-### 1. **User Identity & Security**
-- **RBAC**: Multi-level roles (USER, ADMIN, SUPER_ADMIN).
-- **Verification**: Support for ID verification and Biometric Face matching.
-- **FCM**: Firebase Cloud Messaging integrated for cross-platform notifications.
-- **Privacy**: Blocking and reporting mechanisms for user safety.
+- `auth` - login, register, logout, password reset, OTP verification
+- `users` - user identity and profile-related operations
+- `memories` - social memory CRUD
+- `events` - event CRUD, pagination, likes, and owner event views
+- `likes` - social post or memory-like interactions
+- `comment` - comment system
+- `profile` - profile read/update flows
+- `follow` - follow and request management
+- `chat` - real-time chat transport and persistence
+- `discoverByInterest` and `find-by-interest` - discovery and matching
+- `gift-card`, `gift`, and `coins` - virtual economy features
+- `payments` - payment creation and tracking
+- `admin` - admin dashboards and moderation APIs
+- `report` and `block` - safety and moderation tools
+- `subscription` - plan and subscription management
+- `file-uploads` - media upload helpers
 
-### 2. **Social Mechanics**
-- **Memories & Events**: Full CRUD with geospatial location support (Lat/Lng).
-- **Interactions**: Nested Comments and Like systems with self-referential relations.
-- **Follow System**: Bi-directional friend/follow management with status tracking.
+## API Surface
 
-### 3. **Messaging Engine**
-- **Room Management**: Dynamic creation of private chat rooms based on sender/receiver IDs.
-- **Real-time History**: Immediate persistence of messages and image sharing in chats.
+The app router mounts every module under `/api/v1`.
 
-### 4. **Platform Monetization**
-- **Virtual Economy**: Manage Coin amounts, Gift Cards (Essential, Exclusive, Majestic), and Gift purchases.
-- **Subscription Engine**: Dynamic subscription plans with tier-based features (AI tokens, Boosts, Priority Likes).
-- **Payment Processing**: Comprehensive tracking of transactions (Pending, Completed, Refunded).
+Common examples:
 
----
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/register`
+- `GET /api/v1/memories/paginated`
+- `GET /api/v1/events/paginated`
+- `PATCH /api/v1/events/:id`
+- `POST /api/v1/events/:id/like`
+- `GET /api/v1/profile`
+- `GET /api/v1/chat`
+- `POST /api/v1/payment`
+- `GET /api/v1/admin/...`
 
-## 📡 API Reference Overview
+## Background Jobs
 
-| Action | Route | Method | Description |
-| :--- | :--- | :--- | :--- |
-| **Auth** | `/api/v1/auth/login` | POST | Secure user authentication |
-| **Profile** | `/api/v1/users/update-profile-image` | PUT | **Individual** Image update for efficient uploads |
-| **Memory** | `/api/v1/memories` | GET/POST | Create or retrieve social posts |
-| **Gift** | `/api/v1/gifts/send` | POST | Trigger virtual gift sending with real-time effects |
-| **Coins** | `/api/v1/coins/purchase` | POST | Buy virtual currency via Stripe |
+The backend starts cron jobs from `src/server.ts` after the database connection is ready.
 
----
+Current jobs in `src/cron/cron.ts`:
 
-## 🚀 Getting Started
+- Keep-alive ping every 10 minutes to prevent the server from sleeping on free-tier hosts.
+- Daily decrement of `boosts` and `priorityLikes` on user records.
+- Daily shift of every event `startedAt` value by 1 day.
 
-1. `bun install`
-2. Configure `.env` with:
-   - `DATABASE_URL`, `JWT_ACCESS_SECRET`, `STRIPE_SECRET_KEY`, `CLOUDINARY_*`, `DO_SPACE_*`.
-3. `bun prisma generate`
-4. `bun run dev`
+Important note: these jobs rely on a long-running server process. They run naturally on hosts like Render, PM2, or any always-on Node runtime.
 
----
+## Project Structure
 
-## 🔗 Project Links
-- [Frontend Documentation](../Friendzo/README.md)
-- [Project Architecture Chart](../README.md)
+- `src/app` - app bootstrap, routes, middlewares, and database setup
+- `src/app/modules` - feature modules and business logic
+- `src/config` - environment parsing and config values
+- `src/cron` - scheduled jobs
+- `src/helpars` - reusable helpers
+- `src/shared` - shared utilities such as Prisma and response helpers
+- `prisma` - Prisma schema and database configuration
 
----
+## Environment Variables
 
-## 📜 License
-Private & Proprietary.
+Core app:
+
+- `PORT`
+- `NODE_ENV`
+- `DATABASE_URL`
+- `SERVER_URL`
+
+Authentication:
+
+- `JWT_SECRET`
+- `REFRESH_TOKEN_SECRET`
+- `EXPIRES_IN`
+- `REFRESH_TOKEN_EXPIRES_IN`
+- `RESET_PASS_TOKEN`
+- `RESET_PASS_TOKEN_EXPIRES_IN`
+- `BCRYPT_SALT_ROUNDS`
+
+Email:
+
+- `EMAIL`
+- `APP_PASS`
+
+
+Payments:
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PUBLISHABLE_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+
+DigitalOcean Spaces:
+
+- `DO_SPACE_ENDPOINT`
+- `DO_SPACE_ORIGIN_ENDPOINT`
+- `DO_SPACE_ACCESS_KEY`
+- `DO_SPACE_SECRET_KEY`
+- `DO_SPACE_BUCKET`
+
+Cloudinary:
+
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+Frontend integration:
+
+- `https://friendzo.vercel.app/`
+
+## Scripts
+
+- `bun run dev` - start the API in development mode
+- `bun run build` - compile TypeScript to `dist`
+- `bun run start` - run the compiled server from `dist/server.js`
+- `bun prisma generate` - generate Prisma client
+
+## Getting Started
+
+1. Install dependencies.
+2. Configure the `.env` file.
+3. Run `bun prisma generate`.
+4. Start the server with `bun run dev`.
+
+
