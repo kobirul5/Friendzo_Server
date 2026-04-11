@@ -7,18 +7,29 @@ import router from "./app/routes";
 
 const app: Application = express();
 
-export const corsOptions = {
-  origin: [
-    "http://localhost:3000",
-    "http://72.60.70.222:3000",
-    "https://togetheradmin.site",
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-};
+// export const corsOptions = {
+//   origin: [
+//     "http://localhost:3000",
+//     "http://72.60.70.222:3000",
+//     "https://togetheradmin.site",
+//   ],
+//   methods: ["GET", "POST", "PUT", "DELETE"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+//   credentials: true,
+// };
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      callback(null, true);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "*"],
+  })
+);
+
 app.use(cookieParser());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));

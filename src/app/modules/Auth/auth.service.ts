@@ -4,13 +4,14 @@ import { jwtHelpers } from "../../../helpars/jwtHelpers";
 import prisma from "../../../shared/prisma";
 import * as bcrypt from "bcrypt";
 import ApiError from "../../../errors/ApiErrors";
-import emailSender from "../../../shared/emailSender";
+
 import httpStatus from "http-status";
 import crypto from "crypto";
 import {
   getGoogleUser,
   getFacebookUser,
 } from "../../../shared/socilaAuthHelper";
+import emailSender from "../../../shared/brevoMailSender";
 
 const loginUser = async (payload: {
   email: string;
@@ -37,7 +38,7 @@ const loginUser = async (payload: {
     const html = `
     <div style="font-family: Arial, sans-serif; background:#f5f7fa; padding:40px;">
       <div style="max-width:600px; background:#fff; margin:auto; padding:30px; border-radius:6px;">
-        <h2>Together</h2>
+        <h2>Friendzo</h2>
         <p>Your verification code for login is:</p>
         <div style="font-size:28px; font-weight:bold; margin:20px 0;">${otp}</div>
         <p style="font-size:14px;">This code will expire in 10 minutes.</p>
@@ -47,7 +48,7 @@ const loginUser = async (payload: {
     await emailSender(
       userData.email,
       html,
-      "Together - Login Verification Code",
+      "Friendzo - Login Verification Code",
     );
 
     await prisma.user.update({
@@ -197,7 +198,7 @@ const forgotPassword = async (payload: { email: string }) => {
 <div style="font-family: Arial, sans-serif; background:#f6f8fb; padding:40px;">
   <div style="max-width:600px; background:#fff; margin:auto; padding:30px; border-radius:6px;">
 
-    <h2 style="color:#222;">Together</h2>
+    <h2 style="color:#222;">Friendzo</h2>
     <p style="color:#555;">Password Reset Request</p>
 
     <p style="margin-top:20px;">
@@ -217,7 +218,7 @@ const forgotPassword = async (payload: { email: string }) => {
     </p>
 
     <p style="font-size:12px; color:#999; margin-top:30px;">
-      Together Security Team
+      Friendzo Security Team
     </p>
   </div>
 </div> `;
@@ -226,7 +227,7 @@ const forgotPassword = async (payload: { email: string }) => {
   await emailSender(
     userData.email,
     html,
-    "Together - Password Reset Verification",
+    "Friendzo - Password Reset Verification",
   );
 
   // Update the user's OTP and expiration in the database
@@ -262,7 +263,7 @@ const resendOtp = async (email: string) => {
     <div style="font-family: Arial, sans-serif; background:#f5f7fa; padding:40px;">
   <div style="max-width:600px; background:#fff; margin:auto; padding:30px; border-radius:6px;">
 
-    <h2>Together</h2>
+    <h2>Friendzo</h2>
 
     <p>
       As requested, here is your new OTP code:
@@ -285,7 +286,7 @@ const resendOtp = async (email: string) => {
   `;
 
   // Send the OTP to user's email
-  await emailSender(user.email, html, "Together - Your Verification Code");
+  await emailSender(user.email, html, "Friendzo - Your Verification Code");
 
   // Update the user's profile with the new OTP and expiration
   const updatedUser = await prisma.user.update({
