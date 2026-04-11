@@ -33,5 +33,10 @@ export default {
         secretKey: process.env.DO_SPACE_SECRET_KEY,
         bucket: process.env.DO_SPACE_BUCKET,
     },
+    brevoMail: {
+        api_key: process.env.BREVO_API_KEY,
+        email: process.env.BREVO_EMAIL,
+        sender_name: process.env.BREVO_SENDER_NAME,
+    },
 
 }
