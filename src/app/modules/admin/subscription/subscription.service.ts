@@ -3,8 +3,8 @@ import prisma from "../../../../shared/prisma";
 import ApiError from "../../../../errors/ApiErrors";
 
 import stripe from "../../../../shared/stripe";
-import emailSender from "../../../../shared/emailSender";
 import { subscriptionEmailTemplate } from "./subscriptionEmailTemplate";
+import emailSender from "../../../../shared/brevoMailSender";
 
 const createSubscriptionPlan = async (data: any, userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });

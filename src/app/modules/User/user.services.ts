@@ -8,10 +8,10 @@ import { fileUploader } from "../../../helpars/fileUploader";
 import crypto from "crypto";
 import { Secret } from "jsonwebtoken";
 import { jwtHelpers } from "../../../helpars/jwtHelpers";
-import emailSender from "../../../shared/emailSender";
 import { registrationOtpTemplate } from "./registrationOtpTemplate";
 import { User } from "@prisma/client";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
+import emailSender from "../../../shared/brevoMailSender";
 
 const createUserIntoDb = async (payload: IUser) => {
   const { password, fcmToken } = payload;

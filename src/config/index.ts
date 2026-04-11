@@ -17,10 +17,6 @@ export default {
         reset_pass_token_expires_in: process.env.RESET_PASS_TOKEN_EXPIRES_IN
     },
     reset_pass_link: process.env.RESET_PASS_LINK,
-    emailSender: {
-        email: process.env.EMAIL,
-        app_pass: process.env.APP_PASS
-    },
     stripe: {
         stripe_secret_key: process.env.STRIPE_SECRET_KEY,
         stripe_publishable_key: process.env.STRIPE_PUBLISHABLE_KEY,
