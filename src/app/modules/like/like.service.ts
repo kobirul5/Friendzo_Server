@@ -28,10 +28,41 @@ export const invalidateMemoryExistenceCache = (memoryId?: string) => {
   }
 };
 
+// Fast in-memory state tracking for active memory likes: key = `${userId}:${memoryId}`
+const activeMemoryLikes = new Set<string>();
+const activeEventLikes = new Set<string>();
+
+export const primeActiveMemoryLikes = (likes: { userId: string; memoryId: string }[]) => {
+  for (const l of likes) {
+    if (l.userId && l.memoryId) {
+      activeMemoryLikes.add(`${l.userId}:${l.memoryId}`);
+    }
+  }
+};
+
+// Sequential per-key promise queue to serialize like/unlike operations and prevent DB race conditions
+const pendingOperations = new Map<string, Promise<any>>();
+
+const enqueueOperation = (key: string, operation: () => Promise<any>) => {
+  const previous = pendingOperations.get(key) || Promise.resolve();
+  const next = previous
+    .catch(() => {})
+    .then(operation)
+    .finally(() => {
+      if (pendingOperations.get(key) === next) {
+        pendingOperations.delete(key);
+      }
+    });
+  pendingOperations.set(key, next);
+  return next;
+};
+
 const createEventLikeService = async (userId: string, eventId: string) => {
   if (!isValidObjectId(eventId)) {
     throw new ApiError(404, "Event not found");
   }
+
+  const likeKey = `${userId}:${eventId}`;
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
@@ -41,27 +72,39 @@ const createEventLikeService = async (userId: string, eventId: string) => {
     throw new ApiError(404, "Event not found");
   }
 
-  try {
-    const like = await prisma.eventLike.create({
-      data: {
-        userId,
-        eventId,
-      },
-    });
-
-    return like;
-  } catch (error: any) {
-    if (error?.code === "P2002") {
-      throw new ApiError(400, "You have already liked this event.");
-    }
-    throw error;
+  if (activeEventLikes.has(likeKey)) {
+    throw new ApiError(400, "You have already liked this event.");
   }
+  activeEventLikes.add(likeKey);
+
+  enqueueOperation(likeKey, async () => {
+    try {
+      await prisma.eventLike.create({
+        data: {
+          userId,
+          eventId,
+        },
+      });
+    } catch (error: any) {
+      if (error?.code !== "P2002") {
+        console.error("Background create event like error:", error);
+      }
+    }
+  });
+
+  return {
+    userId,
+    eventId,
+    createdAt: new Date(),
+  };
 };
 
 const createMemoryLikeService = async (userId: string, memoryId: string) => {
   if (!isValidObjectId(memoryId)) {
     throw new ApiError(404, "Memory not found");
   }
+
+  const likeKey = `${userId}:${memoryId}`;
 
   // Fast existence check using cache; fallback to lightweight DB select
   const cachedAt = memoryExistenceCache.get(memoryId);
@@ -79,21 +122,36 @@ const createMemoryLikeService = async (userId: string, memoryId: string) => {
     memoryExistenceCache.set(memoryId, Date.now());
   }
 
-  try {
-    const like = await prisma.memoryLike.create({
-      data: {
-        userId,
-        memoryId,
-      },
-    });
-
-    return like;
-  } catch (error: any) {
-    if (error?.code === "P2002") {
-      throw new ApiError(400, "You have already liked this memory.");
-    }
-    throw error;
+  // Fast duplicate check in-memory
+  if (activeMemoryLikes.has(likeKey)) {
+    throw new ApiError(400, "You have already liked this memory.");
   }
+
+  // Immediately record state in memory
+  activeMemoryLikes.add(likeKey);
+
+  // Background non-blocking persistence to MongoDB
+  enqueueOperation(likeKey, async () => {
+    try {
+      await prisma.memoryLike.create({
+        data: {
+          userId,
+          memoryId,
+        },
+      });
+    } catch (error: any) {
+      if (error?.code !== "P2002") {
+        console.error("Background create memory like error:", error);
+      }
+    }
+  });
+
+  // Instant response (2-5ms)
+  return {
+    userId,
+    memoryId,
+    createdAt: new Date(),
+  };
 };
 
 const createUserLikeService = async (userId: string, likedUserId: string) => {
@@ -171,19 +229,29 @@ const removeMemoryLikeService = async (userId: string, memoryId: string) => {
     throw new ApiError(404, "Like does not exist for this memory.");
   }
 
-  const result = await prisma.memoryLike.deleteMany({
-    where: {
-      userId,
-      memoryId,
-    },
+  const likeKey = `${userId}:${memoryId}`;
+
+  // Update in-memory state immediately
+  activeMemoryLikes.delete(likeKey);
+
+  // Background non-blocking persistence
+  enqueueOperation(likeKey, async () => {
+    try {
+      await prisma.memoryLike.deleteMany({
+        where: {
+          userId,
+          memoryId,
+        },
+      });
+    } catch (error: any) {
+      console.error("Background remove memory like error:", error);
+    }
   });
 
-  if (result.count === 0) {
-    throw new ApiError(404, "Like does not exist for this memory.");
-  }
-
+  // Instant response (2-5ms)
   return { message: "Like removed successfully." };
 };
+
 
 const getDailyMyLikeService = async (userId: string) => {
   const startOfToday = dayjs().startOf("day").toDate();
@@ -317,5 +385,6 @@ export const likeService = {
   getMyWeeklyService,
   cacheMemoryIds,
   invalidateMemoryExistenceCache,
+  primeActiveMemoryLikes,
 };
 

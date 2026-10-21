@@ -125,8 +125,13 @@ const getMemoriesAllUsers = async (
     },
   });
 
-  // Pre-warm memory existence cache for instant like operations
+  // Pre-warm memory existence cache and active likes for instant like operations
   likeService.cacheMemoryIds(memories.map((m) => m.id));
+  likeService.primeActiveMemoryLikes(
+    memories
+      .filter((m) => m.MemoryLike.length > 0)
+      .map((m) => ({ userId, memoryId: m.id }))
+  );
 
   const formattedMemories = memories.map((memory) => {
     const totalLikes = memory._count.MemoryLike;
