@@ -270,18 +270,20 @@ const getPaginatedEvents = async (options: IPaginationOptions, currentUserId?: s
 
 // Toggle event like
 const toggleEventLike = async (eventId: string, userId: string) => {
-  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    select: { id: true },
+  });
   if (!event) {
     throw new ApiError(httpStatus.NOT_FOUND, "Event not found");
   }
 
-  const existingLike = await prisma.eventLike.findFirst({
+  const deleteResult = await prisma.eventLike.deleteMany({
     where: { eventId, userId },
   });
 
-  if (existingLike) {
+  if (deleteResult.count > 0) {
     // Unlike
-    await prisma.eventLike.delete({ where: { id: existingLike.id } });
     const likeCount = await prisma.eventLike.count({ where: { eventId } });
     return { liked: false, likeCount };
   } else {
@@ -296,6 +298,7 @@ const toggleEventLike = async (eventId: string, userId: string) => {
 const getAllEventsWithLikes = async (userId: string): Promise<any[]> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    select: { id: true, lat: true, lng: true },
   });
 
   if (!user) {

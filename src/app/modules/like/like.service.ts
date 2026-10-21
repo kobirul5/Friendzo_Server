@@ -2,122 +2,140 @@ import dayjs from "dayjs";
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
 
+const isValidObjectId = (id: string) => /^[a-f\d]{24}$/i.test(id);
+
+// In-memory cache for memory existence check (5-minute TTL)
+const memoryExistenceCache = new Map<string, number>();
+const MEMORY_CACHE_TTL = 5 * 60 * 1000;
+
+export const cacheMemoryIds = (memoryIds: string[]) => {
+  const now = Date.now();
+  if (memoryExistenceCache.size > 10000) {
+    memoryExistenceCache.clear();
+  }
+  for (const id of memoryIds) {
+    if (id && isValidObjectId(id)) {
+      memoryExistenceCache.set(id, now);
+    }
+  }
+};
+
+export const invalidateMemoryExistenceCache = (memoryId?: string) => {
+  if (memoryId) {
+    memoryExistenceCache.delete(memoryId);
+  } else {
+    memoryExistenceCache.clear();
+  }
+};
+
 const createEventLikeService = async (userId: string, eventId: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-  if (!user) {
-    throw new ApiError(404, "User not found");
+  if (!isValidObjectId(eventId)) {
+    throw new ApiError(404, "Event not found");
   }
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
+    select: { id: true },
   });
   if (!event) {
     throw new ApiError(404, "Event not found");
   }
 
-  // Check if like already exists
-  const existingLike = await prisma.eventLike.findFirst({
-    where: {
-      userId,
-      eventId,
-    },
-  });
+  try {
+    const like = await prisma.eventLike.create({
+      data: {
+        userId,
+        eventId,
+      },
+    });
 
-  if (existingLike) {
-    throw new ApiError(400, "You have already liked this event.");
+    return like;
+  } catch (error: any) {
+    if (error?.code === "P2002") {
+      throw new ApiError(400, "You have already liked this event.");
+    }
+    throw error;
   }
-
-  const like = await prisma.eventLike.create({
-    data: {
-      userId,
-      eventId,
-    },
-  });
-
-  return like;
 };
 
 const createMemoryLikeService = async (userId: string, memoryId: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  const memory = await prisma.memory.findUnique({
-    where: { id: memoryId },
-    include: { user: true },
-  });
-  if (!memory) {
+  if (!isValidObjectId(memoryId)) {
     throw new ApiError(404, "Memory not found");
   }
 
-  const existingLike = await prisma.memoryLike.findFirst({
-    where: {
-      userId,
-      memoryId,
-    },
-  });
-
-  if (existingLike) {
-    throw new ApiError(400, "You have already liked this memory.");
+  // Fast existence check using cache; fallback to lightweight DB select
+  const cachedAt = memoryExistenceCache.get(memoryId);
+  if (!cachedAt || Date.now() - cachedAt > MEMORY_CACHE_TTL) {
+    const memory = await prisma.memory.findUnique({
+      where: { id: memoryId },
+      select: { id: true },
+    });
+    if (!memory) {
+      throw new ApiError(404, "Memory not found");
+    }
+    if (memoryExistenceCache.size > 10000) {
+      memoryExistenceCache.clear();
+    }
+    memoryExistenceCache.set(memoryId, Date.now());
   }
 
-  const like = await prisma.memoryLike.create({
-    data: {
-      userId,
-      memoryId,
-    },
-  });
+  try {
+    const like = await prisma.memoryLike.create({
+      data: {
+        userId,
+        memoryId,
+      },
+    });
 
-  return like;
+    return like;
+  } catch (error: any) {
+    if (error?.code === "P2002") {
+      throw new ApiError(400, "You have already liked this memory.");
+    }
+    throw error;
+  }
 };
 
 const createUserLikeService = async (userId: string, likedUserId: string) => {
-  // Check if the user giving the like exists
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-  if (!user) {
-    throw new ApiError(404, "User not found");
+  if (userId === likedUserId) {
+    throw new ApiError(400, "You cannot like yourself.");
+  }
+
+  if (!isValidObjectId(likedUserId)) {
+    throw new ApiError(404, "Target user not found");
   }
 
   // Check if the user being liked exists
   const likedUser = await prisma.user.findUnique({
     where: { id: likedUserId },
+    select: { id: true },
   });
   if (!likedUser) {
     throw new ApiError(404, "Target user not found");
   }
 
-  // Check if like already exists
-  const existingLike = await prisma.userLike.findFirst({
-    where: {
-      userId,
-      likedUserId,
-    },
-  });
+  try {
+    const like = await prisma.userLike.create({
+      data: {
+        userId,
+        likedUserId,
+      },
+    });
 
-  if (existingLike) {
-    throw new ApiError(400, "You have already liked this user.");
+    return like;
+  } catch (error: any) {
+    if (error?.code === "P2002") {
+      throw new ApiError(400, "You have already liked this user.");
+    }
+    throw error;
   }
-
-  // // Create the like
-  const like = await prisma.userLike.create({
-    data: {
-      userId,
-      likedUserId,
-    },
-  });
-
-  return like;
 };
 
-
 const getMemoryLikeCountService = async (memoryId: string) => {
+  if (!isValidObjectId(memoryId)) {
+    return 0;
+  }
+
   const count = await prisma.memoryLike.count({
     where: { memoryId },
   });
@@ -127,9 +145,13 @@ const getMemoryLikeCountService = async (memoryId: string) => {
 
 // Get users who liked a memory
 const getMemoryLikedUsersService = async (memoryId: string) => {
+  if (!isValidObjectId(memoryId)) {
+    return [];
+  }
+
   const likes = await prisma.memoryLike.findMany({
     where: { memoryId },
-    include: {
+    select: {
       user: {
         select: {
           id: true,
@@ -145,22 +167,20 @@ const getMemoryLikedUsersService = async (memoryId: string) => {
 };
 
 const removeMemoryLikeService = async (userId: string, memoryId: string) => {
-  const existingLike = await prisma.memoryLike.findFirst({
+  if (!isValidObjectId(memoryId)) {
+    throw new ApiError(404, "Like does not exist for this memory.");
+  }
+
+  const result = await prisma.memoryLike.deleteMany({
     where: {
       userId,
       memoryId,
     },
   });
 
-  if (!existingLike) {
+  if (result.count === 0) {
     throw new ApiError(404, "Like does not exist for this memory.");
   }
-
-  await prisma.memoryLike.delete({
-    where: {
-      id: existingLike.id,
-    },
-  });
 
   return { message: "Like removed successfully." };
 };
@@ -239,7 +259,6 @@ const getMyWeeklyService = async (userId: string) => {
       memory: {
         select: {
           id: true,
-          // title: true,
           description: true,
           image: true,
           createdAt: true,
@@ -268,31 +287,23 @@ const getMyWeeklyService = async (userId: string) => {
 };
 
 const removeUserLikeService = async (userId: string, likedUserId: string) => {
+  if (!isValidObjectId(likedUserId)) {
+    throw new ApiError(404, "Like does not exist for this user.");
+  }
 
-  const existingLike = await prisma.userLike.findFirst({
+  const result = await prisma.userLike.deleteMany({
     where: {
       userId,
       likedUserId,
     },
   });
 
-  if (!existingLike) {
+  if (result.count === 0) {
     throw new ApiError(404, "Like does not exist for this user.");
   }
 
-  if(userId !== existingLike.userId){
-    throw new ApiError(400, "You can not remove this like.");
-  }
-
-  await prisma.userLike.delete({
-    where: {
-      id: existingLike.id,
-    },
-  });
-
   return null;
 };
-
 
 export const likeService = {
   createUserLikeService,
@@ -304,4 +315,7 @@ export const likeService = {
   removeMemoryLikeService,
   getDailyMyLikeService,
   getMyWeeklyService,
+  cacheMemoryIds,
+  invalidateMemoryExistenceCache,
 };
+

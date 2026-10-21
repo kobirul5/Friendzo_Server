@@ -9,6 +9,25 @@ import { jwtHelpers } from "../../helpars/jwtHelpers";
 import prisma from "../../shared/prisma";
 import { UserStatus } from "@prisma/client";
 
+interface CachedAuthUser {
+  id: string;
+  role: string;
+  status: UserStatus;
+  isVerified: boolean;
+  cachedAt: number;
+}
+
+const authUserCache = new Map<string, CachedAuthUser>();
+const AUTH_CACHE_TTL = 60 * 1000; // 60 seconds
+
+export const invalidateAuthUserCache = (userId?: string) => {
+  if (userId) {
+    authUserCache.delete(userId);
+  } else {
+    authUserCache.clear();
+  }
+};
+
 const auth = (...roles: string[]) => {
   return async (
     req: Request & { user?: any },
@@ -29,20 +48,45 @@ const auth = (...roles: string[]) => {
         actualToken,
         config.jwt.jwt_secret as Secret
       );
-      const { id, role, iat } = verifiedUser;
+      const { id } = verifiedUser;
 
-      const user = await prisma.user.findUnique({
-        where: {
-          id: id,
-        },
-      });
+      let user: { id: string; role: string; status: UserStatus; isVerified: boolean } | null = null;
+      const cached = authUserCache.get(id);
 
+      if (cached && Date.now() - cached.cachedAt < AUTH_CACHE_TTL) {
+        user = cached;
+      } else {
+        const dbUser = await prisma.user.findUnique({
+          where: {
+            id: id,
+          },
+          select: {
+            id: true,
+            role: true,
+            status: true,
+            isVerified: true,
+          },
+        });
+
+        if (dbUser) {
+          user = {
+            id: dbUser.id,
+            role: dbUser.role,
+            status: dbUser.status,
+            isVerified: dbUser.isVerified,
+          };
+          if (authUserCache.size > 5000) {
+            authUserCache.clear();
+          }
+          authUserCache.set(id, { ...user, cachedAt: Date.now() });
+        }
+      }
 
       if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
       }
 
-      if(user.isVerified === false) {
+      if (user.isVerified === false) {
         throw new ApiError(httpStatus.FORBIDDEN, "Your account is not verified!");
       }
 
@@ -52,7 +96,7 @@ const auth = (...roles: string[]) => {
 
       req.user = verifiedUser as JwtPayload;
 
-      if (roles.length && !roles.includes(verifiedUser.role)) {
+      if (roles.length && !roles.includes(user.role)) {
         throw new ApiError(httpStatus.FORBIDDEN, "Forbidden!");
       }
       next();
@@ -63,3 +107,4 @@ const auth = (...roles: string[]) => {
 };
 
 export default auth;
+

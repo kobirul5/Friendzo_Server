@@ -1,10 +1,10 @@
-import { PrismaClient, Memory } from "@prisma/client";
+import { Memory } from "@prisma/client";
 import ApiError from "../../../errors/ApiErrors";
 import { deleteImageAndFile } from "../../../helpars/fileDelete";
 import { paginationHelper } from "../../../helpars/paginationHelper";
 import { IPaginationOptions } from "../../../interfaces/paginations";
-
-const prisma = new PrismaClient();
+import prisma from "../../../shared/prisma";
+import { likeService } from "../like/like.service";
 
 // Create Memory
 const createMemory = async (data: {
@@ -69,6 +69,8 @@ const deleteMemory = async ({ id, userId }: { id: string; userId: string }) => {
     where: { id },
   });
 
+  likeService.invalidateMemoryExistenceCache(id);
+
   return null;
 };
 
@@ -81,6 +83,7 @@ const getMemoriesAllUsers = async (
 }> => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    select: { id: true },
   });
 
   if (!user) {
@@ -121,6 +124,9 @@ const getMemoriesAllUsers = async (
       },
     },
   });
+
+  // Pre-warm memory existence cache for instant like operations
+  likeService.cacheMemoryIds(memories.map((m) => m.id));
 
   const formattedMemories = memories.map((memory) => {
     const totalLikes = memory._count.MemoryLike;
