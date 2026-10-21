@@ -13,14 +13,32 @@ import {
 } from "../../../shared/socilaAuthHelper";
 import emailSender from "../../../shared/brevoMailSender";
 
+import { setAuthUserCache } from "../../middlewares/auth";
+import { UserStatus } from "@prisma/client";
+
 const loginUser = async (payload: {
   email: string;
   password: string;
   fcmToken?: string;
 }) => {
-  const userData = await prisma.user.findFirst({
+  const userData = await prisma.user.findUnique({
     where: {
       email: payload.email,
+    },
+    select: {
+      id: true,
+      email: true,
+      password: true,
+      role: true,
+      status: true,
+      isVerified: true,
+      firstName: true,
+      lastName: true,
+      phoneNumber: true,
+      gender: true,
+      about: true,
+      interests: true,
+      profileImage: true,
     },
   });
 
@@ -31,6 +49,25 @@ const loginUser = async (payload: {
     );
   }
 
+  if (userData.status === UserStatus.BLOCKED) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Your account is blocked!");
+  }
+
+  if (!userData.password) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "User password is not set.");
+  }
+
+  // Verify password first before performing any heavy operations like sending emails
+  const isCorrectPassword = await bcrypt.compare(
+    payload.password,
+    userData.password,
+  );
+
+  if (!isCorrectPassword) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Password incorrect!");
+  }
+
+  // Only if password is correct, check email verification
   if (!userData.isVerified) {
     const otp = Number(crypto.randomInt(1000, 9999));
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
@@ -57,25 +94,21 @@ const loginUser = async (payload: {
     });
   }
 
-  if (!userData.password) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "User password is not set.");
-  }
-  const isCorrectPassword = await bcrypt.compare(
-    payload.password,
-    userData.password,
-  );
-
-  if (!isCorrectPassword) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Password incorrect!");
-  }
-
-  //  FCM token save logic
+  // FCM token save logic
   if (payload.fcmToken) {
     await prisma.user.update({
       where: { id: userData.id },
       data: { fcmToken: payload.fcmToken },
     });
   }
+
+  // Pre-warm the in-memory auth cache so subsequent requests are instantaneous (0ms)
+  setAuthUserCache({
+    id: userData.id,
+    role: userData.role,
+    status: userData.status,
+    isVerified: userData.isVerified,
+  });
 
   const accessToken = jwtHelpers.generateToken(
     {
@@ -94,7 +127,7 @@ const loginUser = async (payload: {
     userData.phoneNumber,
     userData.gender,
     userData.about,
-    userData.interests?.length > 0,
+    userData.interests && userData.interests.length > 0,
     userData.profileImage,
   ];
 
@@ -109,6 +142,7 @@ const loginUser = async (payload: {
     isProfileComplete: profileComplete,
   };
 };
+
 
 // get user profile
 const getMyProfile = async (userToken: string) => {

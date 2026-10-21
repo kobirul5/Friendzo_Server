@@ -28,6 +28,18 @@ export const invalidateAuthUserCache = (userId?: string) => {
   }
 };
 
+export const setAuthUserCache = (user: {
+  id: string;
+  role: string;
+  status: UserStatus;
+  isVerified: boolean;
+}) => {
+  if (authUserCache.size > 5000) {
+    authUserCache.clear();
+  }
+  authUserCache.set(user.id, { ...user, cachedAt: Date.now() });
+};
+
 const auth = (...roles: string[]) => {
   return async (
     req: Request & { user?: any },
