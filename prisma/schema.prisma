@@ -87,6 +87,9 @@ model User {
   likesReceived     UserLike[]     @relation("UserLikesReceived")
   Subscription      Subscription[]
 
+  @@index([status])
+  @@index([role])
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -111,6 +114,10 @@ model Memory {
   MemoryLike MemoryLike[]
   Comment    Comment[]
   ReportPost ReportPost[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([userId, createdAt])
 }
 
 model Event {
@@ -129,6 +136,10 @@ model Event {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   EventLike EventLike[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([startedAt])
 }
 
 model gitPopUp {
@@ -144,6 +155,9 @@ model gitPopUp {
   receiver User @relation("ReceivedGifts", fields: [receiverId], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@index([receiverId, isSeen])
+  @@index([senderId])
 }
 
 enum PopUp {
@@ -174,6 +188,10 @@ model EventLike {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@index([eventId])
 }
 
 model MemoryLike {
@@ -187,6 +205,10 @@ model MemoryLike {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([memoryId, userId])
+  @@index([userId])
+  @@index([memoryId])
 }
 
 model Comment {
@@ -201,6 +223,9 @@ model Comment {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([memoryId, createdAt])
+  @@index([userId])
 }
 
 model Follow {
@@ -213,6 +238,10 @@ model Follow {
   followingId   String        @db.ObjectId
 
   createdAt DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId, requestStatus])
+  @@index([followingId, requestStatus])
 }
 
 model Chat {
@@ -231,6 +260,11 @@ model Chat {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([roomId, createdAt])
+  @@index([roomId, receiverId, isRead])
+  @@index([senderId])
+  @@index([receiverId])
 }
 
 model Room {
@@ -243,6 +277,9 @@ model Room {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, senderId])
 }
 
 model Report {
@@ -258,6 +295,9 @@ model Report {
   // Reported user
   reportedUserId String @db.ObjectId
   reportedUser   User   @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
+
+  @@index([reportedUserId])
+  @@index([reporterId])
 }
 
 model ReportPost {
@@ -273,6 +313,9 @@ model ReportPost {
   // Reported user
   memoryId String @db.ObjectId
   memory   Memory @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+
+  @@index([memoryId])
+  @@index([reporterId])
 }
 
 model Block {
@@ -286,6 +329,7 @@ model Block {
   blockedUser User @relation("BlockedRelation", fields: [blockedUserId], references: [id], onDelete: Cascade)
 
   @@unique([blockerId, blockedUserId]) // Prevent duplicate blocks
+  @@index([blockedUserId])
 }
 
 model Notification {
@@ -308,6 +352,9 @@ model Notification {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([receiverId, isRead])
+  @@index([receiverId, createdAt])
+  @@index([senderId])
   @@map("notifications")
 }
 
@@ -344,6 +391,9 @@ model CoinGiftSend {
   // Relations
   sender   User @relation("CoinGiftSender", fields: [senderId], references: [id], onDelete: Cascade)
   receiver User @relation("CoinGiftReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
 }
 
 model GiftCard {
@@ -357,6 +407,8 @@ model GiftCard {
   updatedAt    DateTime       @updatedAt
   GiftPurchase GiftPurchase[]
   GiftSend     GiftSend[]
+
+  @@index([status, category])
 }
 
 enum GiftCardStatus {
@@ -380,6 +432,9 @@ model GiftPurchase {
   // Relations 
   user         User         @relation(fields: [userId], references: [id])
   giftCard     GiftCard     @relation(fields: [giftCardId], references: [id])
+
+  @@index([userId])
+  @@index([giftCardId])
 }
 
 model UserLike {
@@ -395,6 +450,7 @@ model UserLike {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, likedUserId]) // prevent duplicate likes
+  @@index([likedUserId])
 }
 
 model GiftSend {
@@ -410,6 +466,10 @@ model GiftSend {
   sender   User     @relation("GiftSender", fields: [senderId], references: [id])
   receiver User     @relation("GiftReceiver", fields: [receiverId], references: [id])
   giftCard GiftCard @relation(fields: [giftCardId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([giftCardId])
 }
 
 enum GiftCategory {
@@ -431,6 +491,10 @@ model Payment {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 //subscription start
@@ -469,6 +533,7 @@ model Subscription {
 
   @@index([userId])
   @@index([planId])
+  @@index([status])
 }
 
 //subscription end
